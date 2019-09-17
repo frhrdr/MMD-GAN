@@ -30,16 +30,16 @@ class SetFlag(object):
         self.SILENT_MODE = False
 
         # library info
-        self.TENSORFLOW_VERSION = '1.8.0'
-        self.CUDA_VERSION = '9.0'
-        self.CUDNN_VERSION = '7.0'
-        self.DRIVER_VERSION = '396.54'
+        self.TENSORFLOW_VERSION = '1.13.0'
+        self.CUDA_VERSION = '10.1'
+        self.CUDNN_VERSION = '7.5'
+        self.DRIVER_VERSION = '430.40'
 
         # directory setup
-        self.DEFAULT_IN = 'MMD-GAN/Data/'
-        self.DEFAULT_OUT = 'MMD-GAN/Results/'
-        self.DEFAULT_DOWNLOAD = 'MMD-GAN/Data/'
-        self.INCEPTION_V1 = 'MMD-GAN/Addon/inception_v1/inceptionv1_for_inception_score.pb'
+        self.DEFAULT_IN = 'Data/'
+        self.DEFAULT_OUT = 'Results/'
+        self.DEFAULT_DOWNLOAD = 'Data/'
+        self.INCEPTION_V1 = 'Addon/inception_v1/inceptionv1_for_inception_score.pb'
         self.INCEPTION_V3 = None
         
         # plotly account
@@ -55,6 +55,42 @@ class SetFlag(object):
     def print(self, info, force_print=False):
         if (not self.SILENT_MODE) or force_print:
             print(info)
+
+
+# initial settings
+# class SetFlag(object):
+#     def __init__(self):
+#         # machine config
+#         self.num_gpus = 1
+#         self.EPSI = 1e-10
+#         self.SILENT_MODE = False
+#
+#         # library info
+#         self.TENSORFLOW_VERSION = '1.8.0'
+#         self.CUDA_VERSION = '9.0'
+#         self.CUDNN_VERSION = '7.0'
+#         self.DRIVER_VERSION = '396.54'
+#
+#         # directory setup
+#         self.DEFAULT_IN = 'MMD-GAN/Data/'
+#         self.DEFAULT_OUT = 'MMD-GAN/Results/'
+#         self.DEFAULT_DOWNLOAD = 'MMD-GAN/Data/'
+#         self.INCEPTION_V1 = 'MMD-GAN/Addon/inception_v1/inceptionv1_for_inception_score.pb'
+#         self.INCEPTION_V3 = None
+#
+#         # plotly account
+#         self.PLT_ACC = None
+#         self.PLT_KEY = None
+#
+#         # model setup
+#         self.IMAGE_FORMAT = 'channels_first'
+#         self.IMAGE_FORMAT_ALIAS = 'NCHW'
+#         self.WEIGHT_INITIALIZER = 'default'  # 'default', 'sn_paper', 'pg_paper'
+#         self.SPECTRAL_NORM_MODE = 'default'  # 'default' = 'PICO', 'sn_paper'
+#
+#     def print(self, info, force_print=False):
+#         if (not self.SILENT_MODE) or force_print:
+#             print(info)
 
 
 FLAGS = SetFlag()

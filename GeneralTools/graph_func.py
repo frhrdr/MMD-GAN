@@ -262,9 +262,13 @@ def write_sprite(sprite_path, images, mesh_num=None, if_invert=False):
     images = images.reshape((mesh_num[0] * images.shape[1], mesh_num[1] * images.shape[3]) + images.shape[4:])
     images = (images * 255).astype(np.uint8)
     # save images to file
-    from scipy.misc import imsave
-    imsave(sprite_path, images)
-
+    # from scipy.misc import imsave
+    # imsave(sprite_path, images)
+    try:
+        from imageio import imwrite
+        imwrite(sprite_path, images)
+    except:
+        print('attempt to write image failed!')
 
 def write_sprite_wrapper(
         images, mesh_num, filename, file_folder=None, file_index='',

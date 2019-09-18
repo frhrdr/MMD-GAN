@@ -39,7 +39,7 @@ class SetFlag(object):
         self.DEFAULT_IN = 'Data/'
         self.DEFAULT_OUT = 'Results/'
         self.DEFAULT_DOWNLOAD = 'Data/'
-        self.INCEPTION_V1 = 'Addon/inception_v1/inceptionv1_for_inception_score.pb'
+        self.INCEPTION_V1 = 'Addon/inception_v1/frozen_inception_v1_2015_12_05/inceptionv1_for_inception_score.pb'
         self.INCEPTION_V3 = None
         
         # plotly account

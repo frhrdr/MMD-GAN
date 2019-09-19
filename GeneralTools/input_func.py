@@ -746,6 +746,8 @@ class ReadTFRecords(object):
             file_folder = DEFAULT_IN_FILE_DIR
         # check inputs
         if isinstance(filename, str):  # if string, add file location and .tfrecords
+            # CHANGE: ignore all parts of the filename after first underscore:
+            filename = filename.split('_')[0]
             filename = [os.path.join(file_folder, filename + '.tfrecords')]
         else:  # if list, add file location and .tfrecords to each element in list
             filename = [os.path.join(file_folder, file + '.tfrecords') for file in filename]

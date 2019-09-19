@@ -1596,16 +1596,16 @@ class Fig(object):
         return line
 
 
-def print_pb_to_event(model_path, event_folder):
-    """ This function print a pre-trained model to event_folder so that it can be viewed by tensorboard
-
-    :param model_path: for example, FLAGS.INCEPTION_V3
-    :param event_folder: for example, '/home/richard/PycharmProjects/myNN/Code/inception_v3/'
-    :return:
-    """
-    from Code.import_pb_to_tensorboard import import_to_tensorboard
-
-    import_to_tensorboard(model_path, event_folder)
+# def print_pb_to_event(model_path, event_folder):
+#     """ This function print a pre-trained model to event_folder so that it can be viewed by tensorboard
+#
+#     :param model_path: for example, FLAGS.INCEPTION_V3
+#     :param event_folder: for example, '/home/richard/PycharmProjects/myNN/Code/inception_v3/'
+#     :return:
+#     """
+#     from Code.import_pb_to_tensorboard import import_to_tensorboard
+#
+#     import_to_tensorboard(model_path, event_folder)
 
 
 class GenerativeModelMetric(object):

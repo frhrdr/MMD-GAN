@@ -1339,7 +1339,7 @@ def mmd_g(
             else:  # note that here kyy is for the real data!
                 assert custom_weights[0] - custom_weights[1] == 1.0, 'w[0]-w[1] must be 1'
                 mmd1 = e_kxx + e_kyy - 2.0 * e_kxy
-                mmd2 = custom_weights[0] * e_kxy - e_kxx - custom_weights[1] * e_kyy
+                mmd2 = custom_weights[0] * e_kxy - e_kxx - custom_weights[1] * e_kyy  # w[0] = 1, w[1]= -1, so kyy - kxx
                 return mmd1, mmd2
         else:
             mmd = e_kxx + e_kyy - 2.0 * e_kxy
@@ -2527,6 +2527,34 @@ class GANLoss(object):
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
                     tf.summary.scalar('GANLoss/dis_scale', self.dis_scale)
 
+    def _repulsive_mmd_g_inv_disc(self):
+        """ repulsive loss with inverted discriminator loss so sample encodings can better be modeled by MoG
+
+        :return:
+        """
+        # calculate pairwise distance
+        dist_gg, dist_gd, dist_dd = get_squared_dist(
+            self.score_gen, self.score_data, z_score=False, do_summary=self.do_summary)
+        # self.loss_gen, self.loss_dis = mmd_g(
+        #     dist_gg, dist_gd, dist_dd, self.batch_size, sigma=1.6,
+        #     name='mmd_g', do_summary=self.do_summary, scope_prefix='', custom_weights=self.repulsive_weights)
+        self.loss_gen, self.loss_dis = mmd_g(
+            dist_gg, dist_gd, dist_dd, self.batch_size, sigma=1.0,
+            name='mmd_g', do_summary=self.do_summary, scope_prefix='', custom_weights=self.repulsive_weights)
+
+        self.loss_dis = -self.loss_dis  # THAT'S ALL THAT CHANGES!
+
+        if self.dis_penalty is not None:
+            self.loss_dis = self.loss_dis + self.dis_penalty
+            if self.do_summary:
+                with tf.name_scope(None):  # return to root scope to avoid scope overlap
+                    tf.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
+        if self.dis_scale is not None:
+            self.loss_dis = (self.loss_dis - 1.0) * self.dis_scale
+            if self.do_summary:
+                with tf.name_scope(None):  # return to root scope to avoid scope overlap
+                    tf.summary.scalar('GANLoss/dis_scale', self.dis_scale)
+
     def _repulsive_mmd_g_bounded_(self):
         """ rmb loss
 
@@ -2588,7 +2616,8 @@ class GANLoss(object):
         # check inputs
         if loss_type in {'fixed_g', 'mmd_g', 'fixed_t', 'mmd_t', 'mmd_g_mix', 'fixed_g_mix',
                          'rand_g', 'rand_g_mix', 'sym_rg_mix', 'instance_noise', 'ins_noise',
-                         'sym_rg', 'rgb', 'rep', 'rep_gp', 'rmb', 'rmb_gp'}:
+                         'sym_rg', 'rgb', 'rep', 'rep_gp', 'rmb', 'rmb_gp',
+                         'rep_inv_disc'}:
             assert self.batch_size is not None, 'GANLoss: batch_size must be provided'
             if loss_type in {'rand_g', 'rand_g_mix', 'sym_rg_mix', 'sym_rg'}:
                 assert self.num_scores is not None, 'GANLoss: d must be provided'
@@ -2647,6 +2676,8 @@ class GANLoss(object):
             self._repulsive_mmd_g_bounded_()
         elif loss_type == 'test':
             self._test_()
+        elif loss_type == 'rep_inv_disc':
+            self._repulsive_mmd_g_inv_disc()
         else:
             raise NotImplementedError('Not implemented.')
 

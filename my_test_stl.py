@@ -1,7 +1,7 @@
 import numpy as np
 from GeneralTools.misc_fun import FLAGS
 FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'stl_NCHW/'
-from GeneralTools.graph_func import Agent
+from GeneralTools.agent import Agent
 from DeepLearning.my_sngan import SNGan
 
 filename = 'stl'

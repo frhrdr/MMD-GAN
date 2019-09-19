@@ -3,10 +3,10 @@ from GeneralTools.misc_fun import FLAGS
 FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'cifar_NCHW/'
 # FLAGS.SPECTRAL_NORM_MODE = 'sn_paper'  # default, sn_paper
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
-from GeneralTools.graph_func import Agent
+from GeneralTools.agent import Agent
 from DeepLearning.my_sngan import SNGan
 
-filename = 'cifar_inv_disc_loss'
+filename = 'cifar_second_try'
 act_k = np.power(64.0, 0.125)  # multiplier
 w_nm = 's'  # spectral normalization
 architecture = {'input': [(3, 32, 32)],
@@ -40,7 +40,7 @@ architecture = {'input': [(3, 32, 32)],
 debug_mode = False
 optimizer = 'adam'
 num_instance = 50000
-save_per_step = 1000  # 12500
+save_per_step = 12500  # 12500
 batch_size = 64
 num_class = 0
 end_lr = 1e-7
@@ -54,7 +54,7 @@ code_x = np.random.randn(400, 128).astype(np.float32)
 
 # a case
 lr_list = [5e-4, 2e-4]  # [dis, gen]
-loss_type = 'rep_inv_disc'
+loss_type = 'rep'
 # rep - repulsive loss, rmb - repulsive loss with bounded rbf kernel
 # to test other losses, see GeneralTools/math_func/GANLoss
 rep_weights = [0.0, -1.0]  # weights for e_kxy and -e_kyy, w[0]-w[1] must be 1

@@ -6,8 +6,9 @@
 import numpy as np
 import tensorflow as tf
 from GeneralTools.misc_fun import FLAGS
-from GeneralTools.math_func import SpectralNorm, get_batch_squared_dist, spatial_shape_after_conv, \
-    spatial_shape_after_transpose_conv
+from GeneralTools.math_funcs.layer_funcs_support import spatial_shape_after_conv, spatial_shape_after_transpose_conv, \
+    get_batch_squared_dist
+from GeneralTools.math_funcs.spectral_norm import SpectralNorm
 
 
 ########################################################################
@@ -81,23 +82,23 @@ def bias_initializer(init_b_scale=0.0):
 
 
 #######################################################################
-def spectral_norm_variable_initializer(shape, dtype=tf.float32, partition_info=None):
-    """ This function provides customized initializer for tf.get_variable()
-
-    :param shape:
-    :param dtype:
-    :param partition_info: this is required by tf.layers, but ignored in many tf.initializer. Here we ignore it.
-    :return:
-    """
-    variable = tf.random_normal(shape=shape, stddev=1.0, dtype=dtype)
-
-    if len(shape) > 2:
-        var_reshaped = tf.reshape(variable, shape=[-1, shape[-1]])
-        sigma = tf.svd(var_reshaped, full_matrices=False, compute_uv=False)[0]
-    else:
-        sigma = tf.svd(variable, full_matrices=False, compute_uv=False)[0]
-
-    return variable / (sigma + FLAGS.EPSI)
+# def spectral_norm_variable_initializer(shape, dtype=tf.float32, partition_info=None):
+#     """ This function provides customized initializer for tf.get_variable()
+#
+#     :param shape:
+#     :param dtype:
+#     :param partition_info: this is required by tf.layers, but ignored in many tf.initializer. Here we ignore it.
+#     :return:
+#     """
+#     variable = tf.random_normal(shape=shape, stddev=1.0, dtype=dtype)
+#
+#     if len(shape) > 2:
+#         var_reshaped = tf.reshape(variable, shape=[-1, shape[-1]])
+#         sigma = tf.svd(var_reshaped, full_matrices=False, compute_uv=False)[0]
+#     else:
+#         sigma = tf.svd(variable, full_matrices=False, compute_uv=False)[0]
+#
+#     return variable / (sigma + FLAGS.EPSI)
 
 
 ########################################################################
@@ -242,220 +243,6 @@ def periodic_shuffling(layer_input, scale_factor, scale_up=True, data_format='ch
         layer_output = shuffling(layer_input, image_format)
 
     return layer_output
-
-
-########################################################################
-def bilinear_additive_upsampling(layer_input, scale_factor, channel_out=None, data_format='channels_last'):
-    """ This function defines a bilinear additive upsampling operation, proposed in following paper:
-
-    Wojna, Z., Ferrari, V., Guadarrama, S., Silberman, N., Chen, L.-C., Fathi, A., & Uijlings, J. (2017).
-    The Devil is in the Decoder.
-
-    :param layer_input: 4-D tensor, in format [batch_size, height, width, channels] or
-        [batch_size, channels, height, width]
-    :param scale_factor: integer, scaling factor; theoretically, channels = channel_out * r^2
-    :param channel_out: integer, number of output channels
-    :param data_format: 'channels_first' or 'channels_last'
-    :return:
-    """
-    # check inputs
-    if channel_out is None:
-        channel_out = 1
-    if data_format == 'channel_first':  # convert to [batch_size, height, width, channels]
-        layer_input = tf.transpose(layer_input, perm=(0, 2, 3, 1))
-    # channels must equal to channel_out * r^2
-    channel_to_add = scale_factor ^ 2
-    required_channel = channel_to_add * channel_out
-    batch_size, height, width, num_channel = layer_input.get_shape().as_list()
-    assert num_channel == required_channel, \
-        'Num of channel mis-match, required: %d, actual %d.' % (required_channel, num_channel)
-    # do upsampling
-    layer_sampled = tf.image.resize_bilinear(
-        layer_input, [height * scale_factor, width * scale_factor], align_corners=True)
-    # add every channel_to_add channels
-    layer_output = tf.reduce_sum(
-        tf.reshape(layer_sampled, shape=[batch_size, height, width, channel_out, channel_to_add]),
-        axis=-1)
-    if data_format == 'channel_first':  # convert to [batch_size, channels, height, width]
-        layer_output = tf.transpose(layer_output, perm=(0, 3, 1, 2))
-
-    return layer_output
-
-
-########################################################################
-class Crop(object):
-    def __init__(self, num_crop):
-        """ This class divides image input into num_crop[0]-by-num_crop[1] crops.
-        Its methods below defines the format of output.
-
-        Attention when using this class.
-        tensorflow has provided functions like extract_image_patches, space_to_batch, etc to crop images.
-        For example, do_crop and stack2batch can be realized by space_to_batch
-        Check this link for more functions:
-        https://www.tensorflow.org/api_guides/python/image#resize_images
-
-        This function does not support input of type [batch, channel, height, width] currently.
-
-        :param num_crop: for randomly
-        """
-        self.num_crop = num_crop
-        self.layer_output = None
-        self.batch = None
-        self.channel = None
-        self.height = None
-        self.width = None
-
-    def do_crop(self, layer_input):
-        """ This function divides image input into num_crop[0]-by-num_crop[1] crops.
-        After do-crop, stack2batch and stack2new_dimension can be used to decide how
-        the crops will be stacked.
-
-        :param layer_input: 4-D tensor,in format [batch_size, height, width, channels]
-        :return:
-        """
-        # get shape info
-        [self.batch, height, width, self.channel] = layer_input.get_shape().as_list()
-        self.height = int(height / self.num_crop[0])  # new_height
-        self.width = int(width / self.num_crop[1])  # new_weight
-
-        # [1, batch_size, height, width, channel]
-        layer_input = tf.expand_dims(layer_input, axis=0)
-        # [crop[1], batch_size, height, new_width, channel]
-        layer_input = tf.concat(tf.split(layer_input, num_or_size_splits=self.num_crop[1], axis=3), axis=0)
-        # [1, crop[1], batch_size, height, new_width, channel]
-        layer_input = tf.expand_dims(layer_input, axis=0)
-        # [crop[0], crop[1], batch_size, new_height, new_width, channel]
-        self.layer_output = tf.concat(tf.split(layer_input, num_or_size_splits=self.num_crop[0], axis=3), axis=0)
-
-    def do_overlap_crop(self, layer_input):
-        pass
-
-    def stack2batch(self):
-        """ This function stacks the crops into the batch_sie axis. Examples:
-        [[x1], [x2]] ===> [[x1c11], [x1c12], [x1c21], [x1c22], [x2c11], [x2c12], [x2c21], [x2c22]].
-
-        :return:
-        """
-        # [batch_size, crop[0], crop[1], new_height, new_width, channel]
-        layer_output = tf.transpose(self.layer_output, perm=[2, 0, 1, 3, 4, 5])
-        # [batch_size*crop[0]*crop[1], new_height, new_width, channel]
-        layer_output = tf.reshape(layer_output, [-1, self.channel, self.height, self.width])
-
-        return layer_output
-
-    def stack2new_dimension(self):
-        """ This function stacks the crops into the first dimension. Examples:
-        [[x1], [x2]] ===> [[c11x1], [c11x2], [c12x1], [c12x2], [c21x1], [c21x2], [c22x1], [c22x2]].
-
-        :return:
-        """
-        # [crop[0]*crop[1], batch_size, new_height, new_width, channel]
-        return tf.reshape(self.layer_output, [-1, self.batch, self.height, self.width, self.channel])
-
-    def do_random_crop(self, layer_input, size=None, stack2batch=False):
-        """ This function randomly samples num_crop crops from the image.
-        The crops will be stacked to new dimension if stack2batch=False
-
-        :param layer_input: 4-D tensor,in format [batch_size, height, width, channels]
-        :param size: list with two elements, [crop_height, crop_width]
-        :param stack2batch:
-
-        :return layer_output: if num_crop=1 or stack2batch=True, 4-D tensor; otherwise, 5-D tensor.
-        """
-        # check inputs
-        if size is None:
-            size = [16, 16]
-
-        # get shape info
-        [self.batch, _, _, self.channel] = layer_input.get_shape().as_list()
-        self.height = size[0]  # new_height
-        self.width = size[1]  # new_weight
-        # do crop
-        if self.num_crop == 1:
-            # [batch_size, new_height, new_width, channel]
-            layer_output = tf.random_crop(
-                layer_input, size=[self.batch, self.height, self.width, self.channel])
-        else:
-            # [1, batch_size, height, width, channel]
-            layer_input = tf.expand_dims(layer_input, axis=0)
-            crops = []
-            for i in range(self.num_crop):
-                crops.append(
-                    tf.random_crop(
-                        layer_input, size=[1, self.batch, self.height, self.width, self.channel]))
-            # [num_crops, batch_size, new_height, new_width, channel]
-            layer_output = tf.concat(crops, axis=0)
-
-            if stack2batch is True:
-                # [batch_size, num_crops, new_height, new_width, channel]
-                layer_output = tf.transpose(layer_output, perm=[1, 0, 2, 3, 4])
-                # [batch_size*num_crops, new_height, new_width, channel]
-                layer_output = tf.reshape(layer_output, shape=[-1, self.height, self.width, self.channel])
-
-        # if num_crop=1 or stack2batch=True, 4-D tensor; otherwise, 5-D tensor.
-        return layer_output
-
-    def do_group_crop(self, layer_input, kernel_size):
-        """ This function first divides the image into num_crop[0]-by-num_crop[1] crops; then like
-        convolution, it pads the peripheral crops, and construct a big crop from kernel_size[0]-by-
-        kernel_size[1] neighbouring crops. The big crops overlap, and cover the whole input images.
-
-        :param layer_input: 4-D tensor,in format [batch_size, height, width, channels]
-        :param kernel_size: a list/tuple of two elements
-        :return: [batch_size, new_height x2, new_width x2, channel]
-        """
-        # check inputs
-        if kernel_size[0] > self.num_crop[0] or kernel_size[0] > self.num_crop[0]:
-            raise AttributeError('Kernel size should be smaller than crop size to avoid identical crops')
-
-        # get shape info
-        [self.batch, height, width, self.channel] = layer_input.get_shape().as_list()
-        num_pixel_h = int(height / self.num_crop[0])  # num_pixel in height direction of each group
-        num_pixel_w = int(width / self.num_crop[1])  # num_pixel in width direction of each group
-        kernel_h = kernel_size[0] * num_pixel_h
-        kernel_w = kernel_size[1] * num_pixel_w
-        # print('Kernel size {}x{}'.format(kernel_h, kernel_w))
-        # [1, batch_size, height, width, channel]
-        layer_input = tf.expand_dims(layer_input, axis=0)
-
-        # do group conv-crop
-        crops = []
-        for i in range(self.num_crop[0] + kernel_size[0] - 1):
-            for j in range(self.num_crop[1] + kernel_size[1] - 1):
-                pixel_i = tf.multiply(i + 1, num_pixel_h)
-                pixel_j = tf.multiply(j + 1, num_pixel_w)
-                # get the crop out of image
-                range_h = [tf.maximum(0, pixel_i - kernel_h), tf.minimum(pixel_i, height)]
-                range_w = [tf.maximum(0, pixel_j - kernel_w), tf.minimum(pixel_j, width)]
-                crop_ij = layer_input[:, :, range_h[0]:range_h[1], range_w[0]:range_w[1], :]
-                # pad the crop with zeros
-                pad_h = [tf.maximum(0, kernel_h - pixel_i), tf.maximum(0, pixel_i - height)]
-                pad_w = [tf.maximum(0, kernel_w - pixel_j), tf.maximum(0, pixel_j - width)]
-                crops.append(tf.pad(crop_ij, paddings=[[0, 0], [0, 0], pad_h, pad_w, [0, 0]]))
-        # [num_crops, batch_size, new_height, new_width, channel]
-        layer_output = tf.concat(crops, axis=0)
-        layer_output.set_shape(
-            [(self.num_crop[0] + kernel_size[0] - 1) * (self.num_crop[1] + kernel_size[1] - 1),
-             self.batch, kernel_h, kernel_w, self.channel])
-
-        return layer_output
-
-
-########################################################################
-def l2_norm(w, scope_prefix=''):
-    """ This function calculates l2 normal (Frobenius norm) of the weight matrix.
-
-    :param w: a list of kernels. The size of each kernel should be:
-        dense: [fan_in, fan_out]
-        conv: [height, weight, channels_in, channels_out]
-        separate conv: not supported yet
-    :param scope_prefix:
-    :return:
-    """
-    # tf.norm is slightly faster than tf.sqrt(tf.reduce_sum(tf.square()))
-    # it is important that axis=None; in this case, norm(w) = norm(vec(w))
-    with tf.name_scope(scope_prefix + 'l2'):
-        return tf.norm(w[0], ord='euclidean', axis=None) + FLAGS.EPSI
 
 
 ########################################################################
@@ -2528,3 +2315,217 @@ class Routine(object):
                     registered_info.append(layer.get_register())
 
         return registered_info
+
+
+########################################################################
+# def bilinear_additive_upsampling(layer_input, scale_factor, channel_out=None, data_format='channels_last'):
+#     """ This function defines a bilinear additive upsampling operation, proposed in following paper:
+#
+#     Wojna, Z., Ferrari, V., Guadarrama, S., Silberman, N., Chen, L.-C., Fathi, A., & Uijlings, J. (2017).
+#     The Devil is in the Decoder.
+#
+#     :param layer_input: 4-D tensor, in format [batch_size, height, width, channels] or
+#         [batch_size, channels, height, width]
+#     :param scale_factor: integer, scaling factor; theoretically, channels = channel_out * r^2
+#     :param channel_out: integer, number of output channels
+#     :param data_format: 'channels_first' or 'channels_last'
+#     :return:
+#     """
+#     # check inputs
+#     if channel_out is None:
+#         channel_out = 1
+#     if data_format == 'channel_first':  # convert to [batch_size, height, width, channels]
+#         layer_input = tf.transpose(layer_input, perm=(0, 2, 3, 1))
+#     # channels must equal to channel_out * r^2
+#     channel_to_add = scale_factor ^ 2
+#     required_channel = channel_to_add * channel_out
+#     batch_size, height, width, num_channel = layer_input.get_shape().as_list()
+#     assert num_channel == required_channel, \
+#         'Num of channel mis-match, required: %d, actual %d.' % (required_channel, num_channel)
+#     # do upsampling
+#     layer_sampled = tf.image.resize_bilinear(
+#         layer_input, [height * scale_factor, width * scale_factor], align_corners=True)
+#     # add every channel_to_add channels
+#     layer_output = tf.reduce_sum(
+#         tf.reshape(layer_sampled, shape=[batch_size, height, width, channel_out, channel_to_add]),
+#         axis=-1)
+#     if data_format == 'channel_first':  # convert to [batch_size, channels, height, width]
+#         layer_output = tf.transpose(layer_output, perm=(0, 3, 1, 2))
+#
+#     return layer_output
+
+
+########################################################################
+# class Crop(object):
+#     def __init__(self, num_crop):
+#         """ This class divides image input into num_crop[0]-by-num_crop[1] crops.
+#         Its methods below defines the format of output.
+#
+#         Attention when using this class.
+#         tensorflow has provided functions like extract_image_patches, space_to_batch, etc to crop images.
+#         For example, do_crop and stack2batch can be realized by space_to_batch
+#         Check this link for more functions:
+#         https://www.tensorflow.org/api_guides/python/image#resize_images
+#
+#         This function does not support input of type [batch, channel, height, width] currently.
+#
+#         :param num_crop: for randomly
+#         """
+#         self.num_crop = num_crop
+#         self.layer_output = None
+#         self.batch = None
+#         self.channel = None
+#         self.height = None
+#         self.width = None
+#
+#     def do_crop(self, layer_input):
+#         """ This function divides image input into num_crop[0]-by-num_crop[1] crops.
+#         After do-crop, stack2batch and stack2new_dimension can be used to decide how
+#         the crops will be stacked.
+#
+#         :param layer_input: 4-D tensor,in format [batch_size, height, width, channels]
+#         :return:
+#         """
+#         # get shape info
+#         [self.batch, height, width, self.channel] = layer_input.get_shape().as_list()
+#         self.height = int(height / self.num_crop[0])  # new_height
+#         self.width = int(width / self.num_crop[1])  # new_weight
+#
+#         # [1, batch_size, height, width, channel]
+#         layer_input = tf.expand_dims(layer_input, axis=0)
+#         # [crop[1], batch_size, height, new_width, channel]
+#         layer_input = tf.concat(tf.split(layer_input, num_or_size_splits=self.num_crop[1], axis=3), axis=0)
+#         # [1, crop[1], batch_size, height, new_width, channel]
+#         layer_input = tf.expand_dims(layer_input, axis=0)
+#         # [crop[0], crop[1], batch_size, new_height, new_width, channel]
+#         self.layer_output = tf.concat(tf.split(layer_input, num_or_size_splits=self.num_crop[0], axis=3), axis=0)
+#
+#     def do_overlap_crop(self, layer_input):
+#         pass
+#
+#     def stack2batch(self):
+#         """ This function stacks the crops into the batch_sie axis. Examples:
+#         [[x1], [x2]] ===> [[x1c11], [x1c12], [x1c21], [x1c22], [x2c11], [x2c12], [x2c21], [x2c22]].
+#
+#         :return:
+#         """
+#         # [batch_size, crop[0], crop[1], new_height, new_width, channel]
+#         layer_output = tf.transpose(self.layer_output, perm=[2, 0, 1, 3, 4, 5])
+#         # [batch_size*crop[0]*crop[1], new_height, new_width, channel]
+#         layer_output = tf.reshape(layer_output, [-1, self.channel, self.height, self.width])
+#
+#         return layer_output
+#
+#     def stack2new_dimension(self):
+#         """ This function stacks the crops into the first dimension. Examples:
+#         [[x1], [x2]] ===> [[c11x1], [c11x2], [c12x1], [c12x2], [c21x1], [c21x2], [c22x1], [c22x2]].
+#
+#         :return:
+#         """
+#         # [crop[0]*crop[1], batch_size, new_height, new_width, channel]
+#         return tf.reshape(self.layer_output, [-1, self.batch, self.height, self.width, self.channel])
+#
+#     def do_random_crop(self, layer_input, size=None, stack2batch=False):
+#         """ This function randomly samples num_crop crops from the image.
+#         The crops will be stacked to new dimension if stack2batch=False
+#
+#         :param layer_input: 4-D tensor,in format [batch_size, height, width, channels]
+#         :param size: list with two elements, [crop_height, crop_width]
+#         :param stack2batch:
+#
+#         :return layer_output: if num_crop=1 or stack2batch=True, 4-D tensor; otherwise, 5-D tensor.
+#         """
+#         # check inputs
+#         if size is None:
+#             size = [16, 16]
+#
+#         # get shape info
+#         [self.batch, _, _, self.channel] = layer_input.get_shape().as_list()
+#         self.height = size[0]  # new_height
+#         self.width = size[1]  # new_weight
+#         # do crop
+#         if self.num_crop == 1:
+#             # [batch_size, new_height, new_width, channel]
+#             layer_output = tf.random_crop(
+#                 layer_input, size=[self.batch, self.height, self.width, self.channel])
+#         else:
+#             # [1, batch_size, height, width, channel]
+#             layer_input = tf.expand_dims(layer_input, axis=0)
+#             crops = []
+#             for i in range(self.num_crop):
+#                 crops.append(
+#                     tf.random_crop(
+#                         layer_input, size=[1, self.batch, self.height, self.width, self.channel]))
+#             # [num_crops, batch_size, new_height, new_width, channel]
+#             layer_output = tf.concat(crops, axis=0)
+#
+#             if stack2batch is True:
+#                 # [batch_size, num_crops, new_height, new_width, channel]
+#                 layer_output = tf.transpose(layer_output, perm=[1, 0, 2, 3, 4])
+#                 # [batch_size*num_crops, new_height, new_width, channel]
+#                 layer_output = tf.reshape(layer_output, shape=[-1, self.height, self.width, self.channel])
+#
+#         # if num_crop=1 or stack2batch=True, 4-D tensor; otherwise, 5-D tensor.
+#         return layer_output
+#
+#     def do_group_crop(self, layer_input, kernel_size):
+#         """ This function first divides the image into num_crop[0]-by-num_crop[1] crops; then like
+#         convolution, it pads the peripheral crops, and construct a big crop from kernel_size[0]-by-
+#         kernel_size[1] neighbouring crops. The big crops overlap, and cover the whole input images.
+#
+#         :param layer_input: 4-D tensor,in format [batch_size, height, width, channels]
+#         :param kernel_size: a list/tuple of two elements
+#         :return: [batch_size, new_height x2, new_width x2, channel]
+#         """
+#         # check inputs
+#         if kernel_size[0] > self.num_crop[0] or kernel_size[0] > self.num_crop[0]:
+#             raise AttributeError('Kernel size should be smaller than crop size to avoid identical crops')
+#
+#         # get shape info
+#         [self.batch, height, width, self.channel] = layer_input.get_shape().as_list()
+#         num_pixel_h = int(height / self.num_crop[0])  # num_pixel in height direction of each group
+#         num_pixel_w = int(width / self.num_crop[1])  # num_pixel in width direction of each group
+#         kernel_h = kernel_size[0] * num_pixel_h
+#         kernel_w = kernel_size[1] * num_pixel_w
+#         # print('Kernel size {}x{}'.format(kernel_h, kernel_w))
+#         # [1, batch_size, height, width, channel]
+#         layer_input = tf.expand_dims(layer_input, axis=0)
+#
+#         # do group conv-crop
+#         crops = []
+#         for i in range(self.num_crop[0] + kernel_size[0] - 1):
+#             for j in range(self.num_crop[1] + kernel_size[1] - 1):
+#                 pixel_i = tf.multiply(i + 1, num_pixel_h)
+#                 pixel_j = tf.multiply(j + 1, num_pixel_w)
+#                 # get the crop out of image
+#                 range_h = [tf.maximum(0, pixel_i - kernel_h), tf.minimum(pixel_i, height)]
+#                 range_w = [tf.maximum(0, pixel_j - kernel_w), tf.minimum(pixel_j, width)]
+#                 crop_ij = layer_input[:, :, range_h[0]:range_h[1], range_w[0]:range_w[1], :]
+#                 # pad the crop with zeros
+#                 pad_h = [tf.maximum(0, kernel_h - pixel_i), tf.maximum(0, pixel_i - height)]
+#                 pad_w = [tf.maximum(0, kernel_w - pixel_j), tf.maximum(0, pixel_j - width)]
+#                 crops.append(tf.pad(crop_ij, paddings=[[0, 0], [0, 0], pad_h, pad_w, [0, 0]]))
+#         # [num_crops, batch_size, new_height, new_width, channel]
+#         layer_output = tf.concat(crops, axis=0)
+#         layer_output.set_shape(
+#             [(self.num_crop[0] + kernel_size[0] - 1) * (self.num_crop[1] + kernel_size[1] - 1),
+#              self.batch, kernel_h, kernel_w, self.channel])
+#
+#         return layer_output
+
+
+########################################################################
+# def l2_norm(w, scope_prefix=''):
+#     """ This function calculates l2 normal (Frobenius norm) of the weight matrix.
+#
+#     :param w: a list of kernels. The size of each kernel should be:
+#         dense: [fan_in, fan_out]
+#         conv: [height, weight, channels_in, channels_out]
+#         separate conv: not supported yet
+#     :param scope_prefix:
+#     :return:
+#     """
+#     # tf.norm is slightly faster than tf.sqrt(tf.reduce_sum(tf.square()))
+#     # it is important that axis=None; in this case, norm(w) = norm(vec(w))
+#     with tf.name_scope(scope_prefix + 'l2'):
+#         return tf.norm(w[0], ord='euclidean', axis=None) + FLAGS.EPSI

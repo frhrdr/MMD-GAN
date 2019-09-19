@@ -6,7 +6,7 @@ FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'cifar_NCHW/'
 from GeneralTools.graph_func import Agent
 from DeepLearning.my_sngan import SNGan
 
-filename = 'cifar'
+filename = 'cifar_inv_disc_loss'
 act_k = np.power(64.0, 0.125)  # multiplier
 w_nm = 's'  # spectral normalization
 architecture = {'input': [(3, 32, 32)],
@@ -54,7 +54,7 @@ code_x = np.random.randn(400, 128).astype(np.float32)
 
 # a case
 lr_list = [5e-4, 2e-4]  # [dis, gen]
-loss_type = 'rep'  
+loss_type = 'rep_inv_disc'
 # rep - repulsive loss, rmb - repulsive loss with bounded rbf kernel
 # to test other losses, see GeneralTools/math_func/GANLoss
 rep_weights = [0.0, -1.0]  # weights for e_kxy and -e_kyy, w[0]-w[1] must be 1

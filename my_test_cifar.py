@@ -3,7 +3,7 @@ from GeneralTools.misc_fun import FLAGS
 FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'cifar_NCHW/'
 # FLAGS.SPECTRAL_NORM_MODE = 'sn_paper'  # default, sn_paper
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
-from GeneralTools.agent import Agent
+from GeneralTools.graph_funcs.agent import Agent
 from DeepLearning.my_sngan import SNGan
 
 filename = 'cifar_second_try'

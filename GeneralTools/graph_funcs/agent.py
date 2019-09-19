@@ -1,7 +1,7 @@
 import tensorflow as tf
 
-from GeneralTools.graph_func import prepare_folder
-from GeneralTools.my_session import MySession
+from GeneralTools.graph_funcs.graph_func import prepare_folder
+from GeneralTools.graph_funcs.my_session import MySession
 from GeneralTools.misc_fun import FLAGS
 
 

@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.client import timeline
 
-from GeneralTools.graph_func import get_ckpt
+from GeneralTools.graph_funcs.graph_func import get_ckpt
 from GeneralTools.misc_fun import FLAGS
 
 

@@ -13,8 +13,9 @@ import tensorflow as tf
 # helper functions
 from GeneralTools.misc_fun import FLAGS
 from GeneralTools.input_func import ReadTFRecords
-from GeneralTools.graph_func import prepare_folder, write_sprite_wrapper, \
-    global_step_config, multi_opt_config, embedding_image_wrapper, GenerativeModelMetric, rollback
+from GeneralTools.graph_funcs.graph_func import prepare_folder, write_sprite_wrapper, \
+    global_step_config, multi_opt_config, embedding_image_wrapper, rollback
+from GeneralTools.graph_funcs.generative_model_metric import GenerativeModelMetric
 from GeneralTools.layer_func import Net, Routine
 # from GeneralTools.math_func import get_squared_dist
 # from GeneralTools.math_funcs.sn_gan_support import jacobian_squared_frobenius_norm, witness_mix_g, witness_g, \

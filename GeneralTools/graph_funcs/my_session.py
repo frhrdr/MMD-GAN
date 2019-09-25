@@ -112,7 +112,6 @@ class MySession(object):
 
     def _check_thread_(self):
         """ This function initializes the coordinator and threads
-
         :return:
         """
         if self.threads is None:
@@ -192,7 +191,8 @@ class MySession(object):
 
     def full_run(self, op_list, loss_list, max_step, step_per_epoch, global_step, summary_op=None,
                  summary_image_op=None, summary_folder=None, ckpt_folder=None, ckpt_file=None, print_loss=True,
-                 query_step=500, imbalanced_update=None, force_print=False):
+                 query_step=500, imbalanced_update=None, force_print=False,
+                 mog_model=None):
         """ This function run the session with all monitor functions.
 
         :param op_list: the first op in op_list runs every extra_steps when the rest run once.
@@ -246,21 +246,31 @@ class MySession(object):
                         summary_image_str = self.sess.run(summary_image_op)
                         self.summary_writer.add_summary(summary_image_str, global_step=global_step_value)
 
-        elif isinstance(imbalanced_update, (list, tuple)):
+        elif isinstance(imbalanced_update, (list, tuple)):  # <------------------------------- ALTERNATING TRAINING HERE
             num_ops = len(op_list)
             assert len(imbalanced_update) == num_ops, 'Imbalanced_update length does not match ' \
                                                       'that of op_list. Expected {} got {}.'.format(
                 num_ops, len(imbalanced_update))
 
-            for step in range(max_step):
+            for step in range(max_step):  # <------------------------------------------------------ ACTUAL TRAINING LOOP
                 # get update ops
                 global_step_value = self.sess.run(global_step)
 
-                # update_ops = [op_list[i] for i in range(num_ops) if global_step_value % imbalanced_update[i] == 0]
-                update_ops = select_ops_to_update(op_list, global_step_value, imbalanced_update)
+                if mog_model is not None:
+                    mog_model.check_and_update(global_step_value, imbalanced_update[1], self.sess)
+                # IF STEP VALUE INDICATES TRAINING GENERATOR:
+                # - collect all data encodings
+                # - update MoG parameters
+                # - proceed with training, sampling from updated MoG
+
+                # in other places:
+                # - predefine MoG distribution
+                # - redefine generator loss through samples from the MoG
+
+                update_ops = select_ops_to_update(op_list, global_step_value, imbalanced_update)  # <------ OP SELECTION
 
                 # update the model
-                loss_value, _, _ = self.sess.run([loss_list, update_ops, extra_update_ops])
+                loss_value, _, _ = self.sess.run([loss_list, update_ops, extra_update_ops])  # <---------- WEIGHT UPDATE
                 # check if model produces nan outcome
                 assert not any(np.isnan(loss_value)), \
                     'Model diverged with loss = {} at step {}'.format(loss_value, step)

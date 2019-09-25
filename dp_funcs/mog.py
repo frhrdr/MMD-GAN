@@ -11,7 +11,7 @@ class MoG:
 
     self.pi = tf.ones((n_clusters,)) / n_clusters
     self.mu = tf.random_normal((n_clusters, n_dims))
-    self.sigma = tf.eye(n_dims, batch_shape=n_clusters)
+    self.sigma = tf.eye(n_dims, batch_shape=(n_clusters,))
 
     self.data_loader = data_loader
     self.encode_op = encode_op

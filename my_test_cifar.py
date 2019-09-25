@@ -106,3 +106,7 @@ def main():
           print('Epoch {} with scores: {}'.format(i, scores))
 
   print('Chunk of code finished.')
+
+
+if __name__ == '__main__':
+    main()

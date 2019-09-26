@@ -79,7 +79,6 @@ class MoG:
 
     assert self.n_data_samples % self.enc_batch_size == 0
     n_steps = self.n_data_samples // self.enc_batch_size
-    print('n_steps:', n_steps)
     encoding_mats = []
 
     if self.encoding is None:
@@ -89,9 +88,9 @@ class MoG:
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)['x']
       encoding_mats.append(encoding_mat)
-    print('done')
 
     encoding_mat = np.concatenate(encoding_mats)
+    print('encoded data shape:', encoding_mat.shape)
     return encoding_mat
 
   def fit(self, encodings, session):
@@ -102,6 +101,8 @@ class MoG:
       print('setting up tfp mog vars')
       self.define_tfp_mog_vars()
 
+    print('mog pi:', self.scikit_mog.weights_)
+    print('mog mu_0', self.scikit_mog.means_[0, :])
     feed_dict = {self.pi_ph: self.scikit_mog.weights_,
                  self.mu_ph: self.scikit_mog.means_,
                  self.sigma_ph: self.scikit_mog.covariances_}

@@ -66,6 +66,7 @@ class MoG:
 
     assert self.n_data_samples % self.enc_batch_size == 0
     n_steps = self.n_data_samples // self.enc_batch_size
+    print('n_steps:', n_steps)
     encoding_mats = []
 
     if self.encoding is None:
@@ -74,6 +75,7 @@ class MoG:
     print('colllecting encodings')
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)
+      print(encoding_mat.shape)
       encoding_mats.append(encoding_mat)
     print('done')
 

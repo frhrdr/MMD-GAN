@@ -248,10 +248,6 @@ class MySession(object):
                         self.summary_writer.add_summary(summary_image_str, global_step=global_step_value)
 
         elif isinstance(imbalanced_update, (list, tuple, NetPicker)):  # <-------------------- ALTERNATING TRAINING HERE
-            num_ops = len(op_list)
-            assert len(imbalanced_update) == num_ops, 'Imbalanced_update length does not match ' \
-                                                      'that of op_list. Expected {} got {}.'.format(
-                num_ops, len(imbalanced_update))
 
             for step in range(max_step):  # <------------------------------------------------------ ACTUAL TRAINING LOOP
                 # get update ops

@@ -5,7 +5,7 @@ from sklearn.mixture import GaussianMixture
 
 
 class MoG:
-  def __init__(self, n_dims, n_clusters, data_loader, encode_op, enc_batch_size, n_data_samples):
+  def __init__(self, n_dims, n_clusters, linked_gan, enc_batch_size, n_data_samples, filename):
     self.n_dims = n_dims
     self.n_clusters = n_clusters
 
@@ -16,8 +16,8 @@ class MoG:
     self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
                                  initializer=tf.eye(n_dims, batch_shape=(n_clusters,)))
 
-    self.data_loader = data_loader
-    self.encode_op = encode_op
+    self.data_loader = linked_gan.get_data_batch(filename, enc_batch_size)
+    self.linked_gan = linked_gan
     self.encoding = None
 
     self.enc_batch_size = enc_batch_size
@@ -70,7 +70,7 @@ class MoG:
 
     if self.encoding is None:
       print('init encoding')
-      self.encoding = self.encode_op(self.data_loader)
+      self.encoding = self.linked_gan.Dis(self.data_loader)
     print('colllecting encodings')
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)

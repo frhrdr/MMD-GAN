@@ -88,9 +88,11 @@ def main():
 
   enc_batch_size = 200
   print(mdl.Dis, mdl.get_data_batch(filename, enc_batch_size))
-  mog_model = MoG(n_dims=16, n_clusters=20,
-                  data_loader=mdl.get_data_batch(filename, enc_batch_size),
-                  encode_op=mdl.Dis, enc_batch_size=enc_batch_size, n_data_samples=num_instance)
+  mog_model = MoG(n_dims=16, n_clusters=20, linked_gan=mdl,
+                  # data_loader=mdl.get_data_batch(filename, enc_batch_size),
+                  # encode_op=mdl.Dis,
+                  enc_batch_size=enc_batch_size, n_data_samples=num_instance,
+                  filename=filename)
 
   for i in range(8):
       mdl.training(

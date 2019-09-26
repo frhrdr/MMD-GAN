@@ -380,6 +380,7 @@ class SNGan(object):
             elif isinstance(agent.imbalanced_update, NetPicker):
                 # updates are laternating, so give globalstep to both (even though creating separate steps may make
                 # sense in the long rung if either model is trained for a long time at once
+                print('netpicker setting used in sngan')
                 dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step)
                 gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step)
                 op_list = [dis_op, gen_op]

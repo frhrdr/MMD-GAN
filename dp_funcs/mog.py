@@ -34,6 +34,7 @@ class MoG:
   def define_tfp_mog_vars(self):
     self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
                               initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
+    print('-------made a pi variable:', self.pi)
     self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
                               initializer=tf.random_normal((self.n_clusters, self.n_dims)))
     self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,

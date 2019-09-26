@@ -94,6 +94,8 @@ def main():
                   enc_batch_size=enc_batch_size, n_data_samples=num_instance,
                   filename=filename)
 
+  mdl.register_mog(mog_model)
+
   for i in range(8):
       mdl.training(
           filename, agent, num_instance,

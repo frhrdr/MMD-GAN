@@ -26,12 +26,10 @@ class MoG:
                                       warm_start=False)  # may be worth considering
     self.tfp_mog = None
 
-    self.pi_ph = tf.placeholder(tf.float32, shape=(n_clusters,))
-    self.mu_ph = tf.placeholder(tf.float32, shape=(n_clusters, n_dims))
-    self.sigma_ph = tf.placeholder(tf.float32, shape=(n_clusters, n_dims, n_dims))
-    self.param_update_op = tf.group(tf.assign(self.pi, self.pi_ph),
-                                    tf.assign(self.mu, self.mu_ph),
-                                    tf.assign(self.sigma, self.sigma_ph))
+    self.pi_ph = None
+    self.mu_ph = None
+    self.sigma_ph = None
+    self.param_update_op = None
 
   def define_tfp_mog_vars(self):
     self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
@@ -45,6 +43,13 @@ class MoG:
     tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
     self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat,
                                                        components_distribution=tfp_nrm)
+
+    self.pi_ph = tf.placeholder(tf.float32, shape=(self.n_clusters,))
+    self.mu_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.n_dims))
+    self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.n_dims, self.n_dims))
+    self.param_update_op = tf.group(tf.assign(self.pi, self.pi_ph),
+                                    tf.assign(self.mu, self.mu_ph),
+                                    tf.assign(self.sigma, self.sigma_ph))
 
   def check_and_update(self, global_step_value, update_freq, session):
     assert update_freq > 0  # should active be less than 50% of steps

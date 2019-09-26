@@ -36,7 +36,7 @@ class MoG:
                               initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
     print('-------made a pi variable:', self.pi)
     self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
-                              initializer=tf.random_normal((self.n_clusters, self.n_dims)))
+                              initializer=tf.random.normal((self.n_clusters, self.n_dims)))
     self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
                                  initializer=tf.eye(self.n_dims, batch_shape=(self.n_clusters,)))
 

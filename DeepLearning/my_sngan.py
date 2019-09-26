@@ -196,10 +196,13 @@ class SNGan(object):
                 code_batch = self.sample_codes(batch_size, name='code_tr')
             gen_batch = self.Gen(code_batch, is_training=is_training)
 
+            print('----------- defining gpu task')
             if self.mog_model is None:
+                print('----------- mog not found')
                 dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
                 s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
             else:
+                print('----------- mog found')
                 s_gen = self.Dis(gen_batch, is_training=True)
                 s_x = self.mog_model.sample_batch(batch_size)
             # loss function

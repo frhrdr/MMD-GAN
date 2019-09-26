@@ -74,10 +74,9 @@ class MoG:
       self.encoding = self.linked_gan.Dis(self.linked_gan.get_data_batch(self.data_filename, self.enc_batch_size))
     print('colllecting encodings')
     for step in range(n_steps):
-      encoding_mat = session.run(self.encoding)
-      print(encoding_mat)
-      print(encoding_mat[0].shape)
-      encoding_mats.append(encoding_mat[0])
+      encoding_mat = session.run(self.encoding)['x']
+
+      encoding_mats.append(encoding_mat)
     print('done')
 
     encoding_mat = np.concatenate(encoding_mats)

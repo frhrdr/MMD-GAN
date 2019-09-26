@@ -9,12 +9,9 @@ class MoG:
     self.n_dims = n_dims
     self.n_clusters = n_clusters
 
-    self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
-                              initializer=tf.ones((n_clusters,)) / n_clusters)
-    self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
-                              initializer=tf.random_normal((n_clusters, n_dims)))
-    self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
-                                 initializer=tf.eye(n_dims, batch_shape=(n_clusters,)))
+    self.pi = None
+    self.mu = None
+    self.sigma = None
 
     self.data_filename = filename
     self.linked_gan = linked_gan
@@ -38,6 +35,14 @@ class MoG:
     self.param_update_op = tf.group(tf.assign(self.pi, self.pi_ph),
                                     tf.assign(self.mu, self.mu_ph),
                                     tf.assign(self.sigma, self.sigma_ph))
+
+  def define_vars(self):
+    self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
+                              initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
+    self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
+                              initializer=tf.random_normal((self.n_clusters, self.n_dims)))
+    self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
+                                 initializer=tf.eye(self.n_dims, batch_shape=(self.n_clusters,)))
 
   def check_and_update(self, global_step_value, update_freq, session):
     assert update_freq > 0  # should active be less than 50% of steps
@@ -75,7 +80,6 @@ class MoG:
     print('colllecting encodings')
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)['x']
-
       encoding_mats.append(encoding_mat)
     print('done')
 

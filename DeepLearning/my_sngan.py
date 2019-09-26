@@ -114,6 +114,9 @@ class SNGan(object):
         self.Dis.seq_links(list(range(d_net.num_layers)))
         self.Dis.add_output_layers([d_net.num_layers - 1])
 
+        if self.mog_model is not None:
+            self.mog_model.define_vars()
+
     ###################################################################
     def sample_codes(self, batch_size, code_x=None, code_y=None, name='codes'):
         """ This function prepares code_batch dictionary. If code_x is not provided, it is sampled

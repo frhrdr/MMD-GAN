@@ -19,6 +19,7 @@ from GeneralTools.graph_funcs.generative_model_metric import GenerativeModelMetr
 from GeneralTools.layer_func import Net, Routine
 from GeneralTools.math_funcs.sn_gan_support import MeshCode
 from GeneralTools.math_funcs.gan_losses import GANLoss
+from dp_funcs.net_picker import NetPicker
 
 ########################################################################
 # from GeneralTools.misc_fun import FLAGS
@@ -374,6 +375,12 @@ class SNGan(object):
                     raise AttributeError('One of the imbalanced_update must be 1 or they must alternate exactly.')
             elif isinstance(agent.imbalanced_update, str):
                 dis_op = opt_ops[0].apply_gradients(grads_list[0])
+                gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step)
+                op_list = [dis_op, gen_op]
+            elif isinstance(agent.imbalanced_update, NetPicker):
+                # updates are laternating, so give globalstep to both (even though creating separate steps may make
+                # sense in the long rung if either model is trained for a long time at once
+                dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step)
                 gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step)
                 op_list = [dis_op, gen_op]
             else:

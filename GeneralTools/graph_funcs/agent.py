@@ -3,6 +3,7 @@ import tensorflow as tf
 from GeneralTools.graph_funcs.graph_func import prepare_folder
 from GeneralTools.graph_funcs.my_session import MySession
 from GeneralTools.misc_fun import FLAGS
+from dp_funcs.net_picker import NetPicker
 
 
 class Agent(object):
@@ -54,8 +55,8 @@ class Agent(object):
         if imbalanced_update is not None:
             self.imbalanced_update = imbalanced_update
         if self.imbalanced_update is not None:
-            assert isinstance(self.imbalanced_update, (list, tuple, str)), \
-                'Imbalanced_update must be a list, tuple or str.'
+            assert isinstance(self.imbalanced_update, (list, tuple, str, NetPicker)), \
+                'Imbalanced_update must be a list, tuple or str or netpicker.'
 
         if self.debug is None:
             # sess = tf.Session(config=tf.ConfigProto(

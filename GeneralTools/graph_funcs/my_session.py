@@ -9,6 +9,7 @@ from tensorflow.python.client import timeline
 
 from GeneralTools.graph_funcs.graph_func import get_ckpt
 from GeneralTools.misc_fun import FLAGS
+from dp_funcs.net_picker import NetPicker
 
 
 class MySession(object):
@@ -257,7 +258,7 @@ class MySession(object):
                 global_step_value = self.sess.run(global_step)
 
                 if mog_model is not None:
-                    mog_model.check_and_update(global_step_value, imbalanced_update[1], self.sess)
+                    mog_model.check_and_update(global_step_value, imbalanced_update, self.sess)
                 # IF STEP VALUE INDICATES TRAINING GENERATOR:
                 # - collect all data encodings
                 # - update MoG parameters
@@ -529,7 +530,9 @@ class MySession(object):
 
 
 def select_ops_to_update(op_list, global_step_value, imbalanced_update):
-    if not [k for k in imbalanced_update if k < 0]:  # no negative values -> select as usual
+    if isinstance(imbalanced_update, NetPicker):
+        return imbalanced_update.pick_ops(op_list)
+    elif not [k for k in imbalanced_update if k < 0]:  # no negative values -> select as usual
         update_ops = [op_list[i] for i in range(len(op_list)) if global_step_value % imbalanced_update[i] == 0]
     else:  # -> in addition, select all negative vals which don't divide the step count
         update_ops = []

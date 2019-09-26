@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from sklearn.mixture import GaussianMixture
-
+from dp_funcs.net_picker import NetPicker
 
 class MoG:
   def __init__(self, n_dims, n_clusters, linked_gan, enc_batch_size, n_data_samples, filename):
@@ -52,10 +52,18 @@ class MoG:
                                     tf.assign(self.mu, self.mu_ph),
                                     tf.assign(self.sigma, self.sigma_ph))
 
-  def check_and_update(self, global_step_value, update_freq, session):
-    assert update_freq > 0  # should active be less than 50% of steps
-    if global_step_value % update_freq != 0:
-      return
+  def check_and_update(self, global_step_value, update_flag, session):
+    if isinstance(update_flag, tuple) or isinstance(update_flag, list):
+      update_freq = update_flag[1]
+      assert update_freq > 0  # should active be less than 50% of steps
+      if global_step_value % update_freq != 0:
+        return
+    elif isinstance(update_flag, NetPicker):
+      if not update_flag.do_mog_update():
+        return
+    else:
+      raise ValueError
+
 
     # - collect all data encodings
     # need a second data iterator

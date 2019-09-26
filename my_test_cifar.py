@@ -6,6 +6,7 @@ FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'cifar_NCHW/'
 from GeneralTools.graph_funcs.agent import Agent
 from DeepLearning.my_sngan import SNGan
 from dp_funcs.mog import MoG
+from dp_funcs.net_picker import NetPicker
 
 
 def main():
@@ -73,7 +74,8 @@ def main():
   #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
   # sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
 
-  imbalanced_update = (-3, 3)  # order: (dis, gen)
+  # imbalanced_update = (-3, 3)  # order: (dis, gen)
+  imbalanced_update = NetPicker(dis_steps=3, gen_steps=3)
 
   agent = Agent(
       filename, sub_folder, load_ckpt=True, do_trace=False,

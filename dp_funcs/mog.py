@@ -24,10 +24,7 @@ class MoG:
                                       max_iter=100,
                                       n_init=3,
                                       warm_start=False)  # may be worth considering
-    tfp_cat = tfp.distributions.Categorical(probs=self.pi)
-    tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
-    self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat,
-                                                       components_distribution=tfp_nrm)
+    self.tfp_mog = None
 
     self.pi_ph = tf.placeholder(tf.float32, shape=(n_clusters,))
     self.mu_ph = tf.placeholder(tf.float32, shape=(n_clusters, n_dims))
@@ -36,13 +33,18 @@ class MoG:
                                     tf.assign(self.mu, self.mu_ph),
                                     tf.assign(self.sigma, self.sigma_ph))
 
-  def define_vars(self):
+  def define_tfp_mog_vars(self):
     self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
                               initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
     self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
                               initializer=tf.random_normal((self.n_clusters, self.n_dims)))
     self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
                                  initializer=tf.eye(self.n_dims, batch_shape=(self.n_clusters,)))
+
+    tfp_cat = tfp.distributions.Categorical(probs=self.pi)
+    tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
+    self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat,
+                                                       components_distribution=tfp_nrm)
 
   def check_and_update(self, global_step_value, update_freq, session):
     assert update_freq > 0  # should active be less than 50% of steps

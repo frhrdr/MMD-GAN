@@ -203,7 +203,7 @@ class SNGan(object):
                 s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
             else:
                 print('----------- mog found')
-                s_gen = self.Dis(gen_batch, is_training=True)
+                s_gen = self.Dis(gen_batch, is_training=True)['x']
                 s_x = self.mog_model.sample_batch(batch_size)
             # loss function
             gan_losses = GANLoss(self.do_summary)
@@ -347,7 +347,7 @@ class SNGan(object):
                 # calculate loss and gradients
                 grads_list, loss_list = self.__gpu_task__(
                     batch_size=batch_size, is_training=True, data_batch=data_batch,
-                    opt_op=opt_ops)
+                    opt_op=opt_ops)  # ------------------------------------------------------------------------ GPU TASK
             # apply the gradient
             if agent.imbalanced_update is None:
                 dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step)

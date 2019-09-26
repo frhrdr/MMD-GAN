@@ -10,7 +10,7 @@ from dp_funcs.net_picker import NetPicker
 
 
 def main():
-  filename = 'cifar_alternating1'
+  filename = 'cifar_alternating2'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   architecture = {'input': [(3, 32, 32)],

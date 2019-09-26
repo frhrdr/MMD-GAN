@@ -114,8 +114,9 @@ class SNGan(object):
         self.Dis.seq_links(list(range(d_net.num_layers)))
         self.Dis.add_output_layers([d_net.num_layers - 1])
 
-        if self.mog_model is not None:
-            self.mog_model.define_tfp_mog_vars()
+        print('-----------SNGAN INIT NET done')
+        # if self.mog_model is not None:
+        #     self.mog_model.define_tfp_mog_vars()
 
     ###################################################################
     def sample_codes(self, batch_size, code_x=None, code_y=None, name='codes'):

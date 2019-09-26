@@ -96,6 +96,11 @@ class MoG:
   def fit(self, encodings, session):
     print('fitting mog')
     self.scikit_mog.fit(encodings)
+
+    if self.pi is None:
+      print('setting up tfp mog vars')
+      self.define_tfp_mog_vars()
+
     feed_dict = {self.pi_ph: self.scikit_mog.weights_,
                  self.mu_ph: self.scikit_mog.means_,
                  self.sigma_ph: self.scikit_mog.covariances_}

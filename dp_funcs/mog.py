@@ -9,13 +9,16 @@ class MoG:
     self.n_dims = n_dims
     self.n_clusters = n_clusters
 
-    self.pi = tf.ones((n_clusters,)) / n_clusters
-    self.mu = tf.random_normal((n_clusters, n_dims))
-    self.sigma = tf.eye(n_dims, batch_shape=(n_clusters,))
+    self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
+                              initializer=tf.ones((n_clusters,)) / n_clusters)
+    self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
+                              initializer=tf.random_normal((n_clusters, n_dims)))
+    self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
+                                 initializer=tf.eye(n_dims, batch_shape=(n_clusters,)))
 
     self.data_loader = data_loader
     self.encode_op = encode_op
-    self.encoding = self.encode_op(self.data_loader)
+    self.encoding = None
 
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
@@ -25,7 +28,7 @@ class MoG:
                                       n_init=3,
                                       warm_start=False)  # may be worth considering
     tfp_cat = tfp.distributions.Categorical(probs=self.pi)
-    tfp_nrm = tfp.distributions.Normal(loc=self.mu, scale=self.sigma)
+    tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
     self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat,
                                                        components_distribution=tfp_nrm)
 
@@ -56,14 +59,18 @@ class MoG:
     # this should not query the dataset at all, ignoring the next-batch op. does it do that?
 
   def collect_encodings(self, session):
-    assert self.data_loader
-    assert self.encode_op
+    # assert self.data_loader
+    # assert self.encode_op
     assert self.enc_batch_size
     assert self.n_data_samples
 
     assert self.n_data_samples % self.enc_batch_size == 0
     n_steps = self.n_data_samples // self.enc_batch_size
     encoding_mats = []
+
+    if self.encoding is None:
+      print('init encoding')
+      self.encoding = self.encode_op(self.data_loader)
     print('colllecting encodings')
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)

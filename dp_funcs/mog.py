@@ -75,8 +75,9 @@ class MoG:
     print('colllecting encodings')
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)
-      print(encoding_mat.shape)
-      encoding_mats.append(encoding_mat)
+      print(encoding_mat)
+      print(encoding_mat[0].shape)
+      encoding_mats.append(encoding_mat[0])
     print('done')
 
     encoding_mat = np.concatenate(encoding_mats)

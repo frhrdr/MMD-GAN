@@ -16,7 +16,7 @@ class MoG:
     self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
                                  initializer=tf.eye(n_dims, batch_shape=(n_clusters,)))
 
-    self.data_loader = linked_gan.get_data_batch(filename, enc_batch_size)
+    self.data_filename = filename
     self.linked_gan = linked_gan
     self.encoding = None
 
@@ -70,7 +70,7 @@ class MoG:
 
     if self.encoding is None:
       print('init encoding')
-      self.encoding = self.linked_gan.Dis(self.data_loader)
+      self.encoding = self.linked_gan.Dis(self.linked_gan.get_data_batch(self.data_filename, self.enc_batch_size))
     print('colllecting encodings')
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)

@@ -9,7 +9,7 @@ from dp_funcs.mog import MoG
 
 
 def main():
-  filename = 'cifar_alternating'
+  filename = 'cifar_alternating1'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   architecture = {'input': [(3, 32, 32)],

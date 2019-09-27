@@ -241,7 +241,8 @@ class MySession(object):
 
                     # ------------------------------------------------------------ALSO TAKE MoG APPROXIMATION STATS HERE
                     # run check and collect
-                    if False and mog_model is not None and not mog_model.linked_gan.train_with_mog:
+                    if mog_model is not None and not mog_model.linked_gan.train_with_mog:
+                        print('------------------- mog model test start')
                         mog_model.test_mog_approx(self.sess)
 
                 # save model at last step

@@ -239,6 +239,11 @@ class MySession(object):
                         epoch = step // step_per_epoch
                         self.print_loss(loss_value, global_step_value, epoch)
 
+                    # ------------------------------------------------------------ALSO TAKE MoG APPROXIMATION STATS HERE
+                    # run check and collect
+                    if mog_model is not None and not mog_model.linked_gan.train_with_mog:
+                        mog_model.test_mog_approx(self.sess)
+
                 # save model at last step
                 if step == max_step - 1:
                     if self.saver is not None:

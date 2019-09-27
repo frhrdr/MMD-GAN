@@ -137,7 +137,7 @@ class MoG:
 
     # sample both data and aproximate encodings
     x_data_sample = new_encodings[np.random.choice(new_encodings.shape[0], n_samples, replace=False), :]
-    x_mog_sample = self.scikit_mog.sample(n_samples)
+    x_mog_sample = self.scikit_mog.sample(n_samples)[0]
     print('data sample shapes should match:', x_data_sample.shape, x_mog_sample.shape)
 
     # sample generator encodings (how?)

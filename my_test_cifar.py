@@ -89,12 +89,12 @@ def main():
       optimizer=optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  # enc_batch_size = 200
-  # mog_model = MoG(n_dims=16, n_clusters=20, linked_gan=mdl,
-  #                 enc_batch_size=enc_batch_size, n_data_samples=num_instance,
-  #                 filename=filename)
-  # mdl.register_mog(mog_model, train_with_mog=False)
-  mog_model = None
+  enc_batch_size = 200
+  mog_model = MoG(n_dims=16, n_clusters=20, linked_gan=mdl,
+                  enc_batch_size=enc_batch_size, n_data_samples=num_instance,
+                  filename=filename)
+  mdl.register_mog(mog_model, train_with_mog=False)
+  # mog_model = None
 
   for i in range(8):
       mdl.training(

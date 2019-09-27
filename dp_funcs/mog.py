@@ -3,10 +3,12 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from sklearn.mixture import GaussianMixture
 from dp_funcs.net_picker import NetPicker
+from GeneralTools.math_funcs.gan_losses import GANLoss
+
 
 class MoG:
   def __init__(self, n_dims, n_clusters, linked_gan, enc_batch_size, n_data_samples, filename):
-    self.n_dims = n_dims
+    self.d_enc = n_dims
     self.n_clusters = n_clusters
 
     self.pi = None
@@ -30,15 +32,21 @@ class MoG:
     self.mu_ph = None
     self.sigma_ph = None
     self.param_update_op = None
+    self.gen_data_op = None
+    # self.gan_loss = None
+    self.s_x_ph = None
+    self.loss_gen = None
+    self.loss_dis = None
+    self.loss_list = []
 
   def define_tfp_mog_vars(self):
     self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
                               initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
     print('-------made a pi variable:', self.pi)
     self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
-                              initializer=tf.random.normal((self.n_clusters, self.n_dims)))
+                              initializer=tf.random.normal((self.n_clusters, self.d_enc)))
     self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
-                                 initializer=tf.eye(self.n_dims, batch_shape=(self.n_clusters,)))
+                                 initializer=tf.eye(self.d_enc, batch_shape=(self.n_clusters,)))
 
     tfp_cat = tfp.distributions.Categorical(probs=self.pi)
     tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
@@ -46,25 +54,23 @@ class MoG:
                                                        components_distribution=tfp_nrm)
 
     self.pi_ph = tf.placeholder(tf.float32, shape=(self.n_clusters,))
-    self.mu_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.n_dims))
-    self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.n_dims, self.n_dims))
+    self.mu_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
+    self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc, self.d_enc))
     self.param_update_op = tf.group(tf.assign(self.pi, self.pi_ph),
                                     tf.assign(self.mu, self.mu_ph),
                                     tf.assign(self.sigma, self.sigma_ph))
 
-  def check_and_update(self, global_step_value, update_flag, session):
+  def time_to_update(self, global_step_value, update_flag):
     if isinstance(update_flag, tuple) or isinstance(update_flag, list):
       update_freq = update_flag[1]
       assert update_freq > 0  # should active be less than 50% of steps
-      if global_step_value % update_freq != 0:
-        return
+      return global_step_value % update_freq == 0
     elif isinstance(update_flag, NetPicker):
-      if not update_flag.do_mog_update():
-        return
+      return update_flag.do_mog_update()
     else:
       raise ValueError
 
-
+  def update(self, session):
     # - collect all data encodings
     # need a second data iterator
     # need an encoder op to get embeddings
@@ -119,3 +125,42 @@ class MoG:
 
   def sample_batch(self, batch_size):
     return self.tfp_mog.sample(batch_size)
+
+  def test_mog_approx(self, session, n_samples=500):
+    # get encodings
+    print('---------------------- starting test mog approx')
+    new_encodings = self.collect_encodings(session)
+    print('---------------------- collected encodings')
+    # fit mog
+    self.fit(new_encodings, session)
+    print('---------------------- fit mog')
+
+    # sample both data and aproximate encodings
+    x_data_sample = new_encodings[np.random.choice(new_encodings.shape[0], n_samples, replace=False), :]
+    x_mog_sample = self.scikit_mog.sample(n_samples)
+    print('data sample shapes should match:', x_data_sample.shape, x_mog_sample.shape)
+
+    # sample generator encodings (how?)
+    if self.loss_gen is None:
+      print('---------------------- init for gen and loss functions')
+      code_batch = self.linked_gan.sample_codes(batch_size=n_samples, name='code_tr')
+      gen_batch = self.linked_gan.Gen(code_batch, is_training=False)
+      s_gen = self.linked_gan.Dis(gen_batch, is_training=True)['x']
+      gan_loss = GANLoss(do_summary=False)
+      self.s_x_ph = tf.placeholder(tf.float32, shape=(n_samples, self.d_enc))
+      assert self.linked_gan.loss_type in {'rep', 'rmb'}
+      self.loss_gen, self.loss_dis = gan_loss.apply(s_gen, self.s_x_ph, self.linked_gan.loss_type, batch_size=n_samples,
+                                                    d=self.linked_gan.score_size,
+                                                    rep_weights=self.linked_gan.rep_weights)
+
+    print('---------------------- computing losses')
+    l_gen_data, l_dis_data = session.run([self.loss_gen, self.loss_dis], feed_dict={self.s_x_ph: x_data_sample})
+    l_gen_mog, l_dis_mog = session.run([self.loss_gen, self.loss_dis], feed_dict={self.s_x_ph: x_mog_sample})
+    print('-> Losses: True Data Dis {} \t Gen {} \t- MoG Approx Dis {} \t Gen {} \n'.format(l_dis_data, l_gen_data,
+                                                                                            l_dis_mog, l_gen_mog))
+    self.loss_list.append((l_dis_data, l_gen_data, l_dis_mog, l_gen_mog))
+    print('---------------------- test mog approx done')
+
+  def save_loss_list(self, save_file):
+    loss_mat = np.asarray(self.loss_list)
+    np.save(save_file, loss_mat)

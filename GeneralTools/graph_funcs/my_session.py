@@ -253,8 +253,9 @@ class MySession(object):
                 # get update ops
                 global_step_value = self.sess.run(global_step)
 
-                if mog_model is not None:
-                    mog_model.check_and_update(global_step_value, imbalanced_update, self.sess)
+                if mog_model is not None and mog_model.linked_gan.train_with_mog:
+                    if mog_model.time_to_update(global_step_value, imbalanced_update):
+                        mog_model.update(self.sess)
                 # IF STEP VALUE INDICATES TRAINING GENERATOR:
                 # - collect all data encodings
                 # - update MoG parameters
@@ -280,6 +281,11 @@ class MySession(object):
                     if print_loss:
                         epoch = step // step_per_epoch
                         self.print_loss(loss_value, global_step_value, epoch)
+
+                    # ------------------------------------------------------------ALSO TAKE MoG APPROXIMATION STATS HERE
+                    # run check and collect
+                    if mog_model is not None and not mog_model.linked_gan.train_with_mog:
+                        mog_model.test_mog_approx(self.sess)
 
                 # save model at last step
                 if step == max_step - 1:

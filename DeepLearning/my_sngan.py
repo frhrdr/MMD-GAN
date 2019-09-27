@@ -86,9 +86,11 @@ class SNGan(object):
 
         # initialize MoG
         self.mog_model = None
+        self.train_with_mog = None
 
-    def register_mog(self, mog_model):
+    def register_mog(self, mog_model, train_with_mog):
         self.mog_model = mog_model
+        self.train_with_mog = train_with_mog
 
     def init_net(self):
         """ This function initializes the network
@@ -198,8 +200,8 @@ class SNGan(object):
             gen_batch = self.Gen(code_batch, is_training=is_training)
 
             print('----------- defining gpu task')
-            if self.mog_model is None:
-                print('----------- mog not found')
+            if self.mog_model is None or self.train_with_mog is False:
+                print('----------- mog not found or turned off')
                 dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
                 s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
             else:

@@ -1,6 +1,6 @@
 import numpy as np
 from GeneralTools.misc_fun import FLAGS
-FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'cifar_NCHW/'
+FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'mnist_NCHW/'
 # FLAGS.SPECTRAL_NORM_MODE = 'sn_paper'  # default, sn_paper
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
 from GeneralTools.graph_funcs.agent import Agent
@@ -10,10 +10,10 @@ from dp_funcs.net_picker import NetPicker
 
 
 def main():
-  filename = 'cifar_alternating2'
+  filename = 'mnist_basic'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
-  architecture = {'input': [(3, 32, 32)],
+  architecture = {'input': [(1, 28, 28)],
                   'code': [(128, 'linear')],
                   'generator': [{'name': 'l1', 'out': 512 * 4 * 4, 'op': 'd', 'act': 'linear', 'act_nm': None,
                                  'out_reshape': [512, 4, 4]},
@@ -74,9 +74,8 @@ def main():
   #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
   # sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
 
-  imbalanced_update = None
   # imbalanced_update = (-3, 3)  # order: (dis, gen)
-  # imbalanced_update = NetPicker(dis_steps=3, gen_steps=3)
+  imbalanced_update = NetPicker(dis_steps=3, gen_steps=3)
 
   agent = Agent(
       filename, sub_folder, load_ckpt=True, do_trace=False,
@@ -90,10 +89,14 @@ def main():
       num_summary_image=8, image_transpose=False)
 
   enc_batch_size = 200
+  print(mdl.Dis, mdl.get_data_batch(filename, enc_batch_size))
   mog_model = MoG(n_dims=16, n_clusters=20, linked_gan=mdl,
+                  # data_loader=mdl.get_data_batch(filename, enc_batch_size),
+                  # encode_op=mdl.Dis,
                   enc_batch_size=enc_batch_size, n_data_samples=num_instance,
                   filename=filename)
-  mdl.register_mog(mog_model, train_with_mog=False)
+
+  mdl.register_mog(mog_model)
 
   for i in range(8):
       mdl.training(
@@ -110,7 +113,7 @@ def main():
           print('Epoch {} with scores: {}'.format(i, scores))
 
   if mog_model is not None:
-    mog_model.save_loss_list('{}_losses.npy'.format(filename))
+    mog_model.save_loss_list('')
   print('Chunk of code finished.')
 
 

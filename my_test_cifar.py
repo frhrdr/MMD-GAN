@@ -44,7 +44,7 @@ def main():
   debug_mode = False
   optimizer = 'adam'
   num_instance = 50000
-  save_per_step = 12500  # 12500
+  save_per_step = 1500  # 12500
   batch_size = 64
   num_class = 0
   end_lr = 1e-7
@@ -101,11 +101,13 @@ def main():
           filename, agent, num_instance,
           lr_list, end_lr=end_lr, max_step=save_per_step,
           batch_size=batch_size, sample_same_class=sample_same_class, num_threads=num_threads, mog_model=mog_model)
-      if debug_mode is not None:
+      if debug_mode is not False:
+          print('running eval_sampling')
           _ = mdl.eval_sampling(
               filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
               real_sample=False, do_embedding=False, do_sprite=True)
       if debug_mode is False:  # v1 - inception score and fid, ms_ssim - MS-SSIM
+          print('running mdl_score')
           scores = mdl.mdl_score(
               filename, sub_folder, batch_size, num_batch=781, model='v1')
           print('Epoch {} with scores: {}'.format(i, scores))

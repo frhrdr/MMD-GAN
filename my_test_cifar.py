@@ -10,7 +10,7 @@ from dp_funcs.net_picker import NetPicker
 
 
 def main():
-  filename = 'cifar_logging3'
+  filename = 'cifar_logging4'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   architecture = {'input': [(3, 32, 32)],
@@ -44,11 +44,12 @@ def main():
   debug_mode = False
   optimizer = 'adam'
   num_instance = 50000
-  save_per_step = 1500  # 12500
+  save_per_step = 25000  # 12500
   batch_size = 64
   num_class = 0
   end_lr = 1e-7
   num_threads = 7
+  n_iterations = 1  # 8
 
   # random code to test model
   code_x = np.random.randn(400, 128).astype(np.float32)
@@ -81,7 +82,7 @@ def main():
   agent = Agent(
       filename, sub_folder, load_ckpt=True, do_trace=False,
       do_save=True, debug_mode=debug_mode, debug_step=400,
-      query_step=1000, log_device=False, imbalanced_update=imbalanced_update,
+      query_step=200, log_device=False, imbalanced_update=imbalanced_update,
       print_loss=True)
 
   mdl = SNGan(
@@ -96,7 +97,8 @@ def main():
   mdl.register_mog(mog_model, train_with_mog=False)
   # mog_model = None
 
-  for i in range(8):
+  for i in range(n_iterations):
+      print('beginning iteration {}'.format(i))
       mdl.training(
           filename, agent, num_instance,
           lr_list, end_lr=end_lr, max_step=save_per_step,

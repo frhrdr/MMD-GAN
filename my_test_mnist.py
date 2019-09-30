@@ -13,38 +13,30 @@ def main():
   filename = 'mnist_basic'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
+  gen = [{'name': 'l1', 'out': 64 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [64, 7, 7]},
+         {'name': 'l2_up',  'out': 32, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
+         {'name': 'l3_up',  'out': 16, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
+         # {'name': 'l4_up',  'out': 16, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
+         {'name': 'l4_t28', 'out': 1, 'act': 'tanh'}]
+
+  dis = [{'name': 'l1_f28', 'out': 16, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1},
+         {'name': 'l2_ds',  'out': 32, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2},
+         {'name': 'l3',     'out': 32, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1},
+         {'name': 'l4_ds',  'out': 64, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2},
+         # {'name': 'l5',     'out': 256, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1},
+         # {'name': 'l6_ds',  'out': 512, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2},
+         {'name': 'l5',   'out': 64, 'op': 'c', 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'out_reshape': [7*7*64]},
+         {'name': 'l6_s', 'out': 4,  'op': 'd', 'act_k': act_k, 'bias': 'b', 'w_nm': w_nm}]
+
   architecture = {'input': [(1, 28, 28)],
-                  'code': [(128, 'linear')],
-                  'generator': [{'name': 'l1', 'out': 512 * 4 * 4, 'op': 'd', 'act': 'linear', 'act_nm': None,
-                                 'out_reshape': [512, 4, 4]},
-                                {'name': 'l2_up', 'out': 256, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4,
-                                 'strides': 2},
-                                {'name': 'l3_up', 'out': 128, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4,
-                                 'strides': 2},
-                                {'name': 'l4_up', 'out': 64, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4,
-                                 'strides': 2},
-                                {'name': 'l5_t32', 'out': 3, 'act': 'tanh'}],
-                  'discriminator': [{'name': 'l1_f32', 'out': 64, 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm},
-                                    {'name': 'l2_ds', 'out': 128, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm,
-                                     'kernel': 4, 'strides': 2},
-                                    {'name': 'l3', 'out': 128, 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm},
-                                    {'name': 'l4_ds', 'out': 256, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm,
-                                     'kernel': 4, 'strides': 2},
-                                    {'name': 'l5', 'out': 256, 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm},
-                                    {'name': 'l6_ds', 'out': 512, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm,
-                                     'kernel': 4, 'strides': 2},
-                                    {'name': 'l7', 'out': 512, 'op': 'c', 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm, 'out_reshape': [4 * 4 * 512]},
-                                    {'name': 'l8_s', 'out': 16, 'op': 'd', 'act_k': act_k,
-                                     'bias': 'b', 'w_nm': w_nm}]}
+                  'code': [(32, 'linear')],
+                  'generator': gen,
+                  'discriminator': dis}
 
   debug_mode = False
   optimizer = 'adam'
-  num_instance = 50000
-  save_per_step = 12500  # 12500
+  num_instance = 60000
+  save_per_step = 20000  # 12500
   batch_size = 64
   num_class = 0
   end_lr = 1e-7
@@ -74,8 +66,7 @@ def main():
   #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
   # sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
 
-  # imbalanced_update = (-3, 3)  # order: (dis, gen)
-  imbalanced_update = NetPicker(dis_steps=3, gen_steps=3)
+  imbalanced_update = None  # NetPicker(dis_steps=3, gen_steps=3)
 
   agent = Agent(
       filename, sub_folder, load_ckpt=True, do_trace=False,
@@ -88,15 +79,8 @@ def main():
       optimizer=optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  enc_batch_size = 200
-  print(mdl.Dis, mdl.get_data_batch(filename, enc_batch_size))
-  mog_model = MoG(n_dims=16, n_clusters=20, linked_gan=mdl,
-                  # data_loader=mdl.get_data_batch(filename, enc_batch_size),
-                  # encode_op=mdl.Dis,
-                  enc_batch_size=enc_batch_size, n_data_samples=num_instance,
-                  filename=filename)
-
-  mdl.register_mog(mog_model)
+  mog_model = None
+  # mdl.register_mog(mog_model)
 
   for i in range(8):
       mdl.training(

@@ -37,6 +37,5 @@ def ds2tfrecord(ds, filepath):
                 pass
 
 
-
 if __name__ == '__main__':
     load_cifar10()

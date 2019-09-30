@@ -10,7 +10,7 @@ from dp_funcs.net_picker import NetPicker
 
 
 def main():
-  filename = 'cifar_logging2'
+  filename = 'cifar_logging3'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   architecture = {'input': [(3, 32, 32)],
@@ -106,7 +106,7 @@ def main():
           _ = mdl.eval_sampling(
               filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
               real_sample=False, do_embedding=False, do_sprite=True)
-      if debug_mode is False:  # v1 - inception score and fid, ms_ssim - MS-SSIM
+      if False and debug_mode is False:  # v1 - inception score and fid, ms_ssim - MS-SSIM
           print('running mdl_score')
           scores = mdl.mdl_score(
               filename, sub_folder, batch_size, num_batch=781, model='v1')

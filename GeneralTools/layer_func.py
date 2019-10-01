@@ -90,7 +90,7 @@ def bias_initializer(init_b_scale=0.0):
 #     :param partition_info: this is required by tf.layers, but ignored in many tf.initializer. Here we ignore it.
 #     :return:
 #     """
-#     variable = tf.random_normal(shape=shape, stddev=1.0, dtype=dtype)
+#     variable = tf.random.normal(shape=shape, stddev=1.0, dtype=dtype)
 #
 #     if len(shape) > 2:
 #         var_reshaped = tf.reshape(variable, shape=[-1, shape[-1]])
@@ -662,7 +662,7 @@ class ParametricOperation(object):
         :param is_training:
         :return:
         """
-        with tf.variable_scope(self.name_scope, reuse=tf.AUTO_REUSE):  # in case a layer has many kernels
+        with tf.compat.v1.variable_scope(self.name_scope, reuse=tf.compat.v1.AUTO_REUSE):  # in case a layer has many kernels
             self._input_check_(op_input)
             with tf.control_dependencies(control_ops):
                 # initialize the kernel
@@ -690,7 +690,7 @@ class ParametricOperation(object):
                     op_output = op_input * self.kernel
                     if 'bound' in self.design:  # set bound to prevent gradient explosion
                         lb, hb = self.design['bound']
-                        tf.add_to_collection(
+                        tf.compat.v1.add_to_collection(
                             tf.GraphKeys.UPDATE_OPS,
                             tf.assign(self.kernel, tf.clip_by_value(self.kernel, lb, hb)))
                 elif self.design['op'] == 'd':  # dense layer
@@ -916,7 +916,7 @@ class ImageScaling(object):
         :param control_ops:
         :return:
         """
-        with tf.variable_scope(self.name_scope, reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope(self.name_scope, reuse=tf.compat.v1.AUTO_REUSE):
             with tf.control_dependencies(control_ops):
                 if self.method == 'ps':
                     scale_up = self.factor > 0
@@ -926,11 +926,11 @@ class ImageScaling(object):
                     if self.data_format == 'channels_first':
                         size = self.output_shape[2:4]
                         op_input = tf.transpose(op_input, perm=(0, 2, 3, 1))  # NCHW to NHWC
-                        op_output = tf.image.resize_bilinear(op_input, size, align_corners=True)
+                        op_output = tf.compat.v1.image.resize_bilinear(op_input, size, align_corners=True)
                         op_output = tf.transpose(op_output, perm=(0, 3, 1, 2))  # NHWC to NCHW
                     else:
                         size = self.output_shape[1:3]
-                        op_output = tf.image.resize_bilinear(op_input, size, align_corners=True)
+                        op_output = tf.compat.v1.image.resize_bilinear(op_input, size, align_corners=True)
                 elif self.method == 'bic':
                     # tf.resize_bicubic only supports NHWC
                     if self.data_format == 'channels_first':
@@ -1870,7 +1870,7 @@ class Layer(object):
         :return:
         """
         self.build_layer()  # in case layer has not been build
-        with tf.variable_scope(self.layer_scope, reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope(self.layer_scope, reuse=tf.compat.v1.AUTO_REUSE):
             self._input_(layer_input)
             self._apply_input_reshape_()
 
@@ -1960,12 +1960,12 @@ class Net(object):
         if dict_form:
             registered_info = {}
             for layer in self.layers:
-                with tf.variable_scope(layer.layer_scope, reuse=tf.AUTO_REUSE):
+                with tf.compat.v1.variable_scope(layer.layer_scope, reuse=tf.compat.v1.AUTO_REUSE):
                     registered_info[layer.layer_scope] = layer.get_register()
         else:
             registered_info = []
             for layer in self.layers:
-                with tf.variable_scope(layer.layer_scope, reuse=tf.AUTO_REUSE):
+                with tf.compat.v1.variable_scope(layer.layer_scope, reuse=tf.compat.v1.AUTO_REUSE):
                     registered_info.append(layer.get_register())
 
         return registered_info
@@ -1986,9 +1986,9 @@ class Net(object):
                     for count, value in enumerate(values):
                         summary_name = prefix if count == 0 else prefix + '_{}'.format(count)
                         if len(value.get_shape().as_list()) == 0:
-                            tf.summary.scalar(summary_name, value)
+                            tf.compat.v1.summary.scalar(summary_name, value)
                         else:
-                            tf.summary.histogram(summary_name, value)
+                            tf.compat.v1.summary.histogram(summary_name, value)
 
 
 class Routine(object):
@@ -2305,13 +2305,13 @@ class Routine(object):
             registered_info = {}
             for layer_index in self.layer_indices:
                 layer = self.net.layers[layer_index]
-                with tf.variable_scope(layer.layer_scope, reuse=tf.AUTO_REUSE):
+                with tf.compat.v1.variable_scope(layer.layer_scope, reuse=tf.compat.v1.AUTO_REUSE):
                     registered_info[layer.layer_scope] = layer.get_register()
         else:
             registered_info = []
             for layer_index in self.layer_indices:
                 layer = self.net.layers[layer_index]
-                with tf.variable_scope(layer.layer_scope, reuse=tf.AUTO_REUSE):
+                with tf.compat.v1.variable_scope(layer.layer_scope, reuse=tf.compat.v1.AUTO_REUSE):
                     registered_info.append(layer.get_register())
 
         return registered_info
@@ -2343,7 +2343,7 @@ class Routine(object):
 #     assert num_channel == required_channel, \
 #         'Num of channel mis-match, required: %d, actual %d.' % (required_channel, num_channel)
 #     # do upsampling
-#     layer_sampled = tf.image.resize_bilinear(
+#     layer_sampled = tf.compat.v1.image.resize_bilinear(
 #         layer_input, [height * scale_factor, width * scale_factor], align_corners=True)
 #     # add every channel_to_add channels
 #     layer_output = tf.reduce_sum(

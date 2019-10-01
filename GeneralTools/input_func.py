@@ -1030,7 +1030,7 @@ class SimData(object):
 
         :return:
         """
-        w = tf.random_normal([self.d, self.D], mean=0.0, stddev=1.0)
+        w = tf.random.normal([self.d, self.D], mean=0.0, stddev=1.0)
         s, u, v = tf.svd(w)
         return tf.compat.v1.get_variable(
             'W', [self.d, self.D], dtype=tf.float32, initializer=tf.matmul(u, v, transpose_b=True), trainable=False)

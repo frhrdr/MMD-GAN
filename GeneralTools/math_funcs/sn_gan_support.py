@@ -35,7 +35,7 @@ class MeshCode(object):
         :param name:
         :return:
         """
-        return tf.random_normal(
+        return tf.random.normal(
             [self.mesh_num[0] * self.mesh_num[1], self.D],
             mean=0.0,
             stddev=1.0,
@@ -49,7 +49,7 @@ class MeshCode(object):
         :return:
         """
         if z_support is None:
-            z_support = tf.random_normal(
+            z_support = tf.random.normal(
                 [4, self.D],
                 mean=0.0,
                 stddev=1.0)

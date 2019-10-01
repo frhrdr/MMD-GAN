@@ -134,7 +134,7 @@ class SNGan(object):
         """
         with tf.name_scope(name):
             if code_x is None:
-                code_x = tf.random_normal(
+                code_x = tf.random.normal(
                     [batch_size, self.code_size], mean=0.0, stddev=1.0, name='x', dtype=tf.float32)
             else:
                 code_x = tf.identity(code_x, name='x')
@@ -237,16 +237,16 @@ class SNGan(object):
             # summary op is always pinned to CPU
             # add summary to loss and intermediate variables
             if self.do_summary:
-                tf.summary.histogram('x/x', data_batch['x'])
-                tf.summary.histogram('x/x_gen', gen_batch['x'])
-                tf.summary.histogram('x/sx', s_x)
-                tf.summary.histogram('x/sg', s_gen)
+                tf.compat.v1.summary.histogram('x/x', data_batch['x'])
+                tf.compat.v1.summary.histogram('x/x_gen', gen_batch['x'])
+                tf.compat.v1.summary.histogram('x/sx', s_x)
+                tf.compat.v1.summary.histogram('x/sg', s_gen)
                 # g_x = tf.reshape(tf.gradients(s_x, data_batch['x'])[0], [batch_size, -1])
                 # g_x_norm = tf.norm(g_x, ord=2, axis=1)
-                # tf.summary.histogram('x/g_x_norm', g_x_norm)
+                # tf.compat.v1.summary.histogram('x/g_x_norm', g_x_norm)
                 g_gen = tf.reshape(tf.gradients(s_gen, gen_batch['x'])[0], [batch_size, -1])
                 g_gen_norm = tf.norm(g_gen, ord=2, axis=1)
-                tf.summary.histogram('x/g_gen_norm', g_gen_norm)
+                tf.compat.v1.summary.histogram('x/g_gen_norm', g_gen_norm)
                 self.Gen.net.add_summary('kernel_norm')
                 self.Dis.net.add_summary('kernel_norm')
 
@@ -340,13 +340,13 @@ class SNGan(object):
             FLAGS.print('Shape of input batch: {}'.format(data_batch['x'].get_shape().as_list()))
 
             # setup training process
-            # with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
+            # with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(), reuse=tf.compat.v1.AUTO_REUSE):
             self.global_step = global_step_config()
             _, opt_ops = multi_opt_config(
                 lr_list, end_lr=end_lr,
                 optimizer=self.optimizer, global_step=self.global_step)
             # assign tasks
-            with tf.variable_scope(tf.get_variable_scope()):
+            with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope()):
                 # calculate loss and gradients
                 grads_list, loss_list = self.__gpu_task__(
                     batch_size=batch_size, is_training=True, data_batch=data_batch,
@@ -395,14 +395,14 @@ class SNGan(object):
                 for grads in grads_list:
                     for var_grad, var in grads:
                         var_name = var.name.replace(':', '_')
-                        tf.summary.histogram('grad_' + var_name, var_grad)
-                        tf.summary.histogram(var_name, var)
-                summary_op = tf.summary.merge_all()
+                        tf.compat.v1.summary.histogram('grad_' + var_name, var_grad)
+                        tf.compat.v1.summary.histogram(var_name, var)
+                summary_op = tf.compat.v1.summary.merge_all()
             else:
                 summary_op = None
             # add summary for final image reconstruction
             if self.do_summary_image:
-                tf.get_variable_scope().reuse_variables()
+                tf.compat.v1.get_variable_scope().reuse_variables()
                 summary_image_op = self.summary_image_sampling(data_batch)
             else:
                 summary_image_op = None
@@ -429,14 +429,14 @@ class SNGan(object):
         gen_batch = self.__gpu_task__(batch_size=self.num_summary_image, is_training=False)
         # do clipping
         x_gen = tf.clip_by_value(gen_batch['x'], clip_value_min=-1, clip_value_max=1)
-        # tf.summary.image only accepts [batch_size, height, width, channels]
+        # tf.compat.v1.summary.image only accepts [batch_size, height, width, channels]
         if FLAGS.IMAGE_FORMAT == 'channels_first':
             x_real = tf.transpose(x_real, perm=(0, 2, 3, 1))
             x_gen = tf.transpose(x_gen, perm=(0, 2, 3, 1))
         # add summaries
-        summaries_image = tf.summary.image('Ir', x_real, max_outputs=self.num_summary_image)
-        summaries_gen = tf.summary.image('Ig', x_gen, max_outputs=self.num_summary_image)
-        summary_image_op = tf.summary.merge([summaries_image, summaries_gen])
+        summaries_image = tf.compat.v1.summary.image('Ir', x_real, max_outputs=self.num_summary_image)
+        summaries_gen = tf.compat.v1.summary.image('Ig', x_gen, max_outputs=self.num_summary_image)
+        summary_image_op = tf.compat.v1.summary.merge([summaries_image, summaries_gen])
 
         return summary_image_op
 

@@ -51,7 +51,7 @@ class GenerativeModelMetric(object):
         if self.image_format in {'channels_first', 'NCHW'}:
             image = tf.transpose(image, perm=(0, 2, 3, 1))
         if image.get_shape().as_list()[1] != image_size:
-            image = tf.image.resize_bilinear(image, [image_size, image_size])
+            image = tf.compat.v1.image.resize_bilinear(image, [image_size, image_size])
 
         # inception score uses the logits:0 while FID uses pool_3:0.
         return tfgan.eval.run_inception(
@@ -264,8 +264,8 @@ class GenerativeModelMetric(object):
             x_images = tf.transpose(x_images, perm=(0, 2, 3, 1))
             y_images = tf.transpose(y_images, perm=(0, 2, 3, 1))
         if x_images.get_shape().as_list()[1] != 256:
-            x_images = tf.image.resize_bilinear(x_images, [image_size, image_size])
-            y_images = tf.image.resize_bilinear(y_images, [image_size, image_size])
+            x_images = tf.compat.v1.image.resize_bilinear(x_images, [image_size, image_size])
+            y_images = tf.compat.v1.image.resize_bilinear(y_images, [image_size, image_size])
 
         scores = tf.image.ssim_multiscale(x_images, y_images, max_val=255)  # scores in range [0, 1]
 

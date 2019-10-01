@@ -41,8 +41,8 @@ class GANLoss(object):
         """
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('GANLoss/gen', self.loss_gen)
-                tf.summary.scalar('GANLoss/dis', self.loss_dis)
+                tf.compat.v1.summary.scalar('GANLoss/gen', self.loss_gen)
+                tf.compat.v1.summary.scalar('GANLoss/dis', self.loss_dis)
 
     def _logistic_(self):
         """ non-saturate logistic loss
@@ -72,7 +72,7 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
+                tf.compat.v1.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
 
         return self.loss_dis, self.loss_gen
 
@@ -123,7 +123,7 @@ class GANLoss(object):
         dist_gg, dist_gd, dist_dd = slice_pairwise_distance(pair_dist, batch_size=self.batch_size)
 
         # mmd
-        with tf.variable_scope('mmd_g_mix', reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope('mmd_g_mix', reuse=tf.compat.v1.AUTO_REUSE):
             self.loss_gen = mixture_mmd_g(
                 dist_gg, dist_gd, dist_dd, self.batch_size, sigma=self.sigma,
                 name='mmd', do_summary=self.do_summary, scope_prefix='mmd_g_mix/')
@@ -139,11 +139,11 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('GANLoss/gen_average', loss_average)
-                tf.summary.scalar('GANLoss/mix_prob', mix_prob)
-                tf.summary.histogram('squared_dist/dxx', dist_gg)
-                tf.summary.histogram('squared_dist/dyy', dist_dd)
-                tf.summary.histogram('squared_dist/dxy', dist_gd)
+                tf.compat.v1.summary.scalar('GANLoss/gen_average', loss_average)
+                tf.compat.v1.summary.scalar('GANLoss/mix_prob', mix_prob)
+                tf.compat.v1.summary.histogram('squared_dist/dxx', dist_gg)
+                tf.compat.v1.summary.histogram('squared_dist/dyy', dist_dd)
+                tf.compat.v1.summary.histogram('squared_dist/dxy', dist_gd)
 
     def _single_mmd_g_mix_(self, mix_threshold=0.2):
         """ maximum mean discrepancy with gaussian kernel and mixing score_gen and score_data
@@ -157,7 +157,7 @@ class GANLoss(object):
         dist_gg, dist_gd, dist_dd = slice_pairwise_distance(pair_dist, batch_size=self.batch_size)
 
         # mmd
-        with tf.variable_scope('mmd_g_mix', reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope('mmd_g_mix', reuse=tf.compat.v1.AUTO_REUSE):
             self.loss_gen = mmd_g(
                 dist_gg, dist_gd, dist_dd, self.batch_size, sigma=1.0,
                 name='mmd', do_summary=self.do_summary, scope_prefix='mmd_g_mix/')
@@ -173,11 +173,11 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('GANLoss/gen_average', loss_average)
-                tf.summary.scalar('GANLoss/mix_prob', mix_prob)
-                tf.summary.histogram('squared_dist/dxx', dist_gg)
-                tf.summary.histogram('squared_dist/dyy', dist_dd)
-                tf.summary.histogram('squared_dist/dxy', dist_gd)
+                tf.compat.v1.summary.scalar('GANLoss/gen_average', loss_average)
+                tf.compat.v1.summary.scalar('GANLoss/mix_prob', mix_prob)
+                tf.compat.v1.summary.histogram('squared_dist/dxx', dist_gg)
+                tf.compat.v1.summary.histogram('squared_dist/dyy', dist_dd)
+                tf.compat.v1.summary.histogram('squared_dist/dxy', dist_gd)
 
     def _mmd_t_(self):
         """ maximum mean discrepancy with t-distribution kernel
@@ -220,10 +220,10 @@ class GANLoss(object):
         # self.debug_register = [omega, loss_gr, loss_gn, loss_rn]
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('rand_g/omega', omega)
-                tf.summary.scalar('GANLoss/gr', loss_gr)
-                tf.summary.scalar('GANLoss/gn', loss_gn)
-                tf.summary.scalar('GANLoss/rn', loss_rn)
+                tf.compat.v1.summary.scalar('rand_g/omega', omega)
+                tf.compat.v1.summary.scalar('GANLoss/gr', loss_gr)
+                tf.compat.v1.summary.scalar('GANLoss/gn', loss_gn)
+                tf.compat.v1.summary.scalar('GANLoss/rn', loss_rn)
 
     def _rand_g_bounded_(self):
         """ maximum mean discrepancy with gaussian kernel and random kernel scale, and upper bounds on dxy
@@ -252,10 +252,10 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('rand_g/omega', omega)
-                tf.summary.scalar('GANLoss/gr', loss_gr)
-                # tf.summary.scalar('GANLoss/gn', loss_gn)
-                # tf.summary.scalar('GANLoss/rn', loss_rn)
+                tf.compat.v1.summary.scalar('rand_g/omega', omega)
+                tf.compat.v1.summary.scalar('GANLoss/gr', loss_gr)
+                # tf.compat.v1.summary.scalar('GANLoss/gn', loss_gn)
+                # tf.compat.v1.summary.scalar('GANLoss/rn', loss_rn)
 
     def _rand_g_mix_(self, mix_threshold=0.2):
         """ maximum mean discrepancy with gaussian kernel and random kernel scale
@@ -265,7 +265,7 @@ class GANLoss(object):
         pair_dist = get_squared_dist(tf.concat((self.score_gen, self.score_data), axis=0))
         dist_gg, dist_gd, dist_dd = slice_pairwise_distance(pair_dist, batch_size=self.batch_size)
         # mmd
-        with tf.variable_scope('rand_g_mix', reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope('rand_g_mix', reuse=tf.compat.v1.AUTO_REUSE):
             omega = tf.random_uniform([], self.omega_range[0], self.omega_range[1], dtype=tf.float32) \
                 if isinstance(self.omega_range, (list, tuple)) else self.omega_range
             loss_gr = rand_mmd_g_xy(
@@ -292,16 +292,16 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('rand_g_mix/omega', omega)
-                tf.summary.scalar('GANLoss/gr_average', loss_average)
-                tf.summary.scalar('GANLoss/mix_prob', mix_prob)
-                tf.summary.histogram('squared_dist/dxx', dist_gg)
-                tf.summary.histogram('squared_dist/dyy', dist_dd)
-                tf.summary.histogram('squared_dist/dxy', dist_gd)
-                tf.summary.scalar('GANLoss/gr', loss_gr)
-                tf.summary.scalar('GANLoss/gn', loss_gn)
-                tf.summary.scalar('GANLoss/rn', loss_rn)
-                tf.summary.scalar('GANLoss/gr_mix', loss_gr_mix)
+                tf.compat.v1.summary.scalar('rand_g_mix/omega', omega)
+                tf.compat.v1.summary.scalar('GANLoss/gr_average', loss_average)
+                tf.compat.v1.summary.scalar('GANLoss/mix_prob', mix_prob)
+                tf.compat.v1.summary.histogram('squared_dist/dxx', dist_gg)
+                tf.compat.v1.summary.histogram('squared_dist/dyy', dist_dd)
+                tf.compat.v1.summary.histogram('squared_dist/dxy', dist_gd)
+                tf.compat.v1.summary.scalar('GANLoss/gr', loss_gr)
+                tf.compat.v1.summary.scalar('GANLoss/gn', loss_gn)
+                tf.compat.v1.summary.scalar('GANLoss/rn', loss_rn)
+                tf.compat.v1.summary.scalar('GANLoss/gr_mix', loss_gr_mix)
 
     def _sym_rg_mix_(self, mix_threshold=0.2):
         """ symmetric version of rand_g_mix
@@ -313,7 +313,7 @@ class GANLoss(object):
         pair_dist = get_squared_dist(tf.concat((self.score_gen, self.score_data), axis=0))
         dist_gg, dist_gd, dist_dd = slice_pairwise_distance(pair_dist, batch_size=self.batch_size)
         # mmd
-        with tf.variable_scope('sym_rg_mix', reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope('sym_rg_mix', reuse=tf.compat.v1.AUTO_REUSE):
             omega = tf.random_uniform([], self.omega_range[0], self.omega_range[1], dtype=tf.float32) \
                 if isinstance(self.omega_range, (list, tuple)) else self.omega_range
             loss_gr = rand_mmd_g_xy(
@@ -339,16 +339,16 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('rand_g_mix/omega', omega)
-                tf.summary.scalar('GANLoss/gr_average', loss_average)
-                tf.summary.scalar('GANLoss/mix_prob', mix_prob)
-                tf.summary.histogram('squared_dist/dxx', dist_gg)
-                tf.summary.histogram('squared_dist/dyy', dist_dd)
-                tf.summary.histogram('squared_dist/dxy', dist_gd)
-                tf.summary.scalar('GANLoss/gr', loss_gr)
-                tf.summary.scalar('GANLoss/gn', loss_gn)
-                tf.summary.scalar('GANLoss/rn', loss_rn)
-                tf.summary.scalar('GANLoss/gr_mix', loss_gr_mix)
+                tf.compat.v1.summary.scalar('rand_g_mix/omega', omega)
+                tf.compat.v1.summary.scalar('GANLoss/gr_average', loss_average)
+                tf.compat.v1.summary.scalar('GANLoss/mix_prob', mix_prob)
+                tf.compat.v1.summary.histogram('squared_dist/dxx', dist_gg)
+                tf.compat.v1.summary.histogram('squared_dist/dyy', dist_dd)
+                tf.compat.v1.summary.histogram('squared_dist/dxy', dist_gd)
+                tf.compat.v1.summary.scalar('GANLoss/gr', loss_gr)
+                tf.compat.v1.summary.scalar('GANLoss/gn', loss_gn)
+                tf.compat.v1.summary.scalar('GANLoss/rn', loss_rn)
+                tf.compat.v1.summary.scalar('GANLoss/gr_mix', loss_gr_mix)
 
     def _sym_rand_g_(self):
         """ Version 2 of symmetric rand_g. This function does not use label smoothing
@@ -361,7 +361,7 @@ class GANLoss(object):
         pair_dist = get_squared_dist(tf.concat((self.score_gen, self.score_data), axis=0))
         dist_gg, dist_gd, dist_dd = slice_pairwise_distance(pair_dist, batch_size=self.batch_size)
         # mmd
-        with tf.variable_scope('sym_rg_mix', reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope('sym_rg_mix', reuse=tf.compat.v1.AUTO_REUSE):
             omega = tf.random_uniform([], self.omega_range[0], self.omega_range[1], dtype=tf.float32) \
                 if isinstance(self.omega_range, (list, tuple)) else self.omega_range
             loss_gr = rand_mmd_g_xy(
@@ -378,13 +378,13 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('sym_rg_mix/omega', omega)
-                tf.summary.histogram('squared_dist/dxx', dist_gg)
-                tf.summary.histogram('squared_dist/dyy', dist_dd)
-                tf.summary.histogram('squared_dist/dxy', dist_gd)
-                tf.summary.scalar('GANLoss/gr', loss_gr)
-                tf.summary.scalar('GANLoss/gn', loss_gn)
-                tf.summary.scalar('GANLoss/rn', loss_rn)
+                tf.compat.v1.summary.scalar('sym_rg_mix/omega', omega)
+                tf.compat.v1.summary.histogram('squared_dist/dxx', dist_gg)
+                tf.compat.v1.summary.histogram('squared_dist/dyy', dist_dd)
+                tf.compat.v1.summary.histogram('squared_dist/dxy', dist_gd)
+                tf.compat.v1.summary.scalar('GANLoss/gr', loss_gr)
+                tf.compat.v1.summary.scalar('GANLoss/gn', loss_gn)
+                tf.compat.v1.summary.scalar('GANLoss/rn', loss_rn)
 
     def _rand_g_instance_noise_(self, mix_threshold=0.2):
         """ This function tests instance noise
@@ -392,14 +392,14 @@ class GANLoss(object):
         :param mix_threshold:
         :return:
         """
-        with tf.variable_scope('ins_noise'):
+        with tf.compat.v1.variable_scope('ins_noise'):
             sigma = tf.compat.v1.get_variable(
                 'sigma', shape=[], dtype=tf.float32, initializer=tf.zeros_initializer, trainable=False)
             stddev = tf.log(sigma + 1.0)  # to slow down sigma increase
-            noise_gen = tf.random_normal(
+            noise_gen = tf.random.normal(
                 self.score_gen.get_shape().as_list(), mean=0.0, stddev=stddev,
                 name='noise_gen', dtype=tf.float32)
-            noise_x = tf.random_normal(
+            noise_x = tf.random.normal(
                 self.score_data.get_shape().as_list(), mean=0.0, stddev=stddev,
                 name='noise_x', dtype=tf.float32)
             self.score_gen = self.score_gen + noise_gen
@@ -408,7 +408,7 @@ class GANLoss(object):
             self._rand_g_()
             # update sigma
             loss_average = moving_average_copy(self.loss_gen, 'mmd_mean')
-            tf.add_to_collection(
+            tf.compat.v1.add_to_collection(
                 tf.GraphKeys.UPDATE_OPS,
                 tf.assign(
                     sigma,
@@ -418,8 +418,8 @@ class GANLoss(object):
 
         if self.do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar('GANLoss/gr_average', loss_average)
-                tf.summary.scalar('GANLoss/sigma', sigma)
+                tf.compat.v1.summary.scalar('GANLoss/gr_average', loss_average)
+                tf.compat.v1.summary.scalar('GANLoss/sigma', sigma)
 
     def _repulsive_mmd_g_(self):
         """ repulsive loss
@@ -439,12 +439,12 @@ class GANLoss(object):
             self.loss_dis = self.loss_dis + self.dis_penalty
             if self.do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
+                    tf.compat.v1.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
         if self.dis_scale is not None:
             self.loss_dis = (self.loss_dis - 1.0) * self.dis_scale
             if self.do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar('GANLoss/dis_scale', self.dis_scale)
+                    tf.compat.v1.summary.scalar('GANLoss/dis_scale', self.dis_scale)
 
     def _repulsive_mmd_g_inv_disc(self):
         """ repulsive loss with inverted discriminator loss so sample encodings can better be modeled by MoG
@@ -467,12 +467,12 @@ class GANLoss(object):
             self.loss_dis = self.loss_dis + self.dis_penalty
             if self.do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
+                    tf.compat.v1.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
         if self.dis_scale is not None:
             self.loss_dis = (self.loss_dis - 1.0) * self.dis_scale
             if self.do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar('GANLoss/dis_scale', self.dis_scale)
+                    tf.compat.v1.summary.scalar('GANLoss/dis_scale', self.dis_scale)
 
     def _repulsive_mmd_g_bounded_(self):
         """ rmb loss
@@ -489,12 +489,12 @@ class GANLoss(object):
             self.loss_dis = self.loss_dis + self.dis_penalty
             if self.do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
+                    tf.compat.v1.summary.scalar('GANLoss/dis_penalty', self.dis_penalty)
         if self.dis_scale is not None:
             self.loss_dis = self.loss_dis * self.dis_scale
             if self.do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar('GANLoss/dis_scale', self.dis_scale)
+                    tf.compat.v1.summary.scalar('GANLoss/dis_scale', self.dis_scale)
 
     def _test_(self):
         self.loss_dis = 0.0
@@ -710,13 +710,13 @@ def mmd_g_bounded(
 
         if do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-                tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-                tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
-                tf.summary.scalar(scope_prefix + name + '/kxx_b', e_kxx_b)
-                tf.summary.scalar(scope_prefix + name + '/kyy_b', e_kyy_b)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx_b', e_kxx_b)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy_b', e_kyy_b)
                 if custom_weights[0] > 0:
-                    tf.summary.scalar(scope_prefix + name + '/kxy_b', e_kxy_b)
+                    tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy_b', e_kxy_b)
 
         if var_target is None:
             if custom_weights is None:
@@ -733,7 +733,7 @@ def mmd_g_bounded(
             loss_sigma = tf.square(var - var_target)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar(scope_prefix + name + '/loss_sigma', loss_sigma)
+                    tf.compat.v1.summary.scalar(scope_prefix + name + '/loss_sigma', loss_sigma)
 
             return mmd, loss_sigma
 
@@ -862,13 +862,13 @@ def rand_mmd_g_xy(
 
         if do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-                tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-                tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
-                # tf.summary.scalar(scope_prefix + name + 'omega', omega)
-                # tf.summary.histogram(scope_prefix + name + 'dxx', dist_xx)
-                # tf.summary.histogram(scope_prefix + name + 'dxy', dist_xy)
-                # tf.summary.histogram(scope_prefix + name + 'dyy', dist_yy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+                # tf.compat.v1.summary.scalar(scope_prefix + name + 'omega', omega)
+                # tf.compat.v1.summary.histogram(scope_prefix + name + 'dxx', dist_xx)
+                # tf.compat.v1.summary.histogram(scope_prefix + name + 'dxy', dist_xy)
+                # tf.compat.v1.summary.histogram(scope_prefix + name + 'dyy', dist_yy)
 
         if dist_yx is None:
             return e_kxx + e_kyy - 2.0 * e_kxy
@@ -881,7 +881,7 @@ def rand_mmd_g_xy(
                 e_kyx = matrix_mean_wo_diagonal(k_yx, m)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar(scope_prefix + name + 'kyx', e_kyx)
+                    tf.compat.v1.summary.scalar(scope_prefix + name + 'kyx', e_kyx)
             return e_kxx + e_kyy - e_kxy - e_kyx
 
 
@@ -980,18 +980,18 @@ def rand_mmd_g_xy_bounded(
 
         if do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-                tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-                tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
-                tf.summary.scalar(scope_prefix + name + '/beta', beta)
-                tf.summary.scalar(scope_prefix + name + '/kxx_b', e_kxx_b)
-                tf.summary.scalar(scope_prefix + name + '/kyy_b', e_kyy_b)
-                tf.summary.scalar(scope_prefix + name + '/kxy_b', e_kxy_b)
-                # tf.summary.scalar(scope_prefix + name + '/kxy_b', e_kxy_b)
-                # tf.summary.scalar(scope_prefix + name + 'omega', omega)
-                # tf.summary.histogram(scope_prefix + name + 'dxx', dist_xx)
-                # tf.summary.histogram(scope_prefix + name + 'dxy', dist_xy)
-                # tf.summary.histogram(scope_prefix + name + 'dyy', dist_yy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/beta', beta)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx_b', e_kxx_b)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy_b', e_kyy_b)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy_b', e_kxy_b)
+                # tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy_b', e_kxy_b)
+                # tf.compat.v1.summary.scalar(scope_prefix + name + 'omega', omega)
+                # tf.compat.v1.summary.histogram(scope_prefix + name + 'dxx', dist_xx)
+                # tf.compat.v1.summary.histogram(scope_prefix + name + 'dxy', dist_xy)
+                # tf.compat.v1.summary.histogram(scope_prefix + name + 'dyy', dist_yy)
 
         if dist_yx is None:
             return e_kxx + e_kyy - 2.0 * e_kxy, e_kxx_b - 2.0 * e_kyy_b + e_kxy_b
@@ -1007,8 +1007,8 @@ def rand_mmd_g_xy_bounded(
                 # e_kyx_b = matrix_mean_wo_diagonal(k_yx_b, m)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar(scope_prefix + name + 'kyx', e_kyx)
-                    # tf.summary.scalar(scope_prefix + name + 'kyx_b', e_kyx_b)
+                    tf.compat.v1.summary.scalar(scope_prefix + name + 'kyx', e_kyx)
+                    # tf.compat.v1.summary.scalar(scope_prefix + name + 'kyx_b', e_kyx_b)
             return e_kxx + e_kyy - e_kxy - e_kyx
 
 
@@ -1075,9 +1075,9 @@ def rand_mmd_g_xn(
 
         if do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-                tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-                tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
 
         return e_kxx + e_kyy - 2.0 * e_kxy
 
@@ -1118,7 +1118,7 @@ def get_mix_coin(
     :param loss_average_name:
     :return:
     """
-    with tf.variable_scope('coin', reuse=tf.AUTO_REUSE):
+    with tf.compat.v1.variable_scope('coin', reuse=tf.compat.v1.AUTO_REUSE):
         # calculate moving average of loss
         loss_average = moving_average_copy(loss, loss_average_name, rho=loss_average_update)
         # update mixing probability
@@ -1149,7 +1149,7 @@ def moving_average_copy(tensor, name=None, rho=0.01, initializer=None, dtype=tf.
 
     tensor_copy = tf.compat.v1.get_variable(
         name, shape=tensor.get_shape().as_list(), dtype=dtype, initializer=initializer, trainable=False)
-    tf.add_to_collection(
+    tf.compat.v1.add_to_collection(
         tf.GraphKeys.UPDATE_OPS,
         tf.assign(tensor_copy, (1.0 - rho) * tensor_copy + rho * tensor))
 
@@ -1174,11 +1174,11 @@ def moving_average_update(name, shape, tensor_update, rho=0.01, initializer=None
     tensor = tf.compat.v1.get_variable(
         name, shape=shape, dtype=dtype, initializer=initializer, trainable=False)
     if clip_values is None:
-        tf.add_to_collection(
+        tf.compat.v1.add_to_collection(
             tf.GraphKeys.UPDATE_OPS,
             tf.assign(tensor, tensor + rho * tensor_update))
     else:
-        tf.add_to_collection(
+        tf.compat.v1.add_to_collection(
             tf.GraphKeys.UPDATE_OPS,
             tf.assign(
                 tensor,
@@ -1243,9 +1243,9 @@ def mmd_g(
 
         if do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-                tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-                tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
 
         if var_target is None:
             if custom_weights is None:
@@ -1262,7 +1262,7 @@ def mmd_g(
             loss_sigma = tf.square(var - var_target)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar(scope_prefix + name + '/loss_sigma', loss_sigma)
+                    tf.compat.v1.summary.scalar(scope_prefix + name + '/loss_sigma', loss_sigma)
 
             return mmd, loss_sigma
 
@@ -1307,9 +1307,9 @@ def mmd_t(
 
         if do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-                tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-                tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
 
         # return e_kxx, e_kxy, e_kyy
         if var_target is None:
@@ -1319,7 +1319,7 @@ def mmd_t(
             loss_sigma = tf.square(var - var_target)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.scalar(scope_prefix + name + '/loss_sigma', loss_sigma)
+                    tf.compat.v1.summary.scalar(scope_prefix + name + '/loss_sigma', loss_sigma)
 
             return mmd, loss_sigma
 
@@ -1436,7 +1436,7 @@ def get_squared_dist(
             dist_xx = tf.maximum(tf.expand_dims(dx, axis=1) - 2.0 * xxt + tf.expand_dims(dx, axis=0), 0.0)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.histogram(scope_prefix + name + '/dxx', dist_xx)
+                    tf.compat.v1.summary.histogram(scope_prefix + name + '/dxx', dist_xx)
 
             if mode == 'xx':
                 return dist_xx
@@ -1450,7 +1450,7 @@ def get_squared_dist(
                 dist_xy = tf.maximum(tf.expand_dims(dx, axis=1) - 2.0 * xyt + tf.expand_dims(dy, axis=0), 0.0)
                 if do_summary:
                     with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                        tf.summary.histogram(scope_prefix + name + '/dxy', dist_xy)
+                        tf.compat.v1.summary.histogram(scope_prefix + name + '/dxy', dist_xy)
 
                 return dist_xx, dist_xy
             elif mode == 'xxxyyy':
@@ -1465,8 +1465,8 @@ def get_squared_dist(
                 dist_yy = tf.maximum(tf.expand_dims(dy, axis=1) - 2.0 * yyt + tf.expand_dims(dy, axis=0), 0.0)
                 if do_summary:
                     with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                        tf.summary.histogram(scope_prefix + name + '/dxy', dist_xy)
-                        tf.summary.histogram(scope_prefix + name + '/dyy', dist_yy)
+                        tf.compat.v1.summary.histogram(scope_prefix + name + '/dxy', dist_xy)
+                        tf.compat.v1.summary.histogram(scope_prefix + name + '/dyy', dist_yy)
 
                 return dist_xx, dist_xy, dist_yy
 
@@ -1482,7 +1482,7 @@ def get_squared_dist(
             dist_xy = tf.maximum(tf.expand_dims(dx, axis=1) - 2.0 * xyt + tf.expand_dims(dy, axis=0), 0.0)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                    tf.summary.histogram(scope_prefix + name + '/dxy', dist_xy)
+                    tf.compat.v1.summary.histogram(scope_prefix + name + '/dxy', dist_xy)
 
             return dist_xy
         else:

@@ -225,12 +225,12 @@
 #
 #         if do_summary:
 #             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-#                 tf.summary.histogram(scope_prefix + name + '/dxx', d_x_x)
-#                 tf.summary.histogram(scope_prefix + name + '/dyy', d_y_y)
-#                 tf.summary.histogram(scope_prefix + name + '/dzz', d_z_z)
-#                 tf.summary.histogram(scope_prefix + name + '/dxy', d_x_y)
-#                 tf.summary.histogram(scope_prefix + name + '/dyz', d_y_z)
-#                 tf.summary.histogram(scope_prefix + name + '/dxz', d_x_z)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/dxx', d_x_x)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/dyy', d_y_y)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/dzz', d_z_z)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/dxy', d_x_y)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/dyz', d_y_z)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/dxz', d_x_z)
 #
 #         return d_x_x, d_y_y, d_z_z, d_x_y, d_x_z, d_y_z
 
@@ -320,9 +320,9 @@
 #
 #         if do_summary:
 #             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-#                 tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-#                 tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-#                 tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
 #
 #         # return e_kxx, e_kxy, e_kyy
 #         return e_kxx + e_kyy - 2.0 * e_kxy
@@ -382,9 +382,9 @@
 #
 #         if do_summary:
 #             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-#                 tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-#                 tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-#                 tf.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
 #
 #         return e_kxx + e_kyy - 2.0 * e_kxy
 
@@ -469,11 +469,11 @@
 #
 #         if do_summary:
 #             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-#                 tf.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-#                 tf.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-#                 tf.summary.scalar(scope_prefix + name + '/kxy_0', e_kxy_0)
-#                 tf.summary.scalar(scope_prefix + name + '/kxy_1', e_kxy_1)
-#                 # tf.summary.scalar(scope_prefix + name + 'omega', omega)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy_0', e_kxy_0)
+#                 tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy_1', e_kxy_1)
+#                 # tf.compat.v1.summary.scalar(scope_prefix + name + 'omega', omega)
 #
 #         return e_kxx + e_kyy - e_kxy_0 - e_kxy_1
 
@@ -552,7 +552,7 @@
 #
 #         if do_summary:
 #             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-#                 tf.summary.histogram('Jaco_sfn', jaco_sfn)
+#                 tf.compat.v1.summary.histogram('Jaco_sfn', jaco_sfn)
 #
 #         return jaco_sfn
 
@@ -605,8 +605,8 @@
 #
 #         if do_summary:
 #             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-#                 tf.summary.histogram(scope_prefix + name + '/kzx', e_kx)
-#                 tf.summary.histogram(scope_prefix + name + '/kzy', e_ky)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/kzx', e_kx)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/kzy', e_ky)
 #
 #         return witness
 
@@ -664,7 +664,7 @@
 #
 #         if do_summary:
 #             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-#                 tf.summary.histogram(scope_prefix + name + '/kzx', e_kx)
-#                 tf.summary.histogram(scope_prefix + name + '/kzy', e_ky)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/kzx', e_kx)
+#                 tf.compat.v1.summary.histogram(scope_prefix + name + '/kzy', e_ky)
 #
 #         return witness

@@ -171,7 +171,7 @@
 #     elif initializer == 'xavier':
 #         initializer_fun = xavier_init(fan_size[0], fan_size[1], weight_scale=weight_scale)
 #     elif initializer == 'normal_in':
-#         initializer_fun = tf.random_normal(fan_size, mean=0.0, stddev=tf.divide(1.0, tf.sqrt(fan_size[0])),
+#         initializer_fun = tf.random.normal(fan_size, mean=0.0, stddev=tf.divide(1.0, tf.sqrt(fan_size[0])),
 #                                            dtype=tf.float32)
 #     else:
 #         raise AttributeError('Initialization method not supported.')

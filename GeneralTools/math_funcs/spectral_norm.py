@@ -308,7 +308,7 @@ class SpectralNorm(object):
         else:
             kernel_shape = kernel.get_shape().as_list()
 
-        with tf.variable_scope(self.name_scope, reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope(self.name_scope, reuse=tf.compat.v1.AUTO_REUSE):
             # In some cases, the spectral norm can be easily calculated.
             sigma = None
             if self.sn_def['op'] in {'d', 'project'} and 1 in kernel_shape:
@@ -353,7 +353,7 @@ class SpectralNorm(object):
                     body=lambda _1, x, i: self._power_iter_(x, step=i),
                     loop_vars=(sigma_init, self.x, tf.constant(0, dtype=tf.int32)))
                 # update the random input
-                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, tf.assign(self.x, x_update))
+                tf.compat.v1.add_to_collection(tf.GraphKeys.UPDATE_OPS, tf.assign(self.x, x_update))
 
         return sigma
 

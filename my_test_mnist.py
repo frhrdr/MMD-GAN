@@ -35,7 +35,7 @@ def main():
 
   debug_mode = False
   optimizer = 'adam'
-  num_instance = 60000
+  num_instance = 50000
   save_per_step = 20000  # 12500
   batch_size = 64
   num_class = 0

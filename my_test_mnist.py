@@ -93,8 +93,7 @@ def main():
               filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
               real_sample=False, do_embedding=False, do_sprite=True)
       if debug_mode is False:  # v1 - inception score and fid, ms_ssim - MS-SSIM
-          scores = mdl.mdl_score(
-              filename, sub_folder, batch_size, num_batch=781, model='v1')
+          scores = mdl.mdl_score(filename, sub_folder, batch_size, num_batch=781, model='v1', grey_scale=True)
           print('Epoch {} with scores: {}'.format(i, scores))
 
   if mog_model is not None:

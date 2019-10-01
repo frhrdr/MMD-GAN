@@ -544,7 +544,8 @@ class SNGan(object):
                     labels=labels, images=x_as_image, mesh_num=mesh_num,
                     if_invert=if_invert, image_format=FLAGS.IMAGE_FORMAT)
 
-    def mdl_score(self, filename, sub_folder, batch_size, num_batch=10, model='v1', ckpt_file=None, num_threads=7):
+    def mdl_score(self, filename, sub_folder, batch_size, num_batch=10, model='v1', ckpt_file=None, num_threads=7,
+                  grey_scale=False):
         """ This function calculates the scores for the real and generated samples
 
         :param filename:
@@ -574,8 +575,12 @@ class SNGan(object):
 
             metric = GenerativeModelMetric(model=model)
             if model == 'v1':
+                d_b, g_b = data_batch['x'], gen_batch['x']
+                if grey_scale:  # copy channel 3 times to fake RGB
+                    d_b = tf.compat.v1.tile(d_b, [1, 3, 1, 1])
+                    g_b = tf.compat.v1.tile(g_b, [1, 3, 1, 1])
                 scores = metric.inception_score_and_fid_v1(
-                    data_batch['x'], gen_batch['x'], num_batch=num_batch, ckpt_folder=ckpt_folder, ckpt_file=ckpt_file)
+                    d_b, g_b, num_batch=num_batch, ckpt_folder=ckpt_folder, ckpt_file=ckpt_file)
             elif model == 'swd':  # swd gives nan somehow
                 scores = metric.sliced_wasserstein_distance(
                     data_batch['x'], gen_batch['x'], num_batch=num_batch, ckpt_folder=ckpt_folder, ckpt_file=ckpt_file)

@@ -933,7 +933,8 @@ class ReadTFRecords(object):
                 FLAGS.print('Num_epoch set: {} epochs.'.format(num_epoch))
                 self.dataset = self.dataset.repeat(self.num_epoch)
 
-            self.iterator = self.dataset.make_one_shot_iterator()
+            # self.iterator = self.dataset.make_one_shot_iterator()
+            self.iterator = tf.compat.v1.data.make_one_shot_iterator(self.dataset)
             self.scheduled = True
 
     ###################################################################
@@ -1031,7 +1032,7 @@ class SimData(object):
         """
         w = tf.random_normal([self.d, self.D], mean=0.0, stddev=1.0)
         s, u, v = tf.svd(w)
-        return tf.get_variable(
+        return tf.compat.v1.get_variable(
             'W', [self.d, self.D], dtype=tf.float32, initializer=tf.matmul(u, v, transpose_b=True), trainable=False)
 
     def multivariate_normal(self, mu, std_or_cov):

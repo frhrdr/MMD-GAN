@@ -174,7 +174,7 @@ class SpectralNorm(object):
             else:
                 raise NotImplementedError('{}: {} is not implemented.'.format(self.name_in_err, self.sn_def['op']))
 
-            self.x = tf.get_variable(
+            self.x = tf.compat.v1.get_variable(
                 'in_rand', shape=x_shape, dtype=tf.float32,
                 initializer=tf.truncated_normal_initializer(), trainable=False)
 

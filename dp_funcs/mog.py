@@ -40,13 +40,13 @@ class MoG:
     self.loss_list = []
 
   def define_tfp_mog_vars(self):
-    self.pi = tf.get_variable('mog_pi', dtype=tf.float32,
-                              initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
+    self.pi = tf.compat.v1.get_variable('mog_pi', dtype=tf.float32,
+                                        initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
     print('-------made a pi variable:', self.pi)
-    self.mu = tf.get_variable('mog_mu', dtype=tf.float32,
-                              initializer=tf.random.normal((self.n_clusters, self.d_enc)))
-    self.sigma = tf.get_variable('mog_sigma', dtype=tf.float32,
-                                 initializer=tf.eye(self.d_enc, batch_shape=(self.n_clusters,)))
+    self.mu = tf.compat.v1.get_variable('mog_mu', dtype=tf.float32,
+                                        initializer=tf.random.normal((self.n_clusters, self.d_enc)))
+    self.sigma = tf.compat.v1.get_variable('mog_sigma', dtype=tf.float32,
+                                           initializer=tf.eye(self.d_enc, batch_shape=(self.n_clusters,)))
 
     tfp_cat = tfp.distributions.Categorical(probs=self.pi)
     tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)

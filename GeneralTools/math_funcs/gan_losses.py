@@ -393,7 +393,7 @@ class GANLoss(object):
         :return:
         """
         with tf.variable_scope('ins_noise'):
-            sigma = tf.get_variable(
+            sigma = tf.compat.v1.get_variable(
                 'sigma', shape=[], dtype=tf.float32, initializer=tf.zeros_initializer, trainable=False)
             stddev = tf.log(sigma + 1.0)  # to slow down sigma increase
             noise_gen = tf.random_normal(
@@ -1147,7 +1147,7 @@ def moving_average_copy(tensor, name=None, rho=0.01, initializer=None, dtype=tf.
     if name is None:
         name = get_tensor_name(tensor) + '_copy'
 
-    tensor_copy = tf.get_variable(
+    tensor_copy = tf.compat.v1.get_variable(
         name, shape=tensor.get_shape().as_list(), dtype=dtype, initializer=initializer, trainable=False)
     tf.add_to_collection(
         tf.GraphKeys.UPDATE_OPS,
@@ -1171,7 +1171,7 @@ def moving_average_update(name, shape, tensor_update, rho=0.01, initializer=None
     if initializer is None:
         initializer = tf.zeros_initializer
 
-    tensor = tf.get_variable(
+    tensor = tf.compat.v1.get_variable(
         name, shape=shape, dtype=dtype, initializer=initializer, trainable=False)
     if clip_values is None:
         tf.add_to_collection(

@@ -513,53 +513,53 @@ class ParametricOperation(object):
 
             if self.design['op'] in {'d', 'c', 'tc', 'k', 'project'}:
                 # dense, conv, transpose conv, scalar weight, projection weight
-                self.kernel = tf.get_variable(
+                self.kernel = tf.compat.v1.get_variable(
                     'kernel', self.kernel_shape, dtype=tf.float32, initializer=kernel_init, trainable=True)
             elif self.design['op'] == 'sc':  # separate conv layer
                 depthwise_shape = self.kernel_shape[0]
                 pointwise_shape = self.kernel_shape[1]
                 self.kernel = [
-                    tf.get_variable(
+                    tf.compat.v1.get_variable(
                         'depthwise_kernel', depthwise_shape,
                         dtype=tf.float32, initializer=kernel_init, trainable=True),
-                    tf.get_variable(
+                    tf.compat.v1.get_variable(
                         'pointwise_kernel', pointwise_shape,
                         dtype=tf.float32, initializer=kernel_init, trainable=True)]
             elif self.design['op'] in {'b', 'bias'}:
                 # if bias is initialized as 0, the CNN output at 1st iter could be at e-15 level.
                 # otherwise, the CNN output would be dominated by bias, which may cause problem if
                 # some operation depends on the
-                self.kernel = tf.get_variable(
+                self.kernel = tf.compat.v1.get_variable(
                     'bias', shape=self.kernel_shape, dtype=tf.float32, trainable=True,
                     initializer=bias_initializer(1e-5))
             elif self.design['op'] in {'c_bias', 'cb'}:
                 # class_wise bias
-                self.kernel = tf.get_variable(
+                self.kernel = tf.compat.v1.get_variable(
                     'c_bias', shape=self.kernel_shape, dtype=tf.float32, trainable=True,
                     initializer=bias_initializer(1e-5))
             elif self.design['op'] in {'bcb'}:
-                b_kernel = tf.get_variable(
+                b_kernel = tf.compat.v1.get_variable(
                     'bias', shape=self.kernel_shape[0], dtype=tf.float32, trainable=True,
                     initializer=bias_initializer(1e-5))
                 # class_wise bias
-                cb_kernel = tf.get_variable(
+                cb_kernel = tf.compat.v1.get_variable(
                     'c_bias', shape=self.kernel_shape[1], dtype=tf.float32, trainable=True,
                     initializer=tf.zeros_initializer())
                 self.kernel = [b_kernel, cb_kernel]
             elif self.design['op'] in {'cbn'}:
                 # conditional batch normalization and conditional kernel and bias
                 self.kernel = [
-                    tf.get_variable(
+                    tf.compat.v1.get_variable(
                         'scale', self.kernel_shape,
                         dtype=tf.float32, initializer=tf.ones_initializer, trainable=True),
-                    tf.get_variable(
+                    tf.compat.v1.get_variable(
                         'offset', self.kernel_shape,
                         dtype=tf.float32, initializer=bias_initializer(1e-5), trainable=True)]
             elif self.design['op'] in {'dcd', 'dck', 'cck'}:
                 self.kernel = [
-                    tf.get_variable(
+                    tf.compat.v1.get_variable(
                         'kernel', self.kernel_shape[0], dtype=tf.float32, initializer=kernel_init, trainable=True),
-                    tf.get_variable(
+                    tf.compat.v1.get_variable(
                         'c_kernel', self.kernel_shape[1], dtype=tf.float32,
                         initializer=tf.zeros_initializer(), trainable=True)]
 

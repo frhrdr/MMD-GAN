@@ -275,7 +275,7 @@ def global_step_config(name='global_step'):
     """ This function is a wrapper for global step
 
     """
-    global_step = tf.get_variable(
+    global_step = tf.compat.v1.get_variable(
         name=name,
         shape=[],
         dtype=tf.int32,
@@ -332,7 +332,7 @@ def opt_config(
         learning_rate = tf.constant(initial_lr)
         # opt_op = tf.train.AdamOptimizer(
         #     learning_rate, beta1=0.9, beta2=0.99, epsilon=1e-8, name='Adam'+name_suffix)
-        opt_op = tf.train.AdamOptimizer(
+        opt_op = tf.compat.v1.train.AdamOptimizer(
             learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='Adam' + name_suffix)
         FLAGS.print('Adam Optimizer is used.')
     elif optimizer in ['RMSProp', 'rmsprop']:

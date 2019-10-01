@@ -28,8 +28,9 @@ def main():
          {'name': 'l5',   'out': 64, 'op': 'c', 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'out_reshape': [7*7*64]},
          {'name': 'l6_s', 'out': 4,  'op': 'd', 'act_k': act_k, 'bias': 'b', 'w_nm': w_nm}]
 
+  code_dim = 32
   architecture = {'input': [(1, 28, 28)],
-                  'code': [(32, 'linear')],
+                  'code': [(code_dim, 'linear')],
                   'generator': gen,
                   'discriminator': dis}
 
@@ -43,7 +44,7 @@ def main():
   num_threads = 7
 
   # random code to test model
-  code_x = np.random.randn(400, 128).astype(np.float32)
+  code_x = np.random.randn(400, code_dim).astype(np.float32)
   # to show the model improvements over iterations, consider save the random codes and use later
   # np.savetxt('MMD-GAN/z_128.txt', z_batch, fmt='%.6f', delimiter=',')
   # code_x = np.genfromtxt('MMD-GAN/z_128.txt', delimiter=',', dtype=np.float32)

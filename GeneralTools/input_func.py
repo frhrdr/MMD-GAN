@@ -594,11 +594,14 @@ def my_read_tfrecord(filename, num_features, batch_size, num_epochs, num_threads
     reader = tf.TFRecordReader()
     _, value = reader.read(filename_queue)
     # decode examples
-    instances = tf.parse_single_example(
+    # instances = tf.parse_single_example(
+    instances = tf.io.parse_single_example(
         value,
         features={
-            'x': tf.FixedLenFeature([num_features], tf.float32),
-            'y': tf.FixedLenFeature([], tf.int64)
+            # 'x': tf.FixedLenFeature([num_features], tf.float32),
+            # 'y': tf.FixedLenFeature([], tf.int64)
+            'x': tf.io.FixedLenFeature([num_features], tf.float32),
+            'y': tf.io.FixedLenFeature([], tf.int64)
         })
     features, label = instances['x'], instances['y']
     # create batch
@@ -785,17 +788,22 @@ class ReadTFRecords(object):
         """
         # configure feature and label length
         # It is crucial that for tf.string, the length is not specified, as the data is stored as a single string!
-        x_config = tf.FixedLenFeature([], tf.string) \
-            if self.x_dtype == tf.string else tf.FixedLenFeature([self.num_features], self.x_dtype)
+        # x_config = tf.FixedLenFeature([], tf.string) \
+        #     if self.x_dtype == tf.string else tf.FixedLenFeature([self.num_features], self.x_dtype)
+        x_config = tf.io.FixedLenFeature([], tf.string) \
+            if self.x_dtype == tf.string else tf.io.FixedLenFeature([self.num_features], self.x_dtype)
         if self.num_labels == 0:
             proto_config = {'x': x_config}
         else:
-            y_config = tf.FixedLenFeature([], tf.string) \
-                if self.y_dtype == tf.string else tf.FixedLenFeature([self.num_labels], self.y_dtype)
+            # y_config = tf.FixedLenFeature([], tf.string) \
+            #     if self.y_dtype == tf.string else tf.FixedLenFeature([self.num_labels], self.y_dtype)
+            y_config = tf.io.FixedLenFeature([], tf.string) \
+                if self.y_dtype == tf.string else tf.io.FixedLenFeature([self.num_labels], self.y_dtype)
             proto_config = {'x': x_config, 'y': y_config}
 
         # decode examples
-        datum = tf.parse_single_example(example_proto, features=proto_config)
+        # datum = tf.parse_single_example(example_proto, features=proto_config)
+        datum = tf.io.parse_single_example(example_proto, features=proto_config)
         if self.x_dtype == tf.string:  # if input is string / bytes, decode it to float32
             # first decode data to uint8, as data is stored in this way
             datum['x'] = tf.decode_raw(datum['x'], tf.uint8)

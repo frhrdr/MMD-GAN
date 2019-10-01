@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 import numpy as np
 from GeneralTools.misc_fun import FLAGS
 FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'mnist_NCHW/'

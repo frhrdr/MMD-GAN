@@ -12,7 +12,7 @@ from dp_funcs.net_picker import NetPicker
 
 
 def main():
-  filename = 'mnist_basic'
+  filename = 'mnist_basic_rmb'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   gen = [{'name': 'l1', 'out': 64 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [64, 7, 7]},

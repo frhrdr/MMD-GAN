@@ -61,17 +61,18 @@ class MoG:
 
     if self.cov_type == 'full':
       tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
+      self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc, self.d_enc))
     elif self.cov_type == 'diag':
       tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma)
+      self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
     else:
       raise ValueError
 
-    self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat,
-                                                       components_distribution=tfp_nrm)
+    self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat, components_distribution=tfp_nrm)
 
     self.pi_ph = tf.placeholder(tf.float32, shape=(self.n_clusters,))
     self.mu_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
-    self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc, self.d_enc))
+
     self.param_update_op = tf.group(tf.assign(self.pi, self.pi_ph),
                                     tf.assign(self.mu, self.mu_ph),
                                     tf.assign(self.sigma, self.sigma_ph))

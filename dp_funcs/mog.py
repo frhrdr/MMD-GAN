@@ -10,6 +10,7 @@ class MoG:
   def __init__(self, n_dims, n_clusters, linked_gan, enc_batch_size, n_data_samples, filename, cov_type='full'):
     self.d_enc = n_dims
     self.n_clusters = n_clusters
+    self.cov_type = cov_type
 
     self.pi = None
     self.mu = None
@@ -45,11 +46,26 @@ class MoG:
     print('-------made a pi variable:', self.pi)
     self.mu = tf.compat.v1.get_variable('mog_mu', dtype=tf.float32,
                                         initializer=tf.random.normal((self.n_clusters, self.d_enc)))
+
+    if self.cov_type == 'full':
+      sig_init = tf.eye(self.d_enc, batch_shape=(self.n_clusters,))
+    elif self.cov_type == 'diag':
+      sig_init = tf.ones((self.d_enc, self.n_clusters))
+    else:
+      raise ValueError
+
     self.sigma = tf.compat.v1.get_variable('mog_sigma', dtype=tf.float32,
-                                           initializer=tf.eye(self.d_enc, batch_shape=(self.n_clusters,)))
+                                           initializer=sig_init)
 
     tfp_cat = tfp.distributions.Categorical(probs=self.pi)
-    tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
+
+    if self.cov_type == 'full':
+      tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
+    elif self.cov_type == 'diag':
+      tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma)
+    else:
+      raise ValueError
+
     self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat,
                                                        components_distribution=tfp_nrm)
 

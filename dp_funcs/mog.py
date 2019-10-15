@@ -50,7 +50,7 @@ class MoG:
     if self.cov_type == 'full':
       sig_init = tf.eye(self.d_enc, batch_shape=(self.n_clusters,))
     elif self.cov_type == 'diag':
-      sig_init = tf.ones((self.d_enc, self.n_clusters))
+      sig_init = tf.ones((self.n_clusters, self.d_enc))
     else:
       raise ValueError
 

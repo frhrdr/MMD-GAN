@@ -10,7 +10,7 @@ from dp_funcs.net_picker import NetPicker
 
 
 def main():
-  filename = 'cifar_logging4'
+  filename = 'cifar_logging5_diag'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   architecture = {'input': [(3, 32, 32)],
@@ -93,7 +93,7 @@ def main():
   enc_batch_size = 200
   mog_model = MoG(n_dims=16, n_clusters=20, linked_gan=mdl,
                   enc_batch_size=enc_batch_size, n_data_samples=num_instance,
-                  filename=filename)
+                  filename=filename, cov_type='diag')
   mdl.register_mog(mog_model, train_with_mog=False)
   # mog_model = None
 

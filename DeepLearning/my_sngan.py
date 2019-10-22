@@ -97,7 +97,6 @@ class SNGan(object):
         if update_loss_type is not False:
             self.loss_type = update_loss_type
 
-
     def init_net(self):
         """ This function initializes the network
 

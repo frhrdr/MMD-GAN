@@ -80,7 +80,7 @@ def main():
       num_summary_image=8, image_transpose=False)
 
   mog_model = MoG(n_dims=4, n_clusters=20, linked_gan=mdl, filename=filename, cov_type='diag')
-  mdl.register_mog(mog_model, train_with_mog=True, repeat_data_once=True, update_loss_type=False)
+  mdl.register_mog(mog_model, train_with_mog=False, repeat_data_once=True, update_loss_type=False)
   # mdl.register_mog(mog_model)
 
   for i in range(n_iterations):

@@ -11,7 +11,7 @@ from dp_funcs.mog import MoG
 
 
 def main():
-  filename = 'mnist_mog_rmb_2'
+  filename = 'mnist_mog_rep_2'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   gen = [{'name': 'l1', 'out': 64 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [64, 7, 7]},
@@ -79,7 +79,7 @@ def main():
       optimizer=optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  mog_model = MoG(n_dims=4, n_clusters=20, linked_gan=mdl,
+  mog_model = MoG(n_dims=4, n_clusters=10, linked_gan=mdl,
                   enc_batch_size=200, n_data_samples=num_instance,
                   filename=filename, cov_type='full')
   mdl.register_mog(mog_model, train_with_mog=True, repeat_data_once=True, update_loss_type=False)

@@ -23,8 +23,8 @@ class MoG:
     self.encoding = None
     self.batch_encoding = None
 
-    self.max_iter = 100
-    self.print_convergence_warning = True
+    self.max_iter = 10
+    self.print_convergence_warning = False
     self.warm_start = True
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples

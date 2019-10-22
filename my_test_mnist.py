@@ -11,7 +11,7 @@ from dp_funcs.mog import MoG
 
 
 def main():
-  filename = 'mnist_mog_rmb'
+  filename = 'mnist_mog_rmb_2'
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
   gen = [{'name': 'l1', 'out': 64 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [64, 7, 7]},
@@ -71,7 +71,7 @@ def main():
   agent = Agent(
       filename, sub_folder, load_ckpt=True, do_trace=False,
       do_save=True, debug_mode=debug_mode, debug_step=400,
-      query_step=1000, log_device=False, imbalanced_update=imbalanced_update,
+      query_step=2, log_device=False, imbalanced_update=imbalanced_update,
       print_loss=True)
 
   mdl = SNGan(

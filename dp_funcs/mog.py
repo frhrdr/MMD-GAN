@@ -112,6 +112,7 @@ class MoG:
     if self.batch_encoding is None:
       self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch)
     encodings_mat = session.run(self.batch_encoding)['x']
+    print('fit')
     self.fit(encodings_mat, session)
 
   def collect_encodings(self, session):

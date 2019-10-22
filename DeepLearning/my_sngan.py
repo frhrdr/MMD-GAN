@@ -203,24 +203,24 @@ class SNGan(object):
             gen_batch = self.Gen(code_batch, is_training=is_training)
 
             print('----------- defining gpu task')
+            dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
+            s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
             if self.mog_model is None or self.train_with_mog is False:
                 print('----------- mog not found or turned off')
-                dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
-                s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
-                s_x = tf.Print(s_x, [tf.norm(s_x), tf.reduce_mean(s_x), tf.reduce_max(s_x)], message='x_enc')
+                s_mog = None
             else:
                 print('----------- mog found')
-                s_gen = self.Dis(gen_batch, is_training=True)['x']
-                s_x = self.mog_model.sample_batch(batch_size)
-                s_x = tf.Print(s_x, [tf.norm(s_x), tf.reduce_mean(s_x), tf.reduce_max(s_x)], message='mog_enc')
+                s_mog = self.mog_model.sample_batch(batch_size)
+                # s_mog = tf.Print(s_x, [tf.norm(s_x), tf.reduce_mean(s_x), tf.reduce_max(s_x)], message='mog_enc')
             # loss function
             gan_losses = GANLoss(self.do_summary)
             if self.loss_type in {'rep', 'rmb'}:
                 loss_gen, loss_dis = gan_losses.apply(
-                    s_gen, s_x, self.loss_type, batch_size=batch_size, d=self.score_size, rep_weights=self.rep_weights)
+                    s_gen, s_x, score_mog=s_mog,
+                    loss_type=self.loss_type, batch_size=batch_size, d=self.score_size, rep_weights=self.rep_weights)
             else:
                 loss_gen, loss_dis = gan_losses.apply(
-                    s_gen, s_x, self.loss_type, batch_size=batch_size, d=self.score_size)
+                    s_gen, s_x, score_mog=s_mog, loss_type=self.loss_type, batch_size=batch_size, d=self.score_size)
 
             # form loss list
             # sigma = [layer.sigma for layer in self.Dis.net.layers]

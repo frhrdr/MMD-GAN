@@ -163,8 +163,8 @@ class MoG:
     session.run(self.param_update_op, feed_dict=feed_dict)
 
     # DEBUG
-    mu_val = session.run(self.mu)
-    print('== mu comp:', np.linalg.norm(mu_val), np.linalg.norm(self.scikit_mog.means_))
+    # mu_val = session.run(self.mu)
+    # print('== mu comp:', np.linalg.norm(mu_val), np.linalg.norm(self.scikit_mog.means_))
 
   def sample_batch(self, batch_size):
     return self.tfp_mog.sample(batch_size)

@@ -446,23 +446,25 @@ class GANLoss(object):
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
                     tf.compat.v1.summary.scalar('GANLoss/dis_scale', self.dis_scale)
 
-    def _repulsive_mmd_g_with_gmm(self, extra_loss_vars):
+    def _repulsive_mmd_g_mog_approx(self):
         """ repulsive loss
 
         :return:
         """
-
-        pi, mu, sig, lambda_mu, lambda_sig = [extra_loss_vars[k] for k in
-                                              ['pi', 'mu', 'sig', 'lambda_mu', 'lambda_sig']]
-        # calculate pairwise distance
+        # DIS LOSS AS USUAL
         dist_gg, dist_gd, dist_dd = get_squared_dist(
             self.score_gen, self.score_data, z_score=False, do_summary=self.do_summary)
-
-        # gmm_term = lambda_mu *
-
-        self.loss_gen, self.loss_dis = mmd_g(
+        _, self.loss_dis = mmd_g(
             dist_gg, dist_gd, dist_dd, self.batch_size, sigma=1.0,
             name='mmd_g', do_summary=self.do_summary, scope_prefix='', custom_weights=self.repulsive_weights)
+
+        # GEN LOSS WITH MOG SAMPLES
+        dist_gg, dist_gd, dist_dd = get_squared_dist(
+            self.score_gen, self.score_mog, z_score=False, do_summary=self.do_summary)
+        self.loss_gen, _ = mmd_g(
+            dist_gg, dist_gd, dist_dd, self.batch_size, sigma=1.0,
+            name='mmd_g_mog', do_summary=self.do_summary, scope_prefix='', custom_weights=self.repulsive_weights)
+
         if self.dis_penalty is not None:
             self.loss_dis = self.loss_dis + self.dis_penalty
             if self.do_summary:
@@ -528,7 +530,7 @@ class GANLoss(object):
         self.loss_dis = 0.0
         self.loss_gen = 0.0
 
-    def __call__(self, score_gen, score_data, loss_type='logistic', **kwargs):
+    def __call__(self, score_gen, score_data, score_mog=None, loss_type='logistic', **kwargs):
         """  This function calls one of the loss functions.
 
         :param score_gen:
@@ -540,6 +542,7 @@ class GANLoss(object):
         # IO and hyperparameters
         self.score_gen = score_gen  # ------- apparently these are just the batch embedding. what a misleading name..
         self.score_data = score_data
+        self.score_mog = score_mog
         if 'batch_size' in kwargs:
             self.batch_size = kwargs['batch_size']
         if 'd' in kwargs:
@@ -620,7 +623,10 @@ class GANLoss(object):
         #         self._rand_g_instance_noise_()
         # el-
         if loss_type in {'rep', 'rep_mmd_g', 'rep_gp', 'rep_ds'}:
-            self._repulsive_mmd_g_()
+            if self.score_mog is None:
+                self._repulsive_mmd_g_()
+            else:
+                self._repulsive_mmd_g_mog_approx()
         elif loss_type in {'rmb', 'rep_b', 'rep_mmd_b', 'rmb_gp', 'rmb_ds'}:
             self._repulsive_mmd_g_bounded_()
         elif loss_type == 'test':
@@ -639,8 +645,8 @@ class GANLoss(object):
 
         return self.loss_gen, self.loss_dis
 
-    def apply(self, score_gen, score_data, loss_type='logistic', **kwargs):
-        return self.__call__(score_gen, score_data, loss_type=loss_type, **kwargs)
+    def apply(self, score_gen, score_data, score_mog=False, loss_type='logistic', **kwargs):
+        return self.__call__(score_gen, score_data, score_mog=score_mog, loss_type=loss_type, **kwargs)
 
     def get_register(self):
         """ This function returns the registered tensor

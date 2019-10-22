@@ -227,7 +227,7 @@ class MySession(object):
                 nb = mog_model.linked_gan.data_batch
                 nb1 = self.sess.run(nb)
                 nb2 = self.sess.run(nb)
-                print(np.sum(nb1[0]), np.sum(nb2[0, :]))
+                print(np.sum(nb1['x']), np.sum(nb2['x']))
 
                 # update MoG with current Dis params and current batch
                 if mog_model is not None and not mog_model.linked_gan.train_with_mog:

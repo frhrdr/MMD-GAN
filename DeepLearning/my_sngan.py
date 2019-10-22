@@ -87,10 +87,15 @@ class SNGan(object):
         # initialize MoG
         self.mog_model = None
         self.train_with_mog = None
+        self.repeat_for_mog = False
+        self.data_batch = None
 
-    def register_mog(self, mog_model, train_with_mog):
+    def register_mog(self, mog_model, train_with_mog, update_loss_type=False):
         self.mog_model = mog_model
         self.train_with_mog = train_with_mog
+        if update_loss_type is not False:
+            self.loss_type = update_loss_type
+            self.repeat_for_mog = True
 
     def init_net(self):
         """ This function initializes the network
@@ -258,7 +263,8 @@ class SNGan(object):
             gen_batch = self.Gen(code_batch, is_training=is_training)
             return gen_batch
 
-    def get_data_batch(self, filename, batch_size, file_repeat=1, num_threads=7, shuffle_file=False, name='data'):
+    def get_data_batch(self, filename, batch_size, file_repeat=1, num_threads=7, shuffle_file=False, name='data',
+                       repeat_for_gmm=False):
         """ This function reads image data
 
         :param filename:
@@ -281,13 +287,14 @@ class SNGan(object):
             # training_data = PreloadGPU(filename, num_instance, self.D, num_threads=num_threads)
             # convert matrix data to image tensor and scale them to [-1, 1]
             training_data.shape2image(self.channels, self.height, self.width)
-            data_batch = training_data.next_batch(self.sample_same_class)
+            data_batch = training_data.next_batch(self.sample_same_class, repeat_for_gmm=repeat_for_gmm)
             # convert x_combo to grey scale images
             # data_batch = tf.image.rgb_to_grayscale(data_batch)  # [batch_size, height, width, 1]
             # for dataset like MNIST, image needs to be transposed
             if self.perm is not None:
                 data_batch['x'] = tf.transpose(data_batch['x'], perm=self.perm)
 
+            self.data_batch = data_batch
         return data_batch
 
     ###################################################################
@@ -336,7 +343,8 @@ class SNGan(object):
             self.init_net()
             # get next batch
             data_batch = self.get_data_batch(
-                filename, batch_size, file_repeat, num_threads, shuffle_file, 'data_tr')
+                filename, batch_size, file_repeat, num_threads, shuffle_file, 'data_tr',
+                repeat_for_gmm=self.repeat_for_mog)
             FLAGS.print('Shape of input batch: {}'.format(data_batch['x'].get_shape().as_list()))
 
             # setup training process
@@ -407,7 +415,7 @@ class SNGan(object):
             else:
                 summary_image_op = None
 
-            # run the session
+            # run the session -----------------------------------------------------------GETTING CLOSER TO TRAINING LOOP
             FLAGS.print('loss_list name: {}.'.format(self.loss_names))
             agent.train(
                 op_list, loss_list,

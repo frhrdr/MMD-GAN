@@ -223,6 +223,10 @@ class MySession(object):
         start_time = time.time()
         if imbalanced_update is None:
             for step in range(max_step):
+                # update MoG with current Dis params and current batch
+                if mog_model is not None and not mog_model.linked_gan.train_with_mog:
+                    mog_model.update_by_batch(self, self.sess)
+
                 # update the model
                 loss_value, _, _, global_step_value = self.sess.run(
                     [loss_list, op_list, extra_update_ops, global_step])

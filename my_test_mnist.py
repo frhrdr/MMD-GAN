@@ -8,7 +8,6 @@ FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'mnist_NCHW/'
 from GeneralTools.graph_funcs.agent import Agent
 from DeepLearning.my_sngan import SNGan
 from dp_funcs.mog import MoG
-from dp_funcs.net_picker import NetPicker
 
 
 def main():
@@ -18,15 +17,12 @@ def main():
   gen = [{'name': 'l1', 'out': 64 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [64, 7, 7]},
          {'name': 'l2_up',  'out': 32, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
          {'name': 'l3_up',  'out': 16, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
-         # {'name': 'l4_up',  'out': 16, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
          {'name': 'l4_t28', 'out': 1, 'act': 'tanh'}]
 
   dis = [{'name': 'l1_f28', 'out': 16, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1},
          {'name': 'l2_ds',  'out': 32, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2},
          {'name': 'l3',     'out': 32, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1},
          {'name': 'l4_ds',  'out': 64, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2},
-         # {'name': 'l5',     'out': 256, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1},
-         # {'name': 'l6_ds',  'out': 512, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2},
          {'name': 'l5',   'out': 64, 'op': 'c', 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'out_reshape': [7*7*64]},
          {'name': 'l6_s', 'out': 4,  'op': 'd', 'act_k': act_k, 'bias': 'b', 'w_nm': w_nm}]
 
@@ -44,6 +40,7 @@ def main():
   num_class = 0
   end_lr = 1e-7
   num_threads = 7
+  n_iterations = 1  # 8
 
   # random code to test model
   code_x = np.random.randn(400, code_dim).astype(np.float32)
@@ -82,10 +79,11 @@ def main():
       optimizer=optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  mog_model = None
+  mog_model = MoG(n_dims=4, n_clusters=20, linked_gan=mdl, filename=filename, cov_type='diag')
+  mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
   # mdl.register_mog(mog_model)
 
-  for i in range(8):
+  for i in range(n_iterations):
       mdl.training(
           filename, agent, num_instance,
           lr_list, end_lr=end_lr, max_step=save_per_step,

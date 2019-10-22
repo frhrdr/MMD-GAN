@@ -6,7 +6,6 @@ FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'cifar_NCHW/'
 from GeneralTools.graph_funcs.agent import Agent
 from DeepLearning.my_sngan import SNGan
 from dp_funcs.mog import MoG
-from dp_funcs.net_picker import NetPicker
 
 
 def main():
@@ -94,7 +93,7 @@ def main():
   mog_model = MoG(n_dims=16, n_clusters=20, linked_gan=mdl,
                   enc_batch_size=enc_batch_size, n_data_samples=num_instance,
                   filename=filename, cov_type='diag')
-  mdl.register_mog(mog_model, train_with_mog=False)
+  mdl.register_mog(mog_model, train_with_mog=False, update_loss_type=False)
   # mog_model = None
 
   for i in range(n_iterations):
@@ -110,8 +109,7 @@ def main():
               real_sample=False, do_embedding=False, do_sprite=True)
       if False and debug_mode is False:  # v1 - inception score and fid, ms_ssim - MS-SSIM
           print('running mdl_score')
-          scores = mdl.mdl_score(
-              filename, sub_folder, batch_size, num_batch=781, model='v1')
+          scores = mdl.mdl_score(filename, sub_folder, batch_size, num_batch=781, model='v1')
           print('Epoch {} with scores: {}'.format(i, scores))
 
   if mog_model is not None:

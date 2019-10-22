@@ -2,12 +2,14 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from sklearn.mixture import GaussianMixture
+from sklearn.exceptions import ConvergenceWarning
 from dp_funcs.net_picker import NetPicker
 from GeneralTools.math_funcs.gan_losses import GANLoss
 
 
 class MoG:
-  def __init__(self, n_dims, n_clusters, linked_gan, enc_batch_size, n_data_samples, filename, cov_type='full'):
+  def __init__(self, n_dims, n_clusters, linked_gan, enc_batch_size=None, n_data_samples=None,
+               filename=None, cov_type='full'):
     self.d_enc = n_dims
     self.n_clusters = n_clusters
     self.cov_type = cov_type
@@ -20,13 +22,16 @@ class MoG:
     self.linked_gan = linked_gan
     self.encoding = None
 
+    self.max_iter = 100
+    self.print_convergence_warning = False
+    self.warm_start = True
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
     self.scikit_mog = GaussianMixture(n_components=n_clusters,
                                       covariance_type=cov_type,
-                                      max_iter=100,
-                                      n_init=3,
-                                      warm_start=False)  # may be worth considering
+                                      max_iter=self.max_iter,
+                                      n_init=1,
+                                      warm_start=self.warm_start)  # may be worth considering
     self.tfp_mog = None
 
     self.pi_ph = None
@@ -102,6 +107,10 @@ class MoG:
     # - proceed with training, sampling from updated MoG
     # this should not query the dataset at all, ignoring the next-batch op. does it do that?
 
+  def update_by_batch(self, session):
+    encodings_mat = session.run(self.linked_gan.Dis(self.linked_gan.data_batch))
+    self.fit(encodings_mat, session)
+
   def collect_encodings(self, session):
     # assert self.data_loader
     # assert self.encode_op
@@ -125,19 +134,23 @@ class MoG:
     return encoding_mat
 
   def fit(self, encodings, session):
-    print('fitting mog')
-    self.scikit_mog.fit(encodings)
+    # print('fitting mog')
+    try:
+      self.scikit_mog.fit(encodings)
+    except ConvergenceWarning as cw:
+      if self.print_convergence_warning:
+        print(cw)
 
     if self.pi is None:
       print('setting up tfp mog vars')
       self.define_tfp_mog_vars()
 
-    print('mog pi:', self.scikit_mog.weights_)
-    print('mog mu_0', self.scikit_mog.means_[0, :])
+    # print('mog pi:', self.scikit_mog.weights_)
+    # print('mog mu_0', self.scikit_mog.means_[0, :])
     feed_dict = {self.pi_ph: self.scikit_mog.weights_,
                  self.mu_ph: self.scikit_mog.means_,
                  self.sigma_ph: self.scikit_mog.covariances_}
-    print('updating tfp mog params')
+    # print('updating tfp mog params')
     session.run(self.param_update_op, feed_dict=feed_dict)
 
   def sample_batch(self, batch_size):

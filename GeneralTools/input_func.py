@@ -880,7 +880,7 @@ class ReadTFRecords(object):
     ###################################################################
     def scheduler(
             self, batch_size=None, num_epoch=None, shuffle_data=True, buffer_size=None, skip_count=None,
-            sample_same_class=False, sample_class=None):
+            sample_same_class=False, sample_class=None, repeat_once=False):
         """ This function schedules the batching process
 
         :param batch_size:
@@ -927,6 +927,8 @@ class ReadTFRecords(object):
             else:
                 self.dataset = self.dataset.batch(self.batch_size)
             # self.dataset = self.dataset.padded_batch(batch_size)
+            if repeat_once:
+                self.dataset = self.dataset.flat_map(lambda x: tf.data.Dataset.from_tensors(x).repeat(2))
             if self.num_epoch is None:
                 self.dataset = self.dataset.repeat()
             else:
@@ -938,7 +940,7 @@ class ReadTFRecords(object):
             self.scheduled = True
 
     ###################################################################
-    def next_batch(self, sample_same_class=False, sample_class=None, shuffle_data=True):
+    def next_batch(self, sample_same_class=False, sample_class=None, shuffle_data=True, repeat_for_gmm=False):
         """ This function generates next batch
 
         :param sample_same_class: if the data must be sampled from the same class at one iteration
@@ -950,7 +952,7 @@ class ReadTFRecords(object):
         """
         if self.num_labels == 0:
             if not self.scheduled:
-                self.scheduler(shuffle_data=shuffle_data)
+                self.scheduler(shuffle_data=shuffle_data, repeat_once=repeat_for_gmm)
             x_batch = self.iterator.get_next()
 
             x_batch.set_shape(self.batch_shape)
@@ -967,7 +969,7 @@ class ReadTFRecords(object):
             if not self.scheduled:
                 self.scheduler(
                     shuffle_data=shuffle_data, sample_same_class=sample_same_class,
-                    sample_class=sample_class)
+                    sample_class=sample_class, repeat_once=repeat_for_gmm)
             x_batch, y_batch = self.iterator.get_next()
 
             x_batch.set_shape(self.batch_shape)

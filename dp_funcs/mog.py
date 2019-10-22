@@ -110,7 +110,9 @@ class MoG:
 
   def update_by_batch(self, session):
     if self.batch_encoding is None:
-      self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
+      # self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
+      k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
+      self.batch_encoding = tf.Print(k, [tf.norm(k), tf.reduce_mean(k), tf.reduce_max(k)], message='x_enc')
     encodings_mat = session.run(self.batch_encoding)['x']
 
     self.fit(encodings_mat, session)

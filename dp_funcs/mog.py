@@ -108,7 +108,7 @@ class MoG:
     # this should not query the dataset at all, ignoring the next-batch op. does it do that?
 
   def update_by_batch(self, session):
-    encodings_mat = session.run(self.linked_gan.Dis(self.linked_gan.data_batch))
+    encodings_mat = session.run(self.linked_gan.Dis(self.linked_gan.data_batch['x']))
     self.fit(encodings_mat, session)
 
   def collect_encodings(self, session):

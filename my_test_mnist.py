@@ -79,7 +79,7 @@ def main():
       optimizer=optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  mog_model = MoG(n_dims=4, n_clusters=20, linked_gan=mdl,
+  mog_model = MoG(n_dims=4, n_clusters=60, linked_gan=mdl,
                   enc_batch_size=200, n_data_samples=num_instance,
                   filename=filename, cov_type='diag')
   mdl.register_mog(mog_model, train_with_mog=True, repeat_data_once=True, update_loss_type=False)

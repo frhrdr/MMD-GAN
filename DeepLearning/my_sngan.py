@@ -209,10 +209,12 @@ class SNGan(object):
                 print('----------- mog not found or turned off')
                 dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
                 s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
+                print(s_x.get_shape(), s_gen.get_shape())
             else:
                 print('----------- mog found')
                 s_gen = self.Dis(gen_batch, is_training=True)['x']
                 s_x = self.mog_model.sample_batch(batch_size)
+                print(s_x.get_shape(), s_gen.get_shape())
             # loss function
             gan_losses = GANLoss(self.do_summary)
             if self.loss_type in {'rep', 'rmb'}:

@@ -71,7 +71,7 @@ def main():
   agent = Agent(
       filename, sub_folder, load_ckpt=True, do_trace=False,
       do_save=True, debug_mode=debug_mode, debug_step=400,
-      query_step=2, log_device=False, imbalanced_update=imbalanced_update,
+      query_step=1000, log_device=False, imbalanced_update=imbalanced_update,
       print_loss=True)
 
   mdl = SNGan(
@@ -82,7 +82,7 @@ def main():
   mog_model = MoG(n_dims=4, n_clusters=3, linked_gan=mdl,
                   enc_batch_size=200, n_data_samples=num_instance,
                   filename=filename, cov_type='diag')
-  mdl.register_mog(mog_model, train_with_mog=False, repeat_data_once=True, update_loss_type=False)
+  mdl.register_mog(mog_model, train_with_mog=True, repeat_data_once=True, update_loss_type=False)
   # mdl.register_mog(mog_model)
 
   for i in range(n_iterations):

@@ -110,7 +110,7 @@ class MoG:
 
   def update_by_batch(self, session):
     if self.batch_encoding is None:
-      if max(0, 1) == 1:
+      if max(0, 1) == 2:
         self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
       else:
         k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
@@ -154,13 +154,17 @@ class MoG:
       print('setting up tfp mog vars')
       self.define_tfp_mog_vars()
 
-    print('mog pi:', self.scikit_mog.weights_)
-    print('mog mu_0', self.scikit_mog.means_[0, :])
+    # print('mog pi:', self.scikit_mog.weights_)
+    # print('mog mu_0', self.scikit_mog.means_[0, :])
     feed_dict = {self.pi_ph: self.scikit_mog.weights_,
                  self.mu_ph: self.scikit_mog.means_,
                  self.sigma_ph: self.scikit_mog.covariances_}
     # print('updating tfp mog params')
     session.run(self.param_update_op, feed_dict=feed_dict)
+
+    # DEBUG
+    mu_val = session.run(self.mu)
+    print('== mu comp:', np.norm(mu_val), np.norm(self.scikit_mog.means_))
 
   def sample_batch(self, batch_size):
     return self.tfp_mog.sample(batch_size)

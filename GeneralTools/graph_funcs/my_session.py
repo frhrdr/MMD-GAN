@@ -221,7 +221,7 @@ class MySession(object):
         self._check_thread_()
         extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         start_time = time.time()
-        if imbalanced_update is None:
+        if imbalanced_update is None:  # ------------------------------------------------------ SIMULTANOUS UPDATES HERE
             for step in range(max_step):
                 # DEBUG
                 # nb = mog_model.linked_gan.data_batch
@@ -232,6 +232,7 @@ class MySession(object):
                 # update MoG with current Dis params and current batch
                 if mog_model is not None and mog_model.linked_gan.train_with_mog:
                     mog_model.update_by_batch(self.sess)
+                    print(mog_model.linked_gan.loss_type)
 
                 # update the model
                 loss_value, _, _, global_step_value = self.sess.run(

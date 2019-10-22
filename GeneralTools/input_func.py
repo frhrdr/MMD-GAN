@@ -928,7 +928,6 @@ class ReadTFRecords(object):
                 self.dataset = self.dataset.batch(self.batch_size)
             # self.dataset = self.dataset.padded_batch(batch_size)
             if repeat_once:
-                print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1 repeat !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111111111111')
                 self.dataset = self.dataset.flat_map(lambda x: tf.data.Dataset.from_tensors(x).repeat(2))
             if self.num_epoch is None:
                 self.dataset = self.dataset.repeat()

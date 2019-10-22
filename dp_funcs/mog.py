@@ -25,7 +25,7 @@ class MoG:
 
     self.max_iter = 100
     self.print_convergence_warning = True
-    self.warm_start = False
+    self.warm_start = True
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
     self.scikit_mog = GaussianMixture(n_components=n_clusters,

@@ -71,7 +71,7 @@ def main():
   agent = Agent(
       filename, sub_folder, load_ckpt=True, do_trace=False,
       do_save=True, debug_mode=debug_mode, debug_step=400,
-      query_step=1000, log_device=False, imbalanced_update=imbalanced_update,
+      query_step=100, log_device=False, imbalanced_update=imbalanced_update,
       print_loss=True)
 
   mdl = SNGan(

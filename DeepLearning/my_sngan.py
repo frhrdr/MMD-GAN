@@ -90,7 +90,7 @@ class SNGan(object):
         self.repeat_for_mog = False
         self.data_batch = None
 
-    def register_mog(self, mog_model, train_with_mog, repeat_data_once,update_loss_type=False):
+    def register_mog(self, mog_model, train_with_mog, repeat_data_once, update_loss_type=False):
         self.mog_model = mog_model
         self.train_with_mog = train_with_mog
         self.repeat_for_mog = repeat_data_once

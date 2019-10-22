@@ -232,7 +232,6 @@ class MySession(object):
                 # update MoG with current Dis params and current batch
                 if mog_model is not None and mog_model.linked_gan.train_with_mog:
                     mog_model.update_by_batch(self.sess)
-                    print(mog_model.linked_gan.loss_type)
 
                 # update the model
                 loss_value, _, _, global_step_value = self.sess.run(

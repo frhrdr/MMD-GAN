@@ -23,7 +23,7 @@ class MoG:
     self.encoding = None
     self.batch_encoding = None
 
-    self.max_iter = 10
+    self.max_iter = 1
     self.print_convergence_warning = False
     self.warm_start = True
     self.enc_batch_size = enc_batch_size

@@ -110,7 +110,7 @@ class MoG:
 
   def update_by_batch(self, session):
     if self.batch_encoding is None:
-      if max(0, 1) == 2:
+      if max(0, 1) == 1:
         self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
       else:
         k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)

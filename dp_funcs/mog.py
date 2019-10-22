@@ -24,7 +24,7 @@ class MoG:
     self.batch_encoding = None
 
     self.max_iter = 100
-    self.print_convergence_warning = False
+    self.print_convergence_warning = True
     self.warm_start = True
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
@@ -112,7 +112,7 @@ class MoG:
     if self.batch_encoding is None:
       self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch)
     encodings_mat = session.run(self.batch_encoding)['x']
-    print('fit')
+
     self.fit(encodings_mat, session)
 
   def collect_encodings(self, session):

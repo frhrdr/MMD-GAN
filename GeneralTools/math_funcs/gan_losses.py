@@ -627,11 +627,11 @@ class GANLoss(object):
             self._test_()
         elif loss_type == 'rep_inv_disc':
             self._repulsive_mmd_g_inv_disc()
-        elif isinstance(loss_type, dict):
-            assert 'type' in loss_type.keys()
-            if loss_type['type'] == 'direct_gmm_loss':
-                print('direct_gmm_loss queried')
-                self._repulsive_mmd_g_with_gmm(loss_type)
+        # elif isinstance(loss_type, dict):
+        #     assert 'type' in loss_type.keys()
+        #     if loss_type['type'] == 'direct_gmm_loss':
+        #         print('direct_gmm_loss queried')
+        #         self._repulsive_mmd_g_with_gmm(loss_type)
         else:
             raise NotImplementedError('Not implemented.')
 

@@ -110,10 +110,12 @@ class MoG:
 
   def update_by_batch(self, session):
     if self.batch_encoding is None:
-      # self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
-      k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
-      k['x'] = tf.Print(k['x'], [tf.norm(k['x']), tf.reduce_mean(k['x']), tf.reduce_max(k['x'])], message='x_enc')
-      self.batch_encoding = k
+      if max(0, 1) == 1:
+        self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
+      else:
+        k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
+        k['x'] = tf.Print(k['x'], [tf.norm(k['x']), tf.reduce_mean(k['x']), tf.reduce_max(k['x'])], message='x_enc')
+        self.batch_encoding = k
     encodings_mat = session.run(self.batch_encoding)['x']
 
     self.fit(encodings_mat, session)
@@ -152,8 +154,8 @@ class MoG:
       print('setting up tfp mog vars')
       self.define_tfp_mog_vars()
 
-    # print('mog pi:', self.scikit_mog.weights_)
-    # print('mog mu_0', self.scikit_mog.means_[0, :])
+    print('mog pi:', self.scikit_mog.weights_)
+    print('mog mu_0', self.scikit_mog.means_[0, :])
     feed_dict = {self.pi_ph: self.scikit_mog.weights_,
                  self.mu_ph: self.scikit_mog.means_,
                  self.sigma_ph: self.scikit_mog.covariances_}

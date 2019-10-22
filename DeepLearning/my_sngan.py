@@ -287,7 +287,7 @@ class SNGan(object):
             # training_data = PreloadGPU(filename, num_instance, self.D, num_threads=num_threads)
             # convert matrix data to image tensor and scale them to [-1, 1]
             training_data.shape2image(self.channels, self.height, self.width)
-            data_batch = training_data.next_batch(self.sample_same_class, repeat_for_gmm=repeat_for_gmm)
+            data_batch = training_data.next_batch(self.sample_same_class, repeat_for_mog=repeat_for_gmm)
             # convert x_combo to grey scale images
             # data_batch = tf.image.rgb_to_grayscale(data_batch)  # [batch_size, height, width, 1]
             # for dataset like MNIST, image needs to be transposed

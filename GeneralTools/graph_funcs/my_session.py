@@ -223,6 +223,12 @@ class MySession(object):
         start_time = time.time()
         if imbalanced_update is None:
             for step in range(max_step):
+                # DEBUG
+                nb = mog_model.linked_gan.data_batch
+                nb1 = self.sess.run(nb)
+                nb2 = self.sess.run(nb)
+                print(np.sum(nb1[0]), np.sum(nb2[0, :]))
+
                 # update MoG with current Dis params and current batch
                 if mog_model is not None and not mog_model.linked_gan.train_with_mog:
                     mog_model.update_by_batch(self, self.sess)

@@ -90,12 +90,13 @@ class SNGan(object):
         self.repeat_for_mog = False
         self.data_batch = None
 
-    def register_mog(self, mog_model, train_with_mog, update_loss_type=False):
+    def register_mog(self, mog_model, train_with_mog, repeat_data_once,update_loss_type=False):
         self.mog_model = mog_model
         self.train_with_mog = train_with_mog
+        self.repeat_for_mog = repeat_data_once
         if update_loss_type is not False:
             self.loss_type = update_loss_type
-            self.repeat_for_mog = True
+
 
     def init_net(self):
         """ This function initializes the network
@@ -264,7 +265,7 @@ class SNGan(object):
             return gen_batch
 
     def get_data_batch(self, filename, batch_size, file_repeat=1, num_threads=7, shuffle_file=False, name='data',
-                       repeat_for_gmm=False):
+                       repeat_for_mog=False):
         """ This function reads image data
 
         :param filename:
@@ -287,7 +288,7 @@ class SNGan(object):
             # training_data = PreloadGPU(filename, num_instance, self.D, num_threads=num_threads)
             # convert matrix data to image tensor and scale them to [-1, 1]
             training_data.shape2image(self.channels, self.height, self.width)
-            data_batch = training_data.next_batch(self.sample_same_class, repeat_for_mog=repeat_for_gmm)
+            data_batch = training_data.next_batch(self.sample_same_class, repeat_for_mog=repeat_for_mog)
             # convert x_combo to grey scale images
             # data_batch = tf.image.rgb_to_grayscale(data_batch)  # [batch_size, height, width, 1]
             # for dataset like MNIST, image needs to be transposed
@@ -344,7 +345,7 @@ class SNGan(object):
             # get next batch
             data_batch = self.get_data_batch(
                 filename, batch_size, file_repeat, num_threads, shuffle_file, 'data_tr',
-                repeat_for_gmm=self.repeat_for_mog)
+                repeat_for_mog=self.repeat_for_mog)
             FLAGS.print('Shape of input batch: {}'.format(data_batch['x'].get_shape().as_list()))
 
             # setup training process

@@ -112,7 +112,8 @@ class MoG:
     if self.batch_encoding is None:
       # self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
       k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
-      self.batch_encoding = tf.Print(k, [tf.norm(k['x']), tf.reduce_mean(k['x']), tf.reduce_max(k['x'])], message='x_enc')
+      k['x'] = tf.Print(k['x'], [tf.norm(k['x']), tf.reduce_mean(k['x']), tf.reduce_max(k['x'])], message='x_enc')
+      self.batch_encoding = k
     encodings_mat = session.run(self.batch_encoding)['x']
 
     self.fit(encodings_mat, session)

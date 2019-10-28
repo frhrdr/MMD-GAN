@@ -147,12 +147,8 @@ class MoG:
     return encoding_mat
 
   def fit(self, encodings, session):
-    # print('fitting mog')
-    # try:
-    self.scikit_mog.fit(encodings)
-    # except ConvergenceWarning as cw:
-    #   if self.print_convergence_warning:
-    #     print(cw)
+
+    # self.scikit_mog.fit(encodings)
 
     if self.pi is None:
       print('setting up tfp mog vars')

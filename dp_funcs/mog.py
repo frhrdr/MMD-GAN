@@ -148,7 +148,8 @@ class MoG:
 
   def fit(self, encodings, session):
 
-    # self.scikit_mog.fit(encodings)
+    encodings = np.random.normal(size=(64, 16))  # debug
+    self.scikit_mog.fit(encodings)
 
     if self.pi is None:
       print('setting up tfp mog vars')

@@ -5,6 +5,7 @@ import GeneralTools.architectures
 def parse_run_args():
   parser = argparse.ArgumentParser()
 
+  parser.add_argument('--filename', '-file', type=str, default=None)
   parser.add_argument('--dataset', '-data', type=str, default='mnist')
 
   parser.add_argument('--debug-mode', action='store_true', default=False)
@@ -36,7 +37,6 @@ def parse_run_args():
   parser.add_argument('--cov-type', '-cov', type=str, default='full')
   parser.add_argument('--train-without-mog', action='store_true', default=False)
 
-  parser.add_argument('--filename', '-file', type=str, default=None)
   parser.add_argument('--architecture_key', type=str, default=None)
 
   parser.add_argument('--seed', '-seed', type=int, default=None)
@@ -47,7 +47,7 @@ def parse_run_args():
 def dataset_defaults(dataset, architecture_key):
   assert dataset in ['mnist', 'cifar', 'fashion']
 
-  if dataset == ['mnist', 'fashion']:
+  if dataset in ['mnist', 'fashion']:
     num_instance = 50000
     if architecture_key is not None:
       raise ValueError

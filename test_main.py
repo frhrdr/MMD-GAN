@@ -70,6 +70,8 @@ def main(args):
   mdl.register_mog(mog_model, train_with_mog=not args.train_without_mog, update_loss_type=False)
   # mdl.register_mog(mog_model)
 
+  grey_scale = args.dataset in ['mnist', 'fashion']
+
   for i in range(args.n_iterations):
       mdl.training(
           args.filename, agent, num_instance,
@@ -81,7 +83,8 @@ def main(args):
               args.filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
               real_sample=False, do_embedding=False, do_sprite=True)
       if args.debug_mode is False:  # v1 - inception score and fid, ms_ssim - MS-SSIM
-          scores = mdl.mdl_score(args.filename, sub_folder, args.batch_size, num_batch=781, model='v1', grey_scale=True)
+          scores = mdl.mdl_score(args.filename, sub_folder, args.batch_size, num_batch=781,
+                                 model='v1', grey_scale=grey_scale)
           print('Epoch {} with scores: {}'.format(i, scores))
 
   if mog_model is not None:

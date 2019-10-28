@@ -7,7 +7,7 @@ from GeneralTools.misc_fun import FLAGS
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
 from GeneralTools.graph_funcs.agent import Agent
 from GeneralTools.run_args import parse_run_args, dataset_defaults
-from DeepLearning.my_sngan import SNGan
+
 from dp_funcs.mog import MoG
 
 
@@ -19,6 +19,7 @@ def main(args):
 
   assert args.filename is not None
   FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + '{}_NCHW/'.format(args.dataset)
+  from DeepLearning.my_sngan import SNGan
 
   num_instance, architecture, code_dim, act_k = dataset_defaults(args.dataset, args.architecture_key)
   # debug_mode = False

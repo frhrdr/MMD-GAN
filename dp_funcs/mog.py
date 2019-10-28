@@ -148,19 +148,21 @@ class MoG:
 
   def fit(self, encodings, session):
 
-    encodings = np.random.normal(size=(64, 16))  # debug
+    # encodings = np.random.normal(size=(64, 16))  # debug
     self.scikit_mog.fit(encodings)
 
     if self.pi is None:
       print('setting up tfp mog vars')
       self.define_tfp_mog_vars()
 
-    # print('mog pi:', self.scikit_mog.weights_)
-    # print('mog mu_0', self.scikit_mog.means_[0, :])
-    feed_dict = {self.pi_ph: self.scikit_mog.weights_,
-                 self.mu_ph: self.scikit_mog.means_,
-                 self.sigma_ph: self.scikit_mog.covariances_}
-    # print('updating tfp mog params')
+    # feed_dict = {self.pi_ph: self.scikit_mog.weights_,
+    #              self.mu_ph: self.scikit_mog.means_,
+    #              self.sigma_ph: self.scikit_mog.covariances_}
+
+    feed_dict = {self.pi_ph: np.ones(1),
+                 self.mu_ph: np.zeros((16,)),
+                 self.sigma_ph: np.eye(16) * 10}
+
     session.run(self.param_update_op, feed_dict=feed_dict)
 
     # DEBUG

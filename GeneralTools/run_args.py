@@ -31,7 +31,7 @@ def parse_run_args():
   parser.add_argument('--n-iterations', '--n-it', type=int, default=8)
 
   # MOG
-  parser.add_argument('--d-encoding', '-denc', type=int, default=4)
+  # parser.add_argument('--d-encoding', '-denc', type=int, default=4)
   parser.add_argument('--n-clusters', '-n-clusters', type=int, default=10)
   parser.add_argument('--em-steps', type=int, default=1)
   parser.add_argument('--cov-type', '-cov', type=str, default='full')
@@ -52,13 +52,13 @@ def dataset_defaults(dataset, architecture_key):
     if architecture_key is not None:
       raise ValueError
     else:
-      architecture, code_dim, act_k = GeneralTools.architectures.mnist_default()
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default()
   elif dataset == 'cifar':
     num_instance = 50000
     if architecture_key is not None:
       raise ValueError
     else:
-      architecture, code_dim, act_k = GeneralTools.architectures.cifar_default()
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.cifar_default()
   else:
     raise ValueError
-  return num_instance, architecture, code_dim, act_k
+  return num_instance, architecture, code_dim, act_k, d_enc

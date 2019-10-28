@@ -20,7 +20,7 @@ def main(args):
   FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + '{}_NCHW/'.format(args.dataset)
   from DeepLearning.my_sngan import SNGan
 
-  num_instance, architecture, code_dim, act_k = dataset_defaults(args.dataset, args.architecture_key)
+  num_instance, architecture, code_dim, act_k, d_enc = dataset_defaults(args.dataset, args.architecture_key)
   # debug_mode = False
   # optimizer = 'adam'
   save_per_step = 20000 if args.save_per_step is None else args.save_per_step
@@ -64,7 +64,7 @@ def main(args):
       optimizer=args.optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  mog_model = MoG(n_dims=args.d_encoding, n_clusters=args.n_clusters, max_iter=args.em_steps, linked_gan=mdl,
+  mog_model = MoG(n_dims=d_enc, n_clusters=args.n_clusters, max_iter=args.em_steps, linked_gan=mdl,
                   enc_batch_size=200, n_data_samples=num_instance,
                   filename=args.filename, cov_type=args.cov_type)
   mdl.register_mog(mog_model, train_with_mog=not args.train_without_mog, update_loss_type=False)

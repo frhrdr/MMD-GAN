@@ -4,42 +4,15 @@ FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + 'cifar_NCHW/'
 # FLAGS.SPECTRAL_NORM_MODE = 'sn_paper'  # default, sn_paper
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
 from GeneralTools.graph_funcs.agent import Agent
+from GeneralTools.architectures import cifar_default
 from DeepLearning.my_sngan import SNGan
 from dp_funcs.mog import MoG
 
 
 def main():
   filename = 'cifar_logging5_diag'
-  act_k = np.power(64.0, 0.125)  # multiplier
-  w_nm = 's'  # spectral normalization
-  architecture = {'input': [(3, 32, 32)],
-                  'code': [(128, 'linear')],
-                  'generator': [{'name': 'l1', 'out': 512 * 4 * 4, 'op': 'd', 'act': 'linear', 'act_nm': None,
-                                 'out_reshape': [512, 4, 4]},
-                                {'name': 'l2_up', 'out': 256, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4,
-                                 'strides': 2},
-                                {'name': 'l3_up', 'out': 128, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4,
-                                 'strides': 2},
-                                {'name': 'l4_up', 'out': 64, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4,
-                                 'strides': 2},
-                                {'name': 'l5_t32', 'out': 3, 'act': 'tanh'}],
-                  'discriminator': [{'name': 'l1_f32', 'out': 64, 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm},
-                                    {'name': 'l2_ds', 'out': 128, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm,
-                                     'kernel': 4, 'strides': 2},
-                                    {'name': 'l3', 'out': 128, 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm},
-                                    {'name': 'l4_ds', 'out': 256, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm,
-                                     'kernel': 4, 'strides': 2},
-                                    {'name': 'l5', 'out': 256, 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm},
-                                    {'name': 'l6_ds', 'out': 512, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm,
-                                     'kernel': 4, 'strides': 2},
-                                    {'name': 'l7', 'out': 512, 'op': 'c', 'act': 'lrelu', 'act_k': act_k,
-                                     'w_nm': w_nm, 'out_reshape': [4 * 4 * 512]},
-                                    {'name': 'l8_s', 'out': 16, 'op': 'd', 'act_k': act_k,
-                                     'bias': 'b', 'w_nm': w_nm}]}
 
+  architecture, code_dim, act_k = cifar_default()
   debug_mode = False
   optimizer = 'adam'
   num_instance = 50000

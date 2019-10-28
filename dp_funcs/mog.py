@@ -8,7 +8,7 @@ from GeneralTools.math_funcs.gan_losses import GANLoss
 
 
 class MoG:
-  def __init__(self, n_dims, n_clusters, linked_gan, enc_batch_size=None, n_data_samples=None,
+  def __init__(self, n_dims, n_clusters, max_iter, linked_gan, enc_batch_size=None, n_data_samples=None,
                filename=None, cov_type='full'):
     self.d_enc = n_dims
     self.n_clusters = n_clusters
@@ -23,7 +23,7 @@ class MoG:
     self.encoding = None
     self.batch_encoding = None
 
-    self.max_iter = 1
+    self.max_iter = max_iter
     self.print_convergence_warning = False
     self.warm_start = True
     self.enc_batch_size = enc_batch_size

@@ -3,6 +3,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from sklearn.mixture import GaussianMixture
 from sklearn.exceptions import ConvergenceWarning
+import warnings
 from dp_funcs.net_picker import NetPicker
 from GeneralTools.math_funcs.gan_losses import GANLoss
 
@@ -45,6 +46,9 @@ class MoG:
     self.loss_gen = None
     self.loss_dis = None
     self.loss_list = []
+
+    if not self.print_convergence_warning:
+      warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
   def define_tfp_mog_vars(self):
     self.pi = tf.compat.v1.get_variable('mog_pi', dtype=tf.float32,
@@ -144,11 +148,11 @@ class MoG:
 
   def fit(self, encodings, session):
     # print('fitting mog')
-    try:
-      self.scikit_mog.fit(encodings)
-    except ConvergenceWarning as cw:
-      if self.print_convergence_warning:
-        print(cw)
+    # try:
+    self.scikit_mog.fit(encodings)
+    # except ConvergenceWarning as cw:
+    #   if self.print_convergence_warning:
+    #     print(cw)
 
     if self.pi is None:
       print('setting up tfp mog vars')

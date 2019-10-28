@@ -7,7 +7,6 @@ from GeneralTools.misc_fun import FLAGS
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
 from GeneralTools.graph_funcs.agent import Agent
 from GeneralTools.run_args import parse_run_args, dataset_defaults
-
 from dp_funcs.mog import MoG
 
 

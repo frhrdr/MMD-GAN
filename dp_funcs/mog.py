@@ -160,8 +160,8 @@ class MoG:
     #              self.sigma_ph: self.scikit_mog.covariances_}
 
     feed_dict = {self.pi_ph: np.ones(1),
-                 self.mu_ph: np.zeros((16,)),
-                 self.sigma_ph: np.eye(16) * 10}
+                 self.mu_ph: np.zeros((1, 16)),
+                 self.sigma_ph: np.eye(16).reshape(1, 16, 16) * 10}
 
     session.run(self.param_update_op, feed_dict=feed_dict)
 

@@ -28,7 +28,7 @@ def parse_run_args():
   parser.add_argument('--debug-step', '-dstep', type=int, default=400)
   parser.add_argument('--query-step', '-qstep', type=int, default=100)
   parser.add_argument('--n-threads', type=int, default=7)
-  parser.add_argument('--n-iterations', '--n-it', type=int, default=8)
+  parser.add_argument('--n-iterations', '-n-it', type=int, default=8)
 
   # MOG
   # parser.add_argument('--d-encoding', '-denc', type=int, default=4)

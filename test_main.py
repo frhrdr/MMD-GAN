@@ -64,10 +64,13 @@ def main(args):
       optimizer=args.optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  mog_model = MoG(n_dims=d_enc, n_clusters=args.n_clusters, max_iter=args.em_steps, linked_gan=mdl,
-                  enc_batch_size=200, n_data_samples=num_instance,
-                  filename=args.filename, cov_type=args.cov_type)
-  mdl.register_mog(mog_model, train_with_mog=not args.train_without_mog, update_loss_type=False)
+  if args.train_without_mog:
+    mog_model = None
+  else:
+    mog_model = MoG(n_dims=d_enc, n_clusters=args.n_clusters, max_iter=args.em_steps, linked_gan=mdl,
+                    enc_batch_size=200, n_data_samples=num_instance,
+                    filename=args.filename, cov_type=args.cov_type)
+    mdl.register_mog(mog_model, train_with_mog=not args.train_without_mog, update_loss_type=False)
   # mdl.register_mog(mog_model)
 
   grey_scale = args.dataset in ['mnist', 'fashion']

@@ -73,21 +73,21 @@ class MoG:
 
     if self.cov_type == 'full':
       tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
-      self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc, self.d_enc))
+      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc, self.d_enc))
     elif self.cov_type == 'diag':
       tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma)
-      self.sigma_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
+      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
     else:
       raise ValueError
 
     self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat, components_distribution=tfp_nrm)
 
-    self.pi_ph = tf.placeholder(tf.float32, shape=(self.n_clusters,))
-    self.mu_ph = tf.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
+    self.pi_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters,))
+    self.mu_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
 
-    self.param_update_op = tf.group(tf.assign(self.pi, self.pi_ph),
-                                    tf.assign(self.mu, self.mu_ph),
-                                    tf.assign(self.sigma, self.sigma_ph))
+    self.param_update_op = tf.group(tf.compat.v1.assign(self.pi, self.pi_ph),
+                                    tf.compat.v1.assign(self.mu, self.mu_ph),
+                                    tf.compat.v1.assign(self.sigma, self.sigma_ph))
 
   def time_to_update(self, global_step_value, update_flag):
     if isinstance(update_flag, tuple) or isinstance(update_flag, list):

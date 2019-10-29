@@ -86,9 +86,9 @@ class MySession(object):
         # only save those variables already created.
         with tf.device('/cpu:0'):
             if self.ckpt_var_list is None:
-                return tf.train.Saver(var_list=tf.global_variables(), max_to_keep=2)
+                return tf.compat.v1.train.Saver(var_list=tf.global_variables(), max_to_keep=2)
             else:
-                return tf.train.Saver(var_list=self.ckpt_var_list, max_to_keep=2)
+                return tf.compat.v1.train.Saver(var_list=self.ckpt_var_list, max_to_keep=2)
 
     def _load_ckpt_(self, ckpt_folder=None, ckpt_file=None, force_print=False):
         """ This function loads a checkpoint model
@@ -215,7 +215,7 @@ class MySession(object):
         """
         # prepare writer
         if (summary_op is not None) or (summary_image_op is not None):
-            self.summary_writer = tf.summary.FileWriter(summary_folder, self.sess.graph)
+            self.summary_writer = tf.compat.v1.summary.FileWriter(summary_folder, self.sess.graph)
         self._load_ckpt_(ckpt_folder, ckpt_file=ckpt_file, force_print=force_print)
         # run the session
         self._check_thread_()
@@ -395,7 +395,7 @@ class MySession(object):
         :return:
         """
         if self.do_trace or (summary_op is not None):
-            self.summary_writer = tf.summary.FileWriter(summary_folder, self.sess.graph)
+            self.summary_writer = tf.compat.v1.summary.FileWriter(summary_folder, self.sess.graph)
         if self.do_trace:
             run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             run_metadata = tf.RunMetadata()

@@ -22,11 +22,11 @@ import tensorflow as tf
 
 if LooseVersion(tf.__version__) < LooseVersion('2.0.0'):
   nest = tf.contrib.framework.nest
-  AdagradOptimizer = tf.train.AdagradOptimizer
-  AdamOptimizer = tf.train.AdamOptimizer
-  GradientDescentOptimizer = tf.train.GradientDescentOptimizer
-  parent_code = tf.train.Optimizer.compute_gradients.__code__
-  GATE_OP = tf.train.Optimizer.GATE_OP  # pylint: disable=invalid-name
+  AdagradOptimizer = tf.compat.v1.train.AdagradOptimizer
+  AdamOptimizer = tf.compat.v1.train.AdamOptimizer
+  GradientDescentOptimizer = tf.compat.v1.train.GradientDescentOptimizer
+  parent_code = tf.compat.v1.train.Optimizer.compute_gradients.__code__
+  GATE_OP = tf.compat.v1.train.Optimizer.GATE_OP  # pylint: disable=invalid-name
 else:
   nest = tf.nest
   AdagradOptimizer = tf.optimizers.Adagrad

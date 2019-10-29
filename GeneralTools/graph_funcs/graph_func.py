@@ -191,9 +191,9 @@ def embedding_latent_code(
         embedding.sprite.image_path = sprite_path
         embedding.sprite.single_image_dim.extend(image_size)
     # finalize embedding setting
-    embedding_writer = tf.summary.FileWriter(file_folder)
+    embedding_writer = tf.compat.v1.summary.FileWriter(file_folder)
     projector.visualize_embeddings(embedding_writer, config)
-    embedding_saver = tf.train.Saver([embedding_var], max_to_keep=1)
+    embedding_saver = tf.compat.v1.train.Saver([embedding_var], max_to_keep=1)
     embedding_saver.save(sess, embedding_path)
     # close all
     sess.close()
@@ -411,7 +411,7 @@ def rollback(var_list, ckpt_folder, ckpt_file=None):
     init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
     sess.run(init_op)
     # load the training graph
-    saver = tf.train.Saver(max_to_keep=2)
+    saver = tf.compat.v1.train.Saver(max_to_keep=2)
     ckpt = get_ckpt(ckpt_folder, ckpt_file=ckpt_file)
     if ckpt is None:
         raise FileNotFoundError('No ckpt Model found at {}.'.format(ckpt_folder))

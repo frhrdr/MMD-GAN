@@ -82,7 +82,7 @@ def main(args):
           _ = mdl.eval_sampling(
               args.filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
               real_sample=False, do_embedding=False, do_sprite=True)
-      if args.debug_mode is False:  # v1 - inception score and fid, ms_ssim - MS-SSIM
+      if args.compute_fid:  # v1 - inception score and fid, ms_ssim - MS-SSIM
           scores = mdl.mdl_score(args.filename, sub_folder, args.batch_size, num_batch=781,
                                  model='v1', grey_scale=grey_scale)
           print('Epoch {} with scores: {}'.format(i, scores))

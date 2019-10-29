@@ -37,6 +37,8 @@ def parse_run_args():
   parser.add_argument('--cov-type', '-cov', type=str, default='full')
   parser.add_argument('--train-without-mog', action='store_true', default=False)
 
+  parser.add_argument('--compute-fid', action='store_true', default=False)
+
   parser.add_argument('--architecture_key', type=str, default=None)
 
   parser.add_argument('--seed', '-seed', type=int, default=None)

@@ -22,9 +22,9 @@ import mock
 import numpy as np
 import tensorflow as tf
 
-from privacy.analysis import privacy_ledger
-from privacy.dp_query import gaussian_query
-from privacy.optimizers import dp_optimizer
+from tf_privacy.analysis import privacy_ledger
+from tf_privacy.dp_query import gaussian_query
+from tf_privacy.optimizers import dp_optimizer
 
 
 class DPOptimizerTest(tf.test.TestCase, parameterized.TestCase):

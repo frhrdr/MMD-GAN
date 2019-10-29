@@ -72,7 +72,7 @@ def make_optimizer_class(cls):
       self._dp_sum_query = dp_sum_query
       self._num_microbatches = num_microbatches
       self._global_state = self._dp_sum_query.initial_global_state()
-      # TODO(b/122613513): Set unroll_microbatches=True to avoid this bug.
+      # T0DO(b/122613513): Set unroll_microbatches=True to avoid this bug.
       # Beware: When num_microbatches is large (>100), enabling this parameter
       # may cause an OOM error.
       self._unroll_microbatches = unroll_microbatches

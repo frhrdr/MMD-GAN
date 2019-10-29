@@ -47,6 +47,8 @@ class MoG:
     self.loss_dis = None
     self.loss_list = []
 
+    self.approx_test = False  # approximation quality test. now mostly obsolete
+
     if not self.print_convergence_warning:
       warnings.filterwarnings("ignore", category=ConvergenceWarning)
 

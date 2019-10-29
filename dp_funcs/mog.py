@@ -165,7 +165,7 @@ class MoG:
   def fit(self, encodings, session):
 
     # encodings = np.random.normal(size=(64, 16))  # debug
-    if self.scikit_mog.weights_ is not None:
+    if hasattr(self.scikit_mog, 'weights_'):
       self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
     self.scikit_mog.fit(encodings)
 

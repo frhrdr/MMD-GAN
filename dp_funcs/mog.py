@@ -165,7 +165,8 @@ class MoG:
   def fit(self, encodings, session):
 
     # encodings = np.random.normal(size=(64, 16))  # debug
-    self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
+    if self.scikit_mog.weights_ is not None:
+      self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
     self.scikit_mog.fit(encodings)
 
     # if self.pi is None:  # this must be done elsewhere in the linked sngan

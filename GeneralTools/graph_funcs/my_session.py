@@ -223,7 +223,7 @@ class MySession(object):
         start_time = time.time()
         if imbalanced_update is None:  # ------------------------------------------------------ SIMULTANOUS UPDATES HERE
             if mog_model is not None and mog_model.linked_gan.train_with_mog:
-                mog_model.update_batch_encoding()
+                mog_model.set_batch_encoding()
 
             for step in range(max_step):
                 # DEBUG

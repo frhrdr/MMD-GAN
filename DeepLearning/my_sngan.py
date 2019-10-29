@@ -124,7 +124,7 @@ class SNGan(object):
 
         print('-----------SNGAN INIT NET done')
         if self.mog_model is not None:
-            self.mog_model.define_tfp_mog_vars()
+            self.mog_model.define_tfp_mog_vars(self.do_summary)
 
     ###################################################################
     def sample_codes(self, batch_size, code_x=None, code_y=None, name='codes'):

@@ -52,7 +52,7 @@ class MoG:
     if not self.print_convergence_warning:
       warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
-  def define_tfp_mog_vars(self):
+  def define_tfp_mog_vars(self, do_summary):
     self.pi = tf.compat.v1.get_variable('mog_pi', dtype=tf.float32,
                                         initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
     print('-------made a pi variable:', self.pi)
@@ -66,8 +66,7 @@ class MoG:
     else:
       raise ValueError
 
-    self.sigma = tf.compat.v1.get_variable('mog_sigma', dtype=tf.float32,
-                                           initializer=sig_init)
+    self.sigma = tf.compat.v1.get_variable('mog_sigma', dtype=tf.float32, initializer=sig_init)
 
     tfp_cat = tfp.distributions.Categorical(probs=self.pi)
 
@@ -89,6 +88,20 @@ class MoG:
     self.param_update_op = tf.group(tf.compat.v1.assign(self.pi, self.pi_ph),
                                     tf.compat.v1.assign(self.mu, self.mu_ph),
                                     tf.compat.v1.assign(self.sigma, self.sigma_ph))
+
+    if do_summary:
+      with tf.name_scope(None):  # return to root scope to avoid scope overlap
+        tf.compat.v1.summary.scalar('MoG/pi/max_val', tf.reduce_max(self.pi))
+        tf.compat.v1.summary.scalar('MoG/pi/min_val', tf.reduce_min(self.pi))
+        mu_norms = tf.norm(self.mu, axis=1)
+        tf.compat.v1.summary.scalar('MoG/mu/max_norm', tf.reduce_max(mu_norms))
+        tf.compat.v1.summary.scalar('MoG/mu/mean_norm', tf.reduce_mean(mu_norms))
+        tf.compat.v1.summary.scalar('MoG/mu/min_norm', tf.reduce_min(mu_norms))
+        sig_diag = tf.linalg.diag_part(self.sigma) if self.cov_type == 'full' else self.sigma
+        tf.compat.v1.summary.scalar('MoG/sig/diag_max_val', tf.reduce_max(sig_diag))
+        tf.compat.v1.summary.scalar('MoG/sig/diag_mean_val', tf.reduce_mean(sig_diag))
+        tf.compat.v1.summary.scalar('MoG/sig/diag_min_val', tf.reduce_min(sig_diag))
+
 
   def time_to_update(self, global_step_value, update_flag):
     if isinstance(update_flag, tuple) or isinstance(update_flag, list):
@@ -154,15 +167,15 @@ class MoG:
     # encodings = np.random.normal(size=(64, 16))  # debug
     self.scikit_mog.fit(encodings)
 
-    if self.pi is None:
-      print('setting up tfp mog vars')
-      self.define_tfp_mog_vars()
+    # if self.pi is None:  # this must be done elsewhere in the linked sngan
+    #   print('setting up tfp mog vars')
+    #   self.define_tfp_mog_vars(do_summary=False)
 
     feed_dict = {self.pi_ph: self.scikit_mog.weights_,
                  self.mu_ph: self.scikit_mog.means_,
                  self.sigma_ph: self.scikit_mog.covariances_}
 
-    # feed_dict = {self.pi_ph: np.ones(1),
+    # feed_dict = {self.pi_ph: np.ones(1),  # debug
     #              self.mu_ph: np.zeros((1, 16)),
     #              self.sigma_ph: np.eye(16).reshape(1, 16, 16) * 10}
 

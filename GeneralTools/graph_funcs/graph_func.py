@@ -6,6 +6,7 @@ import tensorflow as tf
 import warnings
 
 from GeneralTools.misc_fun import FLAGS
+from tf_privacy.optimizers.dp_optimizer_vectorized import VectorizedDPAdam
 
 
 def prepare_folder(filename, sub_folder='', set_folder=True):
@@ -287,7 +288,7 @@ def global_step_config(name='global_step'):
 
 def opt_config(
         initial_lr, lr_decay_steps=None, end_lr=1e-7,
-        optimizer='adam', name_suffix='', global_step=None, target_step=1e5):
+        optimizer='adam', name_suffix='', global_step=None, target_step=1e5, dp_specs=None):
     """ This function configures optimizer.
 
     :param initial_lr:
@@ -299,6 +300,9 @@ def opt_config(
     :param target_step:
     :return:
     """
+
+    assert dp_specs is None or optimizer == 'adam'  # only implementing dp for adam for now
+
     if optimizer in ['SGD', 'sgd']:
         # sgd
         if lr_decay_steps is None:
@@ -332,9 +336,14 @@ def opt_config(
         learning_rate = tf.constant(initial_lr)
         # opt_op = tf.train.AdamOptimizer(
         #     learning_rate, beta1=0.9, beta2=0.99, epsilon=1e-8, name='Adam'+name_suffix)
-        opt_op = tf.compat.v1.train.AdamOptimizer(
-            learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='Adam' + name_suffix)
-        FLAGS.print('Adam Optimizer is used.')
+        if dp_specs is None:
+            opt_op = tf.compat.v1.train.AdamOptimizer(
+                learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='Adam' + name_suffix)
+            FLAGS.print('Adam Optimizer is used.')
+        else:
+            opt_op = VectorizedDPAdam(
+                learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='DPAdam' + name_suffix)
+            FLAGS.print('DP-Adam Optimizer is used.')
     elif optimizer in ['RMSProp', 'rmsprop']:
         # RMSProp
         learning_rate = tf.constant(initial_lr)

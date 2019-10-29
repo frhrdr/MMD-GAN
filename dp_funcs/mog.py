@@ -155,13 +155,13 @@ class MoG:
       print('setting up tfp mog vars')
       self.define_tfp_mog_vars()
 
-    # feed_dict = {self.pi_ph: self.scikit_mog.weights_,
-    #              self.mu_ph: self.scikit_mog.means_,
-    #              self.sigma_ph: self.scikit_mog.covariances_}
+    feed_dict = {self.pi_ph: self.scikit_mog.weights_,
+                 self.mu_ph: self.scikit_mog.means_,
+                 self.sigma_ph: self.scikit_mog.covariances_}
 
-    feed_dict = {self.pi_ph: np.ones(1),
-                 self.mu_ph: np.zeros((1, 16)),
-                 self.sigma_ph: np.eye(16).reshape(1, 16, 16) * 10}
+    # feed_dict = {self.pi_ph: np.ones(1),
+    #              self.mu_ph: np.zeros((1, 16)),
+    #              self.sigma_ph: np.eye(16).reshape(1, 16, 16) * 10}
 
     session.run(self.param_update_op, feed_dict=feed_dict)
 

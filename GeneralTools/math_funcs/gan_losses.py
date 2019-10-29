@@ -338,13 +338,13 @@ def mmd_g(
     """
     with tf.name_scope(name):
         if lower_bound is None:
-            k_xx = tf.exp(-dist_xx / (2.0 * sigma**2), name='k_xx_gen')
-            k_yy = tf.exp(-dist_yy / (2.0 * sigma ** 2), name='k_yy_dat')
+            k_xx = tf.exp(-dist_xx / (2.0 * sigma**2), name='k_xx')
+            k_yy = tf.exp(-dist_yy / (2.0 * sigma ** 2), name='k_yy')
         else:
             k_xx = tf.exp(-tf.maximum(dist_xx, lower_bound) / (2.0 * sigma ** 2), name='k_xx_lb')
             k_yy = tf.exp(-tf.maximum(dist_yy, lower_bound) / (2.0 * sigma ** 2), name='k_yy_lb')
         if upper_bound is None:
-            k_xy = tf.exp(-dist_xy / (2.0 * sigma**2), name='k_xy_mix')
+            k_xy = tf.exp(-dist_xy / (2.0 * sigma**2), name='k_xy')
         else:
             k_xy = tf.exp(-tf.minimum(dist_xy, upper_bound) / (2.0 * sigma ** 2), name='k_xy_ub')
 
@@ -355,9 +355,9 @@ def mmd_g(
 
         if do_summary:
             with tf.name_scope(None):  # return to root scope to avoid scope overlap
-                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx', e_kxx)
-                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy', e_kyy)
-                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy', e_kxy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxx_gen', e_kxx)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kyy_dat', e_kyy)
+                tf.compat.v1.summary.scalar(scope_prefix + name + '/kxy_mix', e_kxy)
 
         if var_target is None:
             if custom_weights is None:

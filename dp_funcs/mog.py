@@ -114,16 +114,16 @@ class MoG:
     # - proceed with training, sampling from updated MoG
     # this should not query the dataset at all, ignoring the next-batch op. does it do that?
 
-  def update_by_batch(self, session):
-    if self.batch_encoding is None:
-      if max(0, 1) == 1:
-        self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
-      else:
-        k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
-        k['x'] = tf.Print(k['x'], [tf.norm(k['x']), tf.reduce_mean(k['x']), tf.reduce_max(k['x'])], message='x_enc')
-        self.batch_encoding = k
-    encodings_mat = session.run(self.batch_encoding)['x']
+  def set_batch_encoding(self):
+    if max(0, 1) == 1:
+      self.batch_encoding = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
+    else:
+      k = self.linked_gan.Dis(self.linked_gan.data_batch, is_training=False)
+      k['x'] = tf.Print(k['x'], [tf.norm(k['x']), tf.reduce_mean(k['x']), tf.reduce_max(k['x'])], message='x_enc')
+      self.batch_encoding = k
 
+  def update_by_batch(self, session):
+    encodings_mat = session.run(self.batch_encoding)['x']
     self.fit(encodings_mat, session)
 
   def collect_encodings(self, session):

@@ -222,6 +222,9 @@ class MySession(object):
         extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         start_time = time.time()
         if imbalanced_update is None:  # ------------------------------------------------------ SIMULTANOUS UPDATES HERE
+            if mog_model is not None and mog_model.linked_gan.train_with_mog:
+                mog_model.update_batch_encoding()
+
             for step in range(max_step):
                 # DEBUG
                 # nb = mog_model.linked_gan.data_batch

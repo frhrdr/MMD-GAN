@@ -60,7 +60,7 @@ class GaussianQueryTest(tf.test.TestCase, parameterized.TestCase):
 
       l2_norm_clip = tf.Variable(5.0)
       l2_norm_clip_placeholder = tf.placeholder(tf.float32)
-      assign_l2_norm_clip = tf.assign(l2_norm_clip, l2_norm_clip_placeholder)
+      assign_l2_norm_clip = tf.compat.v1.assign(l2_norm_clip, l2_norm_clip_placeholder)
       query = gaussian_query.GaussianSumQuery(
           l2_norm_clip=l2_norm_clip, stddev=0.0)
       query_result, _ = test_utils.run_query(query, [record1, record2])

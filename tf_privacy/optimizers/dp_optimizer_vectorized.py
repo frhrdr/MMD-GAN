@@ -101,8 +101,8 @@ def make_vectorized_optimizer_class(cls):
 
         if var_list is None:
           var_list = (
-              tf.trainable_variables() + tf.get_collection(
-                  tf.GraphKeys.TRAINABLE_RESOURCE_VARIABLES))
+              tf.trainable_variables() + tf.compat.v1.get_collection(
+                  tf.compat.v1.GraphKeys.TRAINABLE_RESOURCE_VARIABLES))
 
         def process_microbatch(microbatch_loss):
           """Compute clipped grads for one microbatch."""

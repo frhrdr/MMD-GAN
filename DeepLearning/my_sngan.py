@@ -230,11 +230,11 @@ class SNGan(object):
 
             # compute gradient
             # grads is a list of (gradient, variable) tuples
-            # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            # update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
             # with tf.control_dependencies(update_ops):
-            vars_dis = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "dis")
+            vars_dis = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "dis")
             grads_dis = opt_op[0].compute_gradients(loss_dis, var_list=vars_dis)
-            vars_gen = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "gen")
+            vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
             grads_gen = opt_op[1].compute_gradients(loss_gen, var_list=vars_gen)
             grads_list = [grads_dis, grads_gen]
 

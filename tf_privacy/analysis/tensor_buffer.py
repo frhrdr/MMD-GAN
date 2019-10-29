@@ -88,12 +88,12 @@ class TensorBuffer(object):
               dtype=self._dtype,
               initializer=new_buffer,
               trainable=False)
-          return self._buffer, tf.assign(self._capacity,
+          return self._buffer, tf.compat.v1.assign(self._capacity,
                                          tf.multiply(self._capacity, 2))
       else:
-        return tf.assign(
+        return tf.compat.v1.assign(
             self._buffer, new_buffer,
-            validate_shape=False), tf.assign(self._capacity,
+            validate_shape=False), tf.compat.v1.assign(self._capacity,
                                              tf.multiply(self._capacity, 2))
 
     update_buffer, update_capacity = tf.cond(
@@ -112,8 +112,8 @@ class TensorBuffer(object):
               message='Appending value of inconsistent shape.')
       ]):
         with tf.control_dependencies(
-            [tf.assign(self._buffer[self._current_size, :], value)]):
-          return tf.assign_add(self._current_size, 1)
+            [tf.compat.v1.assign(self._buffer[self._current_size, :], value)]):
+          return tf.compat.v1.assign_add(self._current_size, 1)
 
   @property
   def values(self):

@@ -691,8 +691,8 @@ class ParametricOperation(object):
                     if 'bound' in self.design:  # set bound to prevent gradient explosion
                         lb, hb = self.design['bound']
                         tf.compat.v1.add_to_collection(
-                            tf.GraphKeys.UPDATE_OPS,
-                            tf.assign(self.kernel, tf.clip_by_value(self.kernel, lb, hb)))
+                            tf.compat.v1.GraphKeys.UPDATE_OPS,
+                            tf.compat.v1.assign(self.kernel, tf.clip_by_value(self.kernel, lb, hb)))
                 elif self.design['op'] == 'd':  # dense layer
                     kernel = self.kernel if multiplier is None or multiplier == 1.0 else self.kernel * multiplier
                     op_output = tf.matmul(op_input, kernel)

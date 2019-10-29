@@ -166,7 +166,7 @@ class MySession(object):
             self.ckpt_var_list = ckpt_var_list
         self._load_ckpt_(ckpt_folder, ckpt_file=ckpt_file)
         self._check_thread_()
-        extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        extra_update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
         start_time = time.time()
         if trace:
             var_value_list = []
@@ -219,7 +219,7 @@ class MySession(object):
         self._load_ckpt_(ckpt_folder, ckpt_file=ckpt_file, force_print=force_print)
         # run the session
         self._check_thread_()
-        extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        extra_update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
         start_time = time.time()
         if imbalanced_update is None:  # ------------------------------------------------------ SIMULTANOUS UPDATES HERE
             if mog_model is not None and mog_model.linked_gan.train_with_mog:
@@ -413,7 +413,7 @@ class MySession(object):
         # run the session
         self._load_ckpt_(ckpt_folder, ckpt_file=ckpt_file)
         self._check_thread_()
-        extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        extra_update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
         # print(extra_update_ops)
         start_time = time.time()
         if imbalanced_update is None:

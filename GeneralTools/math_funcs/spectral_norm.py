@@ -353,7 +353,7 @@ class SpectralNorm(object):
                     body=lambda _1, x, i: self._power_iter_(x, step=i),
                     loop_vars=(sigma_init, self.x, tf.constant(0, dtype=tf.int32)))
                 # update the random input
-                tf.compat.v1.add_to_collection(tf.GraphKeys.UPDATE_OPS, tf.assign(self.x, x_update))
+                tf.compat.v1.add_to_collection(tf.compat.v1.GraphKeys.UPDATE_OPS, tf.compat.v1.assign(self.x, x_update))
 
         return sigma
 

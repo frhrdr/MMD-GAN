@@ -452,9 +452,9 @@ def matrix_mean_wo_diagonal(matrix, num_row, num_col=None, name='mu_wo_diag'):
     """
     with tf.name_scope(name):
         if num_col is None:
-            mu = (tf.reduce_sum(matrix) - tf.reduce_sum(tf.matrix_diag_part(matrix))) / (num_row * (num_row - 1.0))
+            mu = (tf.reduce_sum(matrix) - tf.reduce_sum(tf.linalg.diag_part(matrix))) / (num_row * (num_row - 1.0))
         else:
-            mu = (tf.reduce_sum(matrix) - tf.reduce_sum(tf.matrix_diag_part(matrix))) \
+            mu = (tf.reduce_sum(matrix) - tf.reduce_sum(tf.linalg.diag_part(matrix))) \
                  / (num_row * num_col - tf.minimum(num_col, num_row))
 
     return mu
@@ -497,7 +497,7 @@ def get_squared_dist(
                 xxt = tf.matmul(x, x, transpose_b=True)  # [xi_xi, xi_xj; xj_xi, xj_xj], batch_size-by-batch_size
             else:
                 xxt = tf.matmul(x * scale, x, transpose_b=True)
-            dx = tf.diag_part(xxt)  # [xxt], [batch_size]
+            dx = tf.linalg.tensor_diag_part(xxt)  # [xxt], [batch_size]
             dist_xx = tf.maximum(tf.expand_dims(dx, axis=1) - 2.0 * xxt + tf.expand_dims(dx, axis=0), 0.0)
             if do_summary:
                 with tf.name_scope(None):  # return to root scope to avoid scope overlap
@@ -525,7 +525,7 @@ def get_squared_dist(
                 else:
                     xyt = tf.matmul(x * scale, y, transpose_b=True)
                     yyt = tf.matmul(y * scale, y, transpose_b=True)
-                dy = tf.diag_part(yyt)
+                dy = tf.linalg.tensor_diag_part(yyt)
                 dist_xy = tf.maximum(tf.expand_dims(dx, axis=1) - 2.0 * xyt + tf.expand_dims(dy, axis=0), 0.0)
                 dist_yy = tf.maximum(tf.expand_dims(dy, axis=1) - 2.0 * yyt + tf.expand_dims(dy, axis=0), 0.0)
                 if do_summary:

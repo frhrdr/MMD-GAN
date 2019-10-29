@@ -79,7 +79,7 @@ def get_batch_squared_dist(x_batch, y_batch=None, axis=1, mode='xx', name='squar
             xxt = tf.matmul(x_batch, tf.transpose(x_batch, [0, 2, 1])) \
                 if axis == 2 else tf.matmul(tf.transpose(x_batch, [0, 2, 1]), x_batch)
             # dx is batch-a if axis is 2 else batch-b
-            dx = tf.matrix_diag_part(xxt)
+            dx = tf.linalg.diag_part(xxt)
             dist_xx = tf.maximum(tf.expand_dims(dx, axis=2) - 2.0 * xxt + tf.expand_dims(dx, axis=1), 0.0)
             if mode == 'xx':
                 return dist_xx

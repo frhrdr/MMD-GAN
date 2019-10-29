@@ -72,10 +72,11 @@ class MoG:
     tfp_cat = tfp.distributions.Categorical(probs=self.pi)
 
     if self.cov_type == 'full':
-      tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma)
+      tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma,
+                                                                   allow_nan_stats=False)
       self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc, self.d_enc))
     elif self.cov_type == 'diag':
-      tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma)
+      tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma, allow_nan_stats=False)
       self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
     else:
       raise ValueError

@@ -11,7 +11,7 @@ def parse_run_args():
   parser.add_argument('--debug-mode', action='store_true', default=False)
   parser.add_argument('--optimizer', '-opt', type=str, default='adam')
   parser.add_argument('--n-instance', type=int, default=None)
-  parser.add_argument('--save-per-step', type=int, default=None)
+  parser.add_argument('--save-per-step', type=int, default=5000)
   parser.add_argument('--batch-size', '-bs', type=int, default=64)
   parser.add_argument('--n-class', type=int, default=None)
 

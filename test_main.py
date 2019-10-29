@@ -23,7 +23,6 @@ def main(args):
   num_instance, architecture, code_dim, act_k, d_enc = dataset_defaults(args.dataset, args.architecture_key)
   # debug_mode = False
   # optimizer = 'adam'
-  save_per_step = 20000 if args.save_per_step is None else args.save_per_step
   num_class = 0 if args.n_class is None else args.n_class
   #end_lr = 1e-7
   # num_threads = 7
@@ -70,7 +69,7 @@ def main(args):
     mog_model = MoG(n_dims=d_enc, n_clusters=args.n_clusters, max_iter=args.em_steps, linked_gan=mdl,
                     enc_batch_size=200, n_data_samples=num_instance,
                     filename=args.filename, cov_type=args.cov_type)
-    mdl.register_mog(mog_model, train_with_mog=not args.train_without_mog, update_loss_type=False)
+    mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
   # mdl.register_mog(mog_model)
 
   grey_scale = args.dataset in ['mnist', 'fashion']
@@ -78,7 +77,7 @@ def main(args):
   for i in range(args.n_iterations):
       mdl.training(
           args.filename, agent, num_instance,
-          lr_list, end_lr=args.lr_end, max_step=save_per_step,
+          lr_list, end_lr=args.lr_end, max_step=args.save_per_step,
           batch_size=args.batch_size, sample_same_class=args.sample_same_class,
           num_threads=args.n_threads, mog_model=mog_model)
       if args.debug_mode is not None:

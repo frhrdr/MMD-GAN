@@ -43,7 +43,14 @@ def parse_run_args():
 
   parser.add_argument('--seed', '-seed', type=int, default=None)
 
-  return parser.parse_args()
+  args = parser.parse_args()
+
+  post_parse_processing(args)
+  return args
+
+
+def post_parse_processing(args):
+  args.filename = '{}_{}'.format(args.dataset, args.filename)
 
 
 def dataset_defaults(dataset, architecture_key):

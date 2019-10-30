@@ -6,6 +6,7 @@ from sklearn.exceptions import ConvergenceWarning
 import warnings
 from dp_funcs.net_picker import NetPicker
 from GeneralTools.math_funcs.gan_losses import GANLoss
+from scipy.stats import multivariate_normal
 
 
 class MoG:
@@ -165,8 +166,8 @@ class MoG:
   def fit(self, encodings, session):
 
     # encodings = np.random.normal(size=(64, 16))  # debug
-    if hasattr(self.scikit_mog, 'weights_'):
-      self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
+    # if hasattr(self.scikit_mog, 'weights_'):
+    #   self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
     self.scikit_mog.fit(encodings)
 
     # if self.pi is None:  # this must be done elsewhere in the linked sngan
@@ -228,3 +229,68 @@ class MoG:
   def save_loss_list(self, save_file):
     loss_mat = np.asarray(self.loss_list)
     np.save(save_file, loss_mat)
+
+
+class NumpyMAPMoG:
+  def __init__(self, n_clusters, d_enc):
+    self.d_enc = d_enc
+    self.n_clusters = n_clusters
+
+    self.weights_ = None
+    self.means_ = None
+    self.covariances_ = None
+
+    self.dir_a = np.ones((self.n_clusters,)) * 2
+    self.niw_k = 1.
+    self.niw_v = self.d_enc + 2
+    self.niw_s = np.eye(self.d_enc) * 0.1
+
+  def _init_params(self):
+    pass
+
+  def fit(self, encodings):
+    if self.weights_ is None:
+      self._init_params()
+
+    n_data = encodings.shape[0]
+
+    n_k, resp = self.e_step(encodings)
+
+    pi_mle, mu_mle, sig_mle = self.m_step_mle(n_k, n_data, encodings, resp)
+    pi_map, mu_map, sig_map = self.map_from_mle(pi_mle, mu_mle, sig_mle, n_data, n_k)
+    self.weights_, self.means_, self.covariances_ = pi_map, mu_map, sig_map
+
+  def e_step(self, x):
+    # following bishop p. 438
+    pi, mu, sig = self.weights_, self.means_, self.covariances_
+    data_resp = np.stack([pi[k] * multivariate_normal.pdf(x, mean=mu[k, :], cov=sig[k, :, :])
+                          for k in range(self.n_clusters)])  # (n_clusters, n_data)
+    data_resp_normed = data_resp / np.sum(data_resp, axis=0)
+    n_k = np.sum(data_resp_normed, axis=1)  # (n_clusters)
+    return n_k, data_resp_normed
+
+  def m_step_mle(self, n_k, n_data, x, resp):
+    # following bishop p. 439
+    pi_mle = n_k / n_data
+    mu_mle = resp @ x / np.repeat(n_k, self.d_enc, axis=1)  # (n_c, n_d) (n_d, d) / (n_c) -> (n_c, d) / (n_c) -> (n_c,d)
+    # centering: (n_d, d) (n_c, d) -> (n_c, n_d, d)
+    x_centered = x[None, :, :] - mu_mle[:, None, :]
+
+    resp_n_k = resp / n_k[:, None]
+    resp_n_k_expand = resp_n_k[:, :, None]  # -> (n_c, n_d, d)
+    sig_mle = np.sum((resp_n_k_expand * np.transpose(x_centered, (0, 2, 1))) @ x_centered)  # -> (n_c,d,d)
+
+    return pi_mle, mu_mle, sig_mle
+
+  def map_from_mle(self, pi_mle, mu_mle, sig_mle, n_data, n_k):
+    # following the dp-em appendix 1
+    pi_map = (n_data * pi_mle + self.dir_a - 1) / (n_data + np.sum(self.dir_a) - self.n_clusters)  # (n_c)
+
+    mu_map = (n_k * mu_mle) / (n_k + self.niw_k)  # (n_c) (n_c, d) / (n_c)
+    sig_map_num = self.niw_s + n_k * sig_mle + (self.niw_k * n_k / (self.niw_k + n_k)) * mu_mle * mu_mle.T
+    sig_map_den = self.niw_v + n_k + self.d_enc + 2
+    sig_map = sig_map_num / sig_map_den
+    return pi_map, mu_map, sig_map
+
+  def sample(self, n_samples):
+    pass

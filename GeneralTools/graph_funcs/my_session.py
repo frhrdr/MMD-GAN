@@ -262,7 +262,7 @@ class MySession(object):
                     #     print('------------------- mog model test start')
                     #     mog_model.test_mog_approx(self.sess)
                     if mog_model is not None:
-                        mog_model.store_encodings_and_params(self, self.sess, summary_folder, global_step_value)
+                        mog_model.store_encodings_and_params(self.sess, summary_folder, global_step_value)
 
                 # save model at last step
                 if step == max_step - 1:

@@ -49,6 +49,7 @@ class MoG:
     self.loss_list = []
 
     self.starting_means = None
+    self.means_summary_op = None
     self.approx_test = False  # approximation quality test. now mostly obsolete
 
     if not self.print_convergence_warning:
@@ -178,7 +179,7 @@ class MoG:
     if self.starting_means is None:
       self.starting_means = np.copy(self.scikit_mog.means_)
       mu_dist_to_start = tf.norm(self.mu - self.starting_means, axis=1)
-      tf.compat.v1.summary.scalar('MoG/mu/mean_dist_to_start', tf.reduce_mean(mu_dist_to_start))
+      self.means_summary_op = tf.compat.v1.summary.scalar('MoG/mu/mean_dist_to_start', tf.reduce_mean(mu_dist_to_start))
     # if self.pi is None:  # this must be done elsewhere in the linked sngan
     #   print('setting up tfp mog vars')
     #   self.define_tfp_mog_vars(do_summary=False)

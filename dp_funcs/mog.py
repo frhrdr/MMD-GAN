@@ -48,6 +48,7 @@ class MoG:
     self.loss_dis = None
     self.loss_list = []
 
+    self.last_batch = None
     self.starting_means = None
     self.means_summary_op = None
     self.approx_test = False  # approximation quality test. now mostly obsolete
@@ -150,6 +151,7 @@ class MoG:
 
   def update_by_batch(self, session):
     encodings_mat = session.run(self.batch_encoding)['x']
+    self.last_batch = encodings_mat
     self.fit(encodings_mat, session)
 
   def collect_encodings(self, session):
@@ -178,6 +180,7 @@ class MoG:
     # retrieve encodings and MoG parameters and save them in a numpy file
     encodings_mat = self.collect_encodings(session)
     save_dict = {'enc': encodings_mat,
+                 'batch': self.last_batch,
                  'pi': self.scikit_mog.weights_,
                  'mu': self.scikit_mog.means_,
                  'sig': self.scikit_mog.covariances_}

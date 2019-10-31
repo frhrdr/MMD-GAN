@@ -58,7 +58,9 @@ def dataset_defaults(dataset, architecture_key):
 
   if dataset in ['mnist', 'fashion']:
     num_instance = 50000
-    if architecture_key is not None:
+    if architecture_key == '2d':
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_2d_enc()
+    elif architecture_key is not None:
       raise ValueError
     else:
       architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default()

@@ -146,6 +146,7 @@ class MoG:
 
     # because it convenient happens at the same time:
     self.means_summary_op = None
+    self.encoding = None
 
   def update_by_batch(self, session):
     encodings_mat = session.run(self.batch_encoding)['x']
@@ -162,15 +163,15 @@ class MoG:
     encoding_mats = []
 
     if self.encoding is None:
-      print('init encoding')
+      # print('init encoding')
       self.encoding = self.linked_gan.Dis(self.linked_gan.get_data_batch(self.data_filename, self.enc_batch_size))
-    print('colllecting encodings')
+    # print('colllecting encodings')
     for step in range(n_steps):
       encoding_mat = session.run(self.encoding)['x']
       encoding_mats.append(encoding_mat)
 
     encoding_mat = np.concatenate(encoding_mats)
-    print('encoded data shape:', encoding_mat.shape)
+    # print('encoded data shape:', encoding_mat.shape)
     return encoding_mat
 
   def store_encodings_and_params(self, session, save_dir, train_step):

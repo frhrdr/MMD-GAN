@@ -11,9 +11,9 @@ import os
 
 class MoG:
   def __init__(self, n_dims, n_clusters, max_iter, linked_gan, enc_batch_size=None, n_data_samples=None,
-               filename=None, cov_type='full'):
+               filename=None, cov_type='full', fix_all_cov=False):
     self.d_enc = n_dims
-    self.n_clusters = n_clusters
+    self.n_comp = n_clusters
     self.cov_type = cov_type
 
     self.pi = None
@@ -48,6 +48,7 @@ class MoG:
     self.loss_dis = None
     self.loss_list = []
 
+    self.fix_all_cov = fix_all_cov
     self.last_batch = None
     self.starting_means = None
     self.means_summary_op = None
@@ -58,17 +59,17 @@ class MoG:
 
   def define_tfp_mog_vars(self, do_summary):
     self.pi = tf.compat.v1.get_variable('mog_pi', dtype=tf.float32,
-                                        initializer=tf.ones((self.n_clusters,)) / self.n_clusters)
+                                        initializer=tf.ones((self.n_comp,)) / self.n_comp)
     print('-------made a pi variable:', self.pi)
     self.mu = tf.compat.v1.get_variable('mog_mu', dtype=tf.float32,
-                                        initializer=tf.random.normal((self.n_clusters, self.d_enc)))
+                                        initializer=tf.random.normal((self.n_comp, self.d_enc)))
 
     if self.cov_type == 'full':
-      sig_init = tf.eye(self.d_enc, batch_shape=(self.n_clusters,))
+      sig_init = tf.eye(self.d_enc, batch_shape=(self.n_comp,))
     elif self.cov_type == 'diag':
-      sig_init = tf.ones((self.n_clusters, self.d_enc))
+      sig_init = tf.ones((self.n_comp, self.d_enc))
     elif self.cov_type == 'spherical':
-      sig_init = tf.ones((self.n_clusters,))
+      sig_init = tf.ones((self.n_comp,))
     else:
       raise ValueError
 
@@ -79,21 +80,21 @@ class MoG:
     if self.cov_type == 'full':
       tfp_nrm = tfp.distributions.MultivariateNormalFullCovariance(loc=self.mu, covariance_matrix=self.sigma,
                                                                    allow_nan_stats=False)
-      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc, self.d_enc))
+      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_comp, self.d_enc, self.d_enc))
     elif self.cov_type == 'diag':
       tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma, allow_nan_stats=False)
-      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
+      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_comp, self.d_enc))
     elif self.cov_type == 'spherical':
       tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma * tf.eye(self.d_enc),
                                                          allow_nan_stats=False)  # TODO eye not correct
-      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters,))
+      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_comp,))
     else:
       raise ValueError
 
     self.tfp_mog = tfp.distributions.MixtureSameFamily(mixture_distribution=tfp_cat, components_distribution=tfp_nrm)
 
-    self.pi_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters,))
-    self.mu_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
+    self.pi_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_comp,))
+    self.mu_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_comp, self.d_enc))
 
     self.param_update_op = tf.group(tf.compat.v1.assign(self.pi, self.pi_ph),
                                     tf.compat.v1.assign(self.mu, self.mu_ph),
@@ -193,10 +194,17 @@ class MoG:
     # if hasattr(self.scikit_mog, 'weights_'):
     #   self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
     self.scikit_mog.fit(encodings)
+
+    if self.fix_all_cov:
+      fix_cov = np.stack([np.eye(self.d_enc)] * self.n_comp) if self.cov_type == 'full' else np.ones(self.n_comp,
+                                                                                                     self.d_enc)
+      cov_scale = 1.
+      self.scikit_mog.covariances_ = fix_cov * cov_scale
+
     if self.means_summary_op is None:
       if self.starting_means is None:
         self.starting_means = np.copy(self.scikit_mog.means_)
-        print('\033[1;31m', self.starting_means, '\033[1;34m')
+        # print('\033[1;31m', self.starting_means, '\033[1;34m')
 
       mu_dist_to_start = tf.norm(self.mu - self.starting_means, axis=1)
       self.means_summary_op = tf.compat.v1.summary.scalar('MoG/mu/mean_dist_to_start', tf.reduce_mean(mu_dist_to_start))

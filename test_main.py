@@ -89,8 +89,8 @@ def main(args):
                                  model='v1', grey_scale=grey_scale)
           print('Epoch {} with scores: {}'.format(i, scores))
 
-  if mog_model is not None:
-    mog_model.save_loss_list('')
+  # if mog_model is not None:
+  #   mog_model.save_loss_list('')
   print('Chunk of code finished.')
 
 

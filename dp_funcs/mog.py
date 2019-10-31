@@ -110,9 +110,6 @@ class MoG:
         tf.compat.v1.summary.scalar('MoG/sig/diag_mean_val', tf.reduce_mean(sig_diag))
         tf.compat.v1.summary.scalar('MoG/sig/diag_min_val', tf.reduce_min(sig_diag))
 
-        mu_dist_to_start = tf.norm(self.mu - self.starting_means, axis=1)
-        tf.compat.v1.summary.scalar('MoG/mu/mean_dist_to_start', tf.reduce_mean(mu_dist_to_start))
-
   def time_to_update(self, global_step_value, update_flag):
     if isinstance(update_flag, tuple) or isinstance(update_flag, list):
       update_freq = update_flag[1]
@@ -180,6 +177,8 @@ class MoG:
     self.scikit_mog.fit(encodings)
     if self.starting_means is None:
       self.starting_means = np.copy(self.scikit_mog.means_)
+      mu_dist_to_start = tf.norm(self.mu - self.starting_means, axis=1)
+      tf.compat.v1.summary.scalar('MoG/mu/mean_dist_to_start', tf.reduce_mean(mu_dist_to_start))
     # if self.pi is None:  # this must be done elsewhere in the linked sngan
     #   print('setting up tfp mog vars')
     #   self.define_tfp_mog_vars(do_summary=False)

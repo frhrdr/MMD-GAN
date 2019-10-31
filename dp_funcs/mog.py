@@ -144,6 +144,9 @@ class MoG:
       k['x'] = tf.Print(k['x'], [tf.norm(k['x']), tf.reduce_mean(k['x']), tf.reduce_max(k['x'])], message='x_enc')
       self.batch_encoding = k
 
+    # because it convenient happens at the same time:
+    self.means_summary_op = None
+
   def update_by_batch(self, session):
     encodings_mat = session.run(self.batch_encoding)['x']
     self.fit(encodings_mat, session)
@@ -176,8 +179,9 @@ class MoG:
     # if hasattr(self.scikit_mog, 'weights_'):
     #   self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
     self.scikit_mog.fit(encodings)
-    if self.starting_means is None:
-      self.starting_means = np.copy(self.scikit_mog.means_)
+    if self.means_summary_op is None:
+      if self.starting_means is None:
+        self.starting_means = np.copy(self.scikit_mog.means_)
       mu_dist_to_start = tf.norm(self.mu - self.starting_means, axis=1)
       self.means_summary_op = tf.compat.v1.summary.scalar('MoG/mu/mean_dist_to_start', tf.reduce_mean(mu_dist_to_start))
     # if self.pi is None:  # this must be done elsewhere in the linked sngan

@@ -224,8 +224,8 @@ class MySession(object):
         if imbalanced_update is None:  # ------------------------------------------------------ SIMULTANOUS UPDATES HERE
             if mog_model is not None and mog_model.linked_gan.train_with_mog:
                 mog_model.set_batch_encoding()
-            if mog_model is not None:
-                mog_model.store_encodings_and_params(self.sess, summary_folder, 0)
+
+            first =True
             for step in range(max_step):
                 # DEBUG
                 # nb = mog_model.linked_gan.data_batch
@@ -237,6 +237,9 @@ class MySession(object):
                 if mog_model is not None and mog_model.linked_gan.train_with_mog:
                     mog_model.update_by_batch(self.sess)
 
+                    if first:
+                        first = False
+                        mog_model.store_encodings_and_params(self.sess, summary_folder, 0)
                 # update the model
                 loss_value, _, _, global_step_value = self.sess.run(
                     [loss_list, op_list, extra_update_ops, global_step])

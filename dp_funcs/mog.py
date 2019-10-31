@@ -48,6 +48,7 @@ class MoG:
     self.loss_dis = None
     self.loss_list = []
 
+    self.starting_means = None
     self.approx_test = False  # approximation quality test. now mostly obsolete
 
     if not self.print_convergence_warning:
@@ -64,6 +65,8 @@ class MoG:
       sig_init = tf.eye(self.d_enc, batch_shape=(self.n_clusters,))
     elif self.cov_type == 'diag':
       sig_init = tf.ones((self.n_clusters, self.d_enc))
+    elif self.cov_type == 'spherical':
+      sig_init = tf.ones((self.n_clusters,))
     else:
       raise ValueError
 
@@ -78,6 +81,10 @@ class MoG:
     elif self.cov_type == 'diag':
       tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma, allow_nan_stats=False)
       self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters, self.d_enc))
+    elif self.cov_type == 'spherical':
+      tfp_nrm = tfp.distributions.MultivariateNormalDiag(loc=self.mu, scale_diag=self.sigma * tf.eye(self.d_enc),
+                                                         allow_nan_stats=False)  # TODO eye not correct
+      self.sigma_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.n_clusters,))
     else:
       raise ValueError
 
@@ -103,6 +110,8 @@ class MoG:
         tf.compat.v1.summary.scalar('MoG/sig/diag_mean_val', tf.reduce_mean(sig_diag))
         tf.compat.v1.summary.scalar('MoG/sig/diag_min_val', tf.reduce_min(sig_diag))
 
+        mu_dist_to_start = tf.norm(self.mu - self.starting_means, axis=1)
+        tf.compat.v1.summary.scalar('MoG/mu/mean_dist_to_start', tf.reduce_mean(mu_dist_to_start))
 
   def time_to_update(self, global_step_value, update_flag):
     if isinstance(update_flag, tuple) or isinstance(update_flag, list):
@@ -169,7 +178,8 @@ class MoG:
     # if hasattr(self.scikit_mog, 'weights_'):
     #   self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
     self.scikit_mog.fit(encodings)
-
+    if self.starting_means is None:
+      self.starting_means = np.copy(self.scikit_mog.means_)
     # if self.pi is None:  # this must be done elsewhere in the linked sngan
     #   print('setting up tfp mog vars')
     #   self.define_tfp_mog_vars(do_summary=False)
@@ -191,44 +201,44 @@ class MoG:
   def sample_batch(self, batch_size):
     return self.tfp_mog.sample(batch_size)
 
-  def test_mog_approx(self, session, n_samples=500):
-    # get encodings
-    print('---------------------- starting test mog approx')
-    new_encodings = self.collect_encodings(session)
-    print('---------------------- collected encodings')
-    # fit mog
-    self.fit(new_encodings, session)
-    print('---------------------- fit mog')
-
-    # sample both data and aproximate encodings
-    x_data_sample = new_encodings[np.random.choice(new_encodings.shape[0], n_samples, replace=False), :]
-    x_mog_sample = self.scikit_mog.sample(n_samples)[0]
-    print('data sample shapes should match:', x_data_sample.shape, x_mog_sample.shape)
-
-    # sample generator encodings (how?)
-    if self.loss_gen is None:
-      print('---------------------- init for gen and loss functions')
-      code_batch = self.linked_gan.sample_codes(batch_size=n_samples, name='code_tr')
-      gen_batch = self.linked_gan.Gen(code_batch, is_training=False)
-      s_gen = self.linked_gan.Dis(gen_batch, is_training=True)['x']
-      gan_loss = GANLoss(do_summary=False)
-      self.s_x_ph = tf.placeholder(tf.float32, shape=(n_samples, self.d_enc))
-      assert self.linked_gan.loss_type in {'rep', 'rmb'}
-      self.loss_gen, self.loss_dis = gan_loss.apply(s_gen, self.s_x_ph, self.linked_gan.loss_type, batch_size=n_samples,
-                                                    d=self.linked_gan.score_size,
-                                                    rep_weights=self.linked_gan.rep_weights)
-
-    print('---------------------- computing losses')
-    l_gen_data, l_dis_data = session.run([self.loss_gen, self.loss_dis], feed_dict={self.s_x_ph: x_data_sample})
-    l_gen_mog, l_dis_mog = session.run([self.loss_gen, self.loss_dis], feed_dict={self.s_x_ph: x_mog_sample})
-    print('-> Losses: True Data Dis {} \t Gen {} \t- MoG Approx Dis {} \t Gen {} \n'.format(l_dis_data, l_gen_data,
-                                                                                            l_dis_mog, l_gen_mog))
-    self.loss_list.append((l_dis_data, l_gen_data, l_dis_mog, l_gen_mog))
-    print('---------------------- test mog approx done')
-
-  def save_loss_list(self, save_file):
-    loss_mat = np.asarray(self.loss_list)
-    np.save(save_file, loss_mat)
+  # def test_mog_approx(self, session, n_samples=500):
+  #   # get encodings
+  #   print('---------------------- starting test mog approx')
+  #   new_encodings = self.collect_encodings(session)
+  #   print('---------------------- collected encodings')
+  #   # fit mog
+  #   self.fit(new_encodings, session)
+  #   print('---------------------- fit mog')
+  #
+  #   # sample both data and aproximate encodings
+  #   x_data_sample = new_encodings[np.random.choice(new_encodings.shape[0], n_samples, replace=False), :]
+  #   x_mog_sample = self.scikit_mog.sample(n_samples)[0]
+  #   print('data sample shapes should match:', x_data_sample.shape, x_mog_sample.shape)
+  #
+  #   # sample generator encodings (how?)
+  #   if self.loss_gen is None:
+  #     print('---------------------- init for gen and loss functions')
+  #     code_batch = self.linked_gan.sample_codes(batch_size=n_samples, name='code_tr')
+  #     gen_batch = self.linked_gan.Gen(code_batch, is_training=False)
+  #     s_gen = self.linked_gan.Dis(gen_batch, is_training=True)['x']
+  #     gan_loss = GANLoss(do_summary=False)
+  #     self.s_x_ph = tf.placeholder(tf.float32, shape=(n_samples, self.d_enc))
+  #     assert self.linked_gan.loss_type in {'rep', 'rmb'}
+  #     self.loss_gen, self.loss_dis = gan_loss.apply(s_gen, self.s_x_ph, self.linked_gan.loss_type,
+  #                                                   batch_size=n_samples, d=self.linked_gan.score_size,
+  #                                                   rep_weights=self.linked_gan.rep_weights)
+  #
+  #   print('---------------------- computing losses')
+  #   l_gen_data, l_dis_data = session.run([self.loss_gen, self.loss_dis], feed_dict={self.s_x_ph: x_data_sample})
+  #   l_gen_mog, l_dis_mog = session.run([self.loss_gen, self.loss_dis], feed_dict={self.s_x_ph: x_mog_sample})
+  #   print('-> Losses: True Data Dis {} \t Gen {} \t- MoG Approx Dis {} \t Gen {} \n'.format(l_dis_data, l_gen_data,
+  #                                                                                           l_dis_mog, l_gen_mog))
+  #   self.loss_list.append((l_dis_data, l_gen_data, l_dis_mog, l_gen_mog))
+  #   print('---------------------- test mog approx done')
+  #
+  # def save_loss_list(self, save_file):
+  #   loss_mat = np.asarray(self.loss_list)
+  #   np.save(save_file, loss_mat)
 
 
 class NumpyMAPMoG:
@@ -272,24 +282,22 @@ class NumpyMAPMoG:
   def m_step_mle(self, n_k, n_data, x, resp):
     # following bishop p. 439
     pi_mle = n_k / n_data
-    mu_mle = resp @ x / np.repeat(n_k, self.d_enc, axis=1)  # (n_c, n_d) (n_d, d) / (n_c) -> (n_c, d) / (n_c) -> (n_c,d)
+    mu_mle = resp @ x / n_k[:, None]  # (n_c, n_d) (n_d, d) / (n_c) -> (n_c, d) / (n_c) -> (n_c,d)
     # centering: (n_d, d) (n_c, d) -> (n_c, n_d, d)
     x_centered = x[None, :, :] - mu_mle[:, None, :]
 
     resp_n_k = resp / n_k[:, None]
-    resp_n_k_expand = resp_n_k[:, :, None]  # -> (n_c, n_d, d)
-    sig_mle = np.sum((resp_n_k_expand * np.transpose(x_centered, (0, 2, 1))) @ x_centered)  # -> (n_c,d,d)
-
+    sig_mle = (resp_n_k[:, :, None] * np.transpose(x_centered, (0, 2, 1))) @ x_centered  # -> (n_c, d,d)
     return pi_mle, mu_mle, sig_mle
 
   def map_from_mle(self, pi_mle, mu_mle, sig_mle, n_data, n_k):
     # following the dp-em appendix 1
     pi_map = (n_data * pi_mle + self.dir_a - 1) / (n_data + np.sum(self.dir_a) - self.n_clusters)  # (n_c)
 
-    mu_map = (n_k * mu_mle) / (n_k + self.niw_k)  # (n_c) (n_c, d) / (n_c)
-    sig_map_num = self.niw_s + n_k * sig_mle + (self.niw_k * n_k / (self.niw_k + n_k)) * mu_mle * mu_mle.T
-    sig_map_den = self.niw_v + n_k + self.d_enc + 2
-    sig_map = sig_map_num / sig_map_den
+    mu_map = (n_k[:, None] * mu_mle) / (n_k + self.niw_k)[:, None]  # (n_c) (n_c, d) / (n_c) -> (n_c, d)
+    sig_map_t1 = self.niw_s + n_k[:, None, None] * sig_mle  # (n_c, d,d)
+    sig_map_t2 = (self.niw_k * n_k / (self.niw_k + n_k))[:, None, None] * (mu_mle[:, :, None] @ mu_mle[:, None, :])
+    sig_map = (sig_map_t1 + sig_map_t2) / (self.niw_v + n_k + self.d_enc + 2)
     return pi_map, mu_map, sig_map
 
   def sample(self, n_samples):

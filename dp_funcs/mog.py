@@ -5,8 +5,8 @@ from sklearn.mixture import GaussianMixture
 from sklearn.exceptions import ConvergenceWarning
 import warnings
 from dp_funcs.net_picker import NetPicker
-from GeneralTools.math_funcs.gan_losses import GANLoss
 from scipy.stats import multivariate_normal
+import os
 
 
 class MoG:
@@ -172,6 +172,16 @@ class MoG:
     encoding_mat = np.concatenate(encoding_mats)
     print('encoded data shape:', encoding_mat.shape)
     return encoding_mat
+
+  def store_encodings_and_params(self, session, save_dir, train_step):
+    # retrieve encodings and MoG parameters and save them in a numpy file
+    encodings_mat = self.collect_encodings(session)
+    save_dict = {'enc': encodings_mat,
+                 'pi': self.scikit_mog.weights_,
+                 'mu': self.scikit_mog.means_,
+                 'sig': self.scikit_mog.covariances_}
+    save_path = os.path.join(save_dir, 'encodings_step_{}.npz'.format(train_step))
+    np.savez(save_path, **save_dict)
 
   def fit(self, encodings, session):
 

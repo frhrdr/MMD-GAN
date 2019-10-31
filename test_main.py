@@ -68,7 +68,7 @@ def main(args):
   else:
     mog_model = MoG(n_dims=d_enc, n_clusters=args.n_clusters, max_iter=args.em_steps, linked_gan=mdl,
                     enc_batch_size=200, n_data_samples=num_instance,
-                    filename=args.filename, cov_type=args.cov_type)
+                    filename=args.filename, cov_type=args.cov_type, fix_all_cov=args.fix_cov)
     mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
   # mdl.register_mog(mog_model)
 

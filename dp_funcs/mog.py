@@ -10,10 +10,10 @@ import os
 
 
 class MoG:
-  def __init__(self, n_dims, n_clusters, max_iter, linked_gan, enc_batch_size=None, n_data_samples=None,
-               filename=None, cov_type='full', fix_cov=False, fix_pi=False):
+  def __init__(self, n_dims, n_comp, max_iter, linked_gan, enc_batch_size=None, n_data_samples=None,
+               filename=None, cov_type='full', fix_cov=False, fix_pi=False, re_init_at_step=None):
     self.d_enc = n_dims
-    self.n_comp = n_clusters
+    self.n_comp = n_comp
     self.cov_type = cov_type
 
     self.pi = None
@@ -25,16 +25,16 @@ class MoG:
     self.encoding = None
     self.batch_encoding = None
 
+    self.mog_init_type = 'random'
+    self.mog_init_tries = 1
     self.max_iter = max_iter
     self.print_convergence_warning = False
     self.warm_start = True
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
-    self.scikit_mog = GaussianMixture(n_components=n_clusters,
-                                      covariance_type=cov_type,
-                                      max_iter=self.max_iter,
-                                      n_init=3,
-                                      warm_start=self.warm_start)  # may be worth considering
+    self.scikit_mog = None
+    self.init_scikit_mog()
+
     self.tfp_mog = None
 
     self.pi_ph = None
@@ -48,6 +48,7 @@ class MoG:
     self.loss_dis = None
     self.loss_list = []
 
+    self.re_init_at_step = re_init_at_step
     self.fix_cov = fix_cov
     self.fix_pi = fix_pi
     self.last_batch = None
@@ -57,6 +58,15 @@ class MoG:
 
     if not self.print_convergence_warning:
       warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
+  def init_scikit_mog(self):
+    print('(re)-initializing MoG')
+    self.scikit_mog = GaussianMixture(n_components=self.n_comp,
+                                      covariance_type=self.cov_type,
+                                      max_iter=self.max_iter,
+                                      init_params=self.mog_init_type,
+                                      n_init=self.mog_init_type,
+                                      warm_start=self.warm_start)  # may be worth considering
 
   def define_tfp_mog_vars(self, do_summary):
     self.pi = tf.compat.v1.get_variable('mog_pi', dtype=tf.float32,

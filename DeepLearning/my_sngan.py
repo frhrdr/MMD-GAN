@@ -107,12 +107,14 @@ class SNGan(object):
             self.architecture['generator'], net_name='gen',
             data_format=FLAGS.IMAGE_FORMAT, num_class=self.num_class)
         # define layer connections in generator
+        print('---------GENERATOR DEF')
         self.Gen = Routine(g_net)
         self.Gen.add_input_layers([64, self.code_size], [0])
         self.Gen.seq_links(list(range(g_net.num_layers)))
         self.Gen.add_output_layers([g_net.num_layers - 1])
 
         # initialize the discriminator network
+        print('---------DISCRIMINATOR DEF')
         d_net = Net(
             self.architecture['discriminator'], net_name='dis',
             data_format=FLAGS.IMAGE_FORMAT, num_class=self.num_class)

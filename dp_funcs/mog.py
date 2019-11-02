@@ -65,7 +65,7 @@ class MoG:
                                       covariance_type=self.cov_type,
                                       max_iter=self.max_iter,
                                       init_params=self.mog_init_type,
-                                      n_init=self.mog_init_type,
+                                      n_init=self.mog_init_tries,
                                       warm_start=self.warm_start)  # may be worth considering
 
   def define_tfp_mog_vars(self, do_summary):

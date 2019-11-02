@@ -504,6 +504,8 @@ class ParametricOperation(object):
         if not self.is_kernel_initialized:
             # some ops may require different initial scale for kernel
             if self.design['op'] in {'d', 'c', 'tc', 'sc', 'project', 'dcd', 'dck', 'cck'}:
+                print('-----DESIGN:')
+                print(self.design)
                 kernel_init = weight_initializer(self.design['act'], self.design['init_w_scale']) \
                     if self.design.get('init_w_scale') is not None else weight_initializer(self.design['act'])
             elif self.design['op'] in {'k'}:

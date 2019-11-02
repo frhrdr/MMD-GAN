@@ -61,15 +61,15 @@ def mnist_2d_enc_wide_init():
        {'name': 'l4_t28', 'out': 1, 'act': 'tanh'}]
 
   d = [{'name': 'l1_f28', 'out': 16, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1,
-        'init_w_scale': 5.},
+        'init_w_scale': 50.},
        {'name': 'l2_ds',  'out': 32, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2,
-        'init_w_scale': 5.},
+        'init_w_scale': 50.},
        {'name': 'l3',     'out': 32, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1,
-        'init_w_scale': 5.},
+        'init_w_scale': 50.},
        {'name': 'l4_ds',  'out': 64, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2,
-        'init_w_scale': 5.},
+        'init_w_scale': 50.},
        {'name': 'l5',   'out': 64, 'op': 'c', 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'out_reshape': [7*7*64],
-        'init_w_scale': 5.},
+        'init_w_scale': 50.},
        {'name': 'l6_s', 'out': d_enc,  'op': 'd', 'act_k': act_k, 'bias': 'b', 'w_nm': w_nm}]
 
   code_dim = 32

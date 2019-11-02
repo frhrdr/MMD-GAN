@@ -1021,7 +1021,8 @@ def update_layer_design(layer_design):
                 'act': 'linear', 'act_nm': None, 'act_k': False,
                 'w_nm': None, 'w_p': None,
                 'kernel': 3, 'strides': 1, 'dilation': 1, 'padding': 'SAME', 'scale': None,
-                'in_reshape': None, 'out_reshape': None, 'aux': None}
+                'in_reshape': None, 'out_reshape': None, 'aux': None,
+                'init_w_scale': None}  # for better manipulation of network init
     # update template with parameters from layer_design
     for key in layer_design:
         template[key] = layer_design[key]
@@ -1051,13 +1052,14 @@ def update_layer_design(layer_design):
                             'act', 'act_nm', 'act_k',
                             'w_nm', 'w_p',
                             'in_reshape', 'out_reshape', 'aux']}
-    elif template['op'] in ['sc', 'c', 'tc', 'avg', 'max', 'sum', 'cck', 'tcck']:
+    elif template['op'] in ['sc', 'c', 'tc', 'avg', 'max', 'sum', 'cck', 'tcck']:  # convolutions here
         return {key: template[key]
                 for key in ['name', 'op', 'type', 'out', 'bias',
                             'act', 'act_nm', 'act_k',
                             'w_nm', 'w_p',
                             'kernel', 'strides', 'dilation', 'padding', 'scale',
-                            'in_reshape', 'out_reshape', 'aux']}
+                            'in_reshape', 'out_reshape', 'aux',
+                            'init_w_scale']}  # edited to include init_w_scale
     elif template['op'] in {'i'}:
         return {key: template[key]
                 for key in ['name', 'op', 'act', 'act_nm', 'type', 'in_reshape', 'out_reshape']}

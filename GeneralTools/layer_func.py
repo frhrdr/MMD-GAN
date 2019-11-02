@@ -1221,7 +1221,8 @@ class Layer(object):
         """
         design = {'op': self.design['op']} if op_design is None else {'op': op_design}
         # acquire kernel definition from self.design
-        target_keys = {'out', 'act', 'act_k', 'w_nm', 'kernel', 'strides', 'dilation', 'padding'}
+        target_keys = {'out', 'act', 'act_k', 'w_nm', 'kernel', 'strides', 'dilation', 'padding',
+                       'init_w_scale'}  # adding init option
         design = self._update_design_(design, target_keys, index)
         # check for exceptional cases
         if design['op'] in {'dcd', 'dck', 'cck', 'tcck'}:  # some ops require class info

@@ -248,7 +248,7 @@ class MySession(object):
                     'Model diverged with loss = {} at step {}'.format(loss_value, step)
 
                 # add summary and print loss every query step
-                if global_step_value % query_step == (query_step-1) or global_step_value == 0:
+                if global_step_value % query_step == (query_step-1) or global_step_value == 1:
                     if mog_model.means_summary_op is not None and summary_op is not None:
                         summary_str, summary_str_means = self.sess.run([summary_op, mog_model.means_summary_op])
                         self.summary_writer.add_summary(summary_str, global_step=global_step_value)

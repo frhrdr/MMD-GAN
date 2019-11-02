@@ -60,7 +60,6 @@ def mnist_2d_enc_wide_init():
        {'name': 'l3_up',  'out': 16, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
        {'name': 'l4_t28', 'out': 1, 'act': 'tanh'}]
 
-  print('----------selected wide init! ----------------------------------------')
   d = [{'name': 'l1_f28', 'out': 16, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 3, 'strides': 1,
         'init_w_scale': 5.},
        {'name': 'l2_ds',  'out': 32, 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'kernel': 4, 'strides': 2},

@@ -1930,6 +1930,7 @@ class Net(object):
             layer_design = update_layer_design(self.net_def[i])
             print('----------------- layer_design')
             print(layer_design)
+            print(self.net_def[i])
             if layer_design['op'] in {'d', 'dcd', 'dck'}:
                 layer_data_format = None
             elif layer_design['op'] in {'i'} and self.layers[i-1].design['op'] in {'d', 'dcd', 'dck'}:

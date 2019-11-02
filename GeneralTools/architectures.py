@@ -54,7 +54,8 @@ def mnist_2d_enc():
 def mnist_2d_enc_wide_init():
   d_enc = 2
   act_k = np.power(64.0, 0.125)  # multiplier
-  w_nm = 's'  # spectral normalization
+  # w_nm = 's'  # spectral normalization
+  w_nm = None  # spectral normalization
   g = [{'name': 'l1', 'out': 64 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [64, 7, 7]},
        {'name': 'l2_up',  'out': 32, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
        {'name': 'l3_up',  'out': 16, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
@@ -79,7 +80,6 @@ def mnist_2d_enc_wide_init():
                   'discriminator': d}
 
   return architecture, code_dim, act_k, d_enc
-
 
 
 def cifar_default():

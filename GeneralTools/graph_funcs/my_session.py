@@ -225,7 +225,7 @@ class MySession(object):
             if mog_model is not None and mog_model.linked_gan.train_with_mog:
                 mog_model.set_batch_encoding()
 
-            first =True
+            first = True
             for step in range(max_step):
                 # DEBUG
                 # nb = mog_model.linked_gan.data_batch

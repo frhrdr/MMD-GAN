@@ -11,7 +11,7 @@ import os
 
 class MoG:
   def __init__(self, n_dims, n_clusters, max_iter, linked_gan, enc_batch_size=None, n_data_samples=None,
-               filename=None, cov_type='full', fix_all_cov=False):
+               filename=None, cov_type='full', fix_cov=False, fix_pi=False):
     self.d_enc = n_dims
     self.n_comp = n_clusters
     self.cov_type = cov_type
@@ -48,7 +48,8 @@ class MoG:
     self.loss_dis = None
     self.loss_list = []
 
-    self.fix_all_cov = fix_all_cov
+    self.fix_cov = fix_cov
+    self.fix_pi = fix_pi
     self.last_batch = None
     self.starting_means = None
     self.means_summary_op = None
@@ -195,11 +196,14 @@ class MoG:
     #   self.scikit_mog.weights_ = np.ones_like(self.scikit_mog.weights_) / self.n_clusters
     self.scikit_mog.fit(encodings)
 
-    if self.fix_all_cov:
+    if self.fix_cov:
       fix_cov = np.stack([np.eye(self.d_enc)] * self.n_comp) if self.cov_type == 'full' else np.ones(self.n_comp,
                                                                                                      self.d_enc)
       cov_scale = 1.
       self.scikit_mog.covariances_ = fix_cov * cov_scale
+
+    if self.fix_pi:
+      self.scikit_mog.weights_ = np.ones(self.n_comp) / self.n_comp
 
     if self.means_summary_op is None:
       if self.starting_means is None:
@@ -270,15 +274,15 @@ class MoG:
 
 
 class NumpyMAPMoG:
-  def __init__(self, n_clusters, d_enc):
+  def __init__(self, n_comp, d_enc):
     self.d_enc = d_enc
-    self.n_clusters = n_clusters
+    self.n_comp = n_comp
 
     self.weights_ = None
     self.means_ = None
     self.covariances_ = None
 
-    self.dir_a = np.ones((self.n_clusters,)) * 2
+    self.dir_a = np.ones((self.n_comp,)) * 2
     self.niw_k = 1.
     self.niw_v = self.d_enc + 2
     self.niw_s = np.eye(self.d_enc) * 0.1
@@ -302,9 +306,9 @@ class NumpyMAPMoG:
     # following bishop p. 438
     pi, mu, sig = self.weights_, self.means_, self.covariances_
     data_resp = np.stack([pi[k] * multivariate_normal.pdf(x, mean=mu[k, :], cov=sig[k, :, :])
-                          for k in range(self.n_clusters)])  # (n_clusters, n_data)
+                          for k in range(self.n_comp)])  # (n_comp, n_data)
     data_resp_normed = data_resp / np.sum(data_resp, axis=0)
-    n_k = np.sum(data_resp_normed, axis=1)  # (n_clusters)
+    n_k = np.sum(data_resp_normed, axis=1)  # (n_comp)
     return n_k, data_resp_normed
 
   def m_step_mle(self, n_k, n_data, x, resp):
@@ -320,7 +324,7 @@ class NumpyMAPMoG:
 
   def map_from_mle(self, pi_mle, mu_mle, sig_mle, n_data, n_k):
     # following the dp-em appendix 1
-    pi_map = (n_data * pi_mle + self.dir_a - 1) / (n_data + np.sum(self.dir_a) - self.n_clusters)  # (n_c)
+    pi_map = (n_data * pi_mle + self.dir_a - 1) / (n_data + np.sum(self.dir_a) - self.n_comp)  # (n_c)
 
     mu_map = (n_k[:, None] * mu_mle) / (n_k + self.niw_k)[:, None]  # (n_c) (n_c, d) / (n_c) -> (n_c, d)
     sig_map_t1 = self.niw_s + n_k[:, None, None] * sig_mle  # (n_c, d,d)

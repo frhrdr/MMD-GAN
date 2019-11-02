@@ -41,6 +41,7 @@ def weight_initializer(act_fun, init_w_scale=1.0):
             #     initializer = tf.contrib.layers.variance_scaling_initializer(
             #         factor=3.0 * init_w_scale, mode='FAN_AVG', uniform=True)
             elif act_fun == 'lrelu':  # assume alpha = 0.1
+                print('-------LRELU INIT with scale:', init_w_scale)
                 initializer = tf.variance_scaling_initializer(
                     scale=2.0 / 1.01 * init_w_scale, mode='fan_in', distribution='normal')
             elif act_fun == 'sigmoid':

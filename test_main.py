@@ -7,24 +7,24 @@ from GeneralTools.misc_fun import FLAGS
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
 from GeneralTools.graph_funcs.agent import Agent
 from GeneralTools.run_args import parse_run_args, dataset_defaults
-from dp_funcs.mog import MoG
+from dp_funcs.mog import EncodingMoG
 
 
-def main(args):
+def main(ar):
 
-  if args.seed is not None:
-    np.random.seed(args.seed)
-    tf.compat.v2.random.set_seed(args.seed)
+  if ar.seed is not None:
+    np.random.seed(ar.seed)
+    tf.compat.v2.random.set_seed(ar.seed)
 
-  assert args.filename is not None
-  FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + '{}_NCHW/'.format(args.dataset)
+  assert ar.filename is not None
+  FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + '{}_NCHW/'.format(ar.dataset)
   from DeepLearning.my_sngan import SNGan
 
-  num_instance, architecture, code_dim, act_k, d_enc = dataset_defaults(args.dataset, args.architecture_key)
+  num_instance, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.architecture_key)
   # debug_mode = False
   # optimizer = 'adam'
-  num_class = 0 if args.n_class is None else args.n_class
-  #end_lr = 1e-7
+  num_class = 0 if ar.n_class is None else ar.n_class
+  # end_lr = 1e-7
   # num_threads = 7
   # n_iterations = 1  # 8
 
@@ -35,58 +35,58 @@ def main(args):
   # code_x = np.genfromtxt('MMD-GAN/z_128.txt', delimiter=',', dtype=np.float32)
 
   # a case
-  lr_list = [args.lr_dis, args.lr_gen]  # [dis, gen]
+  lr_list = [ar.lr_dis, ar.lr_gen]  # [dis, gen]
   # rep - repulsive loss, rmb - repulsive loss with bounded rbf kernel
   # to test other losses, see GeneralTools/math_func/GANLoss
   # rep_weights = [0.0, -1.0]  # weights for e_kxy and -e_kyy, w[0]-w[1] must be 1
 
-  if args.loss_type in {'rep', 'rmb'}:
+  if ar.loss_type in {'rep', 'rmb'}:
       sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}_{:.1f}_{:.1f}'.format(
-          args.loss_type, lr_list[0], lr_list[1], act_k, args.rep_weight_0, args.rep_weight_1)
+          ar.loss_type, lr_list[0], lr_list[1], act_k, ar.rep_weight_0, ar.rep_weight_1)
   #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear_{:.1f}_{:.1f}'.format(
   #         loss_type, lr_list[0], lr_list[1], rep_weights[0], rep_weights[1])
   else:
-      sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(args.loss_type, lr_list[0], lr_list[1], act_k)
+      sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(ar.loss_type, lr_list[0], lr_list[1], act_k)
   #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
   # sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
 
   # imbalanced_update = None  # NetPicker(dis_steps=3, gen_steps=3)
 
   agent = Agent(
-      args.filename, sub_folder, load_ckpt=True, do_trace=False,
-      do_save=True, debug_mode=args.debug_mode, debug_step=args.debug_step,
-      query_step=args.query_step, log_device=False, imbalanced_update=args.imbalanced_update,
+      ar.filename, sub_folder, load_ckpt=True, do_trace=False,
+      do_save=True, debug_mode=ar.debug_mode, debug_step=ar.debug_step,
+      query_step=ar.query_step, log_device=False, imbalanced_update=ar.imbalanced_update,
       print_loss=True)
 
   mdl = SNGan(
-      architecture, num_class=num_class, loss_type=args.loss_type,
-      optimizer=args.optimizer, do_summary=True, do_summary_image=True,
+      architecture, num_class=num_class, loss_type=ar.loss_type,
+      optimizer=ar.optimizer, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
-  if args.train_without_mog:
+  if ar.train_without_mog:
     mog_model = None
   else:
-    mog_model = MoG(n_dims=d_enc, n_comp=args.n_comp, max_iter=args.em_steps, linked_gan=mdl,
-                    enc_batch_size=200, n_data_samples=num_instance,
-                    filename=args.filename, cov_type=args.cov_type,
-                    fix_cov=args.fix_cov, fix_pi=args.fix_pi, re_init_at_step=args.re_init_step)
+    mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=ar.mog_type,
+                            n_data_samples=num_instance, enc_batch_size=200,
+                            filename=ar.filename, cov_type=ar.cov_type,
+                            fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,
+                            decay_gamma=ar.decay_gamma)
     mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
-  # mdl.register_mog(mog_model)
 
-  grey_scale = args.dataset in ['mnist', 'fashion']
+  grey_scale = ar.dataset in ['mnist', 'fashion']
 
-  for i in range(args.n_iterations):
+  for i in range(ar.n_iterations):
       mdl.training(
-          args.filename, agent, num_instance,
-          lr_list, end_lr=args.lr_end, max_step=args.save_per_step,
-          batch_size=args.batch_size, sample_same_class=args.sample_same_class,
-          num_threads=args.n_threads, mog_model=mog_model)
-      if args.debug_mode is not None:
+          ar.filename, agent, num_instance,
+          lr_list, end_lr=ar.lr_end, max_step=ar.save_per_step,
+          batch_size=ar.batch_size, sample_same_class=ar.sample_same_class,
+          num_threads=ar.n_threads, mog_model=mog_model)
+      if ar.debug_mode is not None:
           _ = mdl.eval_sampling(
-              args.filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
+              ar.filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
               real_sample=False, do_embedding=False, do_sprite=True)
-      if args.compute_fid:  # v1 - inception score and fid, ms_ssim - MS-SSIM
-          scores = mdl.mdl_score(args.filename, sub_folder, args.batch_size, num_batch=781,
+      if ar.compute_fid:  # v1 - inception score and fid, ms_ssim - MS-SSIM
+          scores = mdl.mdl_score(ar.filename, sub_folder, ar.batch_size, num_batch=781,
                                  model='v1', grey_scale=grey_scale)
           print('Epoch {} with scores: {}'.format(i, scores))
 

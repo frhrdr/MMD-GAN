@@ -249,7 +249,7 @@ class MySession(object):
 
                 # maybe re-init mog after a few epochs, as it may have gotten lost given the rapid change of encodings
                 if mog_model is not None and global_step_value == mog_model.re_init_at_step:
-                    mog_model.init_scikit_mog()
+                    mog_model.init_np_mog()
 
                 # add summary and print loss every query step
                 if global_step_value % query_step == (query_step-1) or global_step_value == 1:

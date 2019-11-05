@@ -41,7 +41,6 @@ def weight_initializer(act_fun, init_w_scale=1.0):
             #     initializer = tf.contrib.layers.variance_scaling_initializer(
             #         factor=3.0 * init_w_scale, mode='FAN_AVG', uniform=True)
             elif act_fun == 'lrelu':  # assume alpha = 0.1
-                print('-------LRELU INIT with scale:', init_w_scale)
                 initializer = tf.variance_scaling_initializer(
                     scale=2.0 / 1.01 * init_w_scale, mode='fan_in', distribution='normal')
             elif act_fun == 'sigmoid':
@@ -504,8 +503,6 @@ class ParametricOperation(object):
         if not self.is_kernel_initialized:
             # some ops may require different initial scale for kernel
             if self.design['op'] in {'d', 'c', 'tc', 'sc', 'project', 'dcd', 'dck', 'cck'}:
-                print('-----DESIGN:')
-                print(self.design)
                 kernel_init = weight_initializer(self.design['act'], self.design['init_w_scale']) \
                     if self.design.get('init_w_scale') is not None else weight_initializer(self.design['act'])
             elif self.design['op'] in {'k'}:
@@ -1931,9 +1928,7 @@ class Net(object):
         self.layers = []
         for i in range(self.num_layers):
             layer_design = update_layer_design(self.net_def[i])
-            print('----------------- layer_design')
-            print(layer_design)
-            print(self.net_def[i])
+
             if layer_design['op'] in {'d', 'dcd', 'dck'}:
                 layer_data_format = None
             elif layer_design['op'] in {'i'} and self.layers[i-1].design['op'] in {'d', 'dcd', 'dck'}:

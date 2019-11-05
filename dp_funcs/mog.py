@@ -10,8 +10,8 @@ import os
 
 
 class EncodingMoG:
-  def __init__(self, n_dims, n_comp, linked_gan, np_mog, n_data_samples, enc_batch_size,
-               filename=None, cov_type='full', fix_cov=False, fix_pi=False, re_init_at_step=None, decay_gamma=None):
+  def __init__(self, n_dims, n_comp, linked_gan, np_mog, n_data_samples, enc_batch_size, filename=None, cov_type='full',
+               fix_cov=False, fix_pi=False, re_init_at_step=None, decay_gamma=None, map_em=False):
     self.n_dims = n_dims
     self.n_comp = n_comp
     self.cov_type = cov_type
@@ -27,7 +27,7 @@ class EncodingMoG:
 
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
-    self.np_mog = default_mogs(np_mog, n_comp, n_dims, cov_type, decay_gamma) if isinstance(np_mog, str) else np_mog
+    self.np_mog = default_mogs(np_mog, n_comp, n_dims, cov_type, decay_gamma, map_em) if isinstance(np_mog, str) else np_mog
 
     self.tfp_mog = None
 
@@ -357,16 +357,17 @@ class NowlanMoG:
     pass
 
 
-def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma=None):
+def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma=None, map_em=False):
   if key == 'sklearn':
+    assert map_em is False
     mog = GaussianMixture(n_comp, cov_type, max_iter=1, init_params='random', n_init=1, warm_start=True)
   elif key == 'map':
     assert cov_type == 'full'
-    mog = NumpyMAPMoG(n_comp, d_enc)
+    mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
   elif key == 'nowlan':
     assert cov_type == 'full'
     assert decay_gamma is not None
-    mog = NowlanMoG(n_comp, d_enc, decay_gamma)
+    mog = NowlanMoG(n_comp, d_enc, decay_gamma, do_map=map_em)
   else:
     raise ValueError
   return mog

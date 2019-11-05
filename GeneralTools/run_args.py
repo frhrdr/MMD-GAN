@@ -45,7 +45,7 @@ def parse_run_args():
   parser.add_argument('--compute-fid', action='store_true', default=False)
   parser.add_argument('--fix-cov', action='store_true', default=False)
   parser.add_argument('--fix-pi', action='store_true', default=False)
-
+  parser.add_argument('--map-em', action='store_true', default=False)
   parser.add_argument('--architecture_key', '-arch', type=str, default=None)
 
   parser.add_argument('--seed', '-seed', type=int, default=None)

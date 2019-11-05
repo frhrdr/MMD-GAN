@@ -70,7 +70,7 @@ def main(ar):
                             n_data_samples=num_instance, enc_batch_size=200,
                             filename=ar.filename, cov_type=ar.cov_type,
                             fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,
-                            decay_gamma=ar.decay_gamma)
+                            decay_gamma=ar.decay_gamma, map_em=ar.map_em)
     mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
 
   grey_scale = ar.dataset in ['mnist', 'fashion']

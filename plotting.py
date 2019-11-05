@@ -5,10 +5,9 @@ import matplotlib.transforms as transforms
 from sklearn.mixture import GaussianMixture
 
 
-def plot_encodings_2d(empirical_mog_clusters=5):
-  step = 499
-  dataset = 'fashion'
-  setup = 'c5_2d_fix_cov_5steps_mri200_log'
+def plot_encodings_2d(step, empirical_mog_clusters, dataset, setup):
+
+
   base_path = 'Results/{}_{}/sngan_rep_5e-04_2e-04_k1.68_0.0_-1.0/encodings_step_{}.npz'.format(dataset, setup, step)
   mats = np.load(base_path)
   plt.figure()
@@ -48,7 +47,7 @@ def plot_encodings_2d(empirical_mog_clusters=5):
   plt.ylabel('D_enc2')
   plt.title('{}_{}_encodings_step_{}'.format(dataset, setup, step))
   # plt.show()
-  plt.savefig('{}_{}_encodings_step_{}.png'.format(dataset, setup, step))
+  plt.savefig('Plots/{}/{}_encodings_step_{}.png'.format(dataset, setup, step))
 
 
 def confidence_ellipse(mean, cov, ax, n_std=2.0, facecolor='none', **kwargs):
@@ -114,4 +113,9 @@ def first_loss_approx_plots():
 
 
 if __name__ == '__main__':
-  plot_encodings_2d()
+  steps = [0, 49, 99, 199, 499, 1099]
+  empirical_mog_clusters = 5
+  dataset = 'fashion'
+  setup = 'nowlan_c5_test_re_init_log'
+  for step in steps:
+    plot_encodings_2d(step, empirical_mog_clusters, dataset, setup)

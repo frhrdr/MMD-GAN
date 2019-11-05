@@ -284,13 +284,9 @@ class NowlanMoG:
     self.n_comp = n_comp  # noted in comments as k
     # batch size noted in comments as n
 
-    self.weights_ = None
-    self.means_ = None
-    self.covariances_ = None
+    self.weights_, self.means_, self.covariances_ = None, None, None
+    self.n_agg, self.m_agg, self.q_agg = None, None, None
 
-    self.n_agg = np.zeros((self.n_comp,))
-    self.m_agg = np.zeros((self.n_comp, self.d_enc))
-    self.q_agg = np.zeros((self.n_comp, self.d_enc, self.d_enc))
     self.decay_gamma = decay_gamma
 
     self.do_map = do_map
@@ -298,6 +294,11 @@ class NowlanMoG:
     self.niw_k = niw_k if niw_k is not None else 1.
     self.niw_v = niw_v if niw_v is not None else self.d_enc + 2
     self.niw_s = niw_s if niw_s is not None else np.eye(self.d_enc) * 0.1
+
+  def init_stats(self):
+    self.n_agg = np.zeros((self.n_comp,))
+    self.m_agg = np.zeros((self.n_comp, self.d_enc))
+    self.q_agg = np.zeros((self.n_comp, self.d_enc, self.d_enc))
 
   def fit(self, data):
     n_batch, m_batch, q_batch = self.e_step(data)
@@ -310,6 +311,7 @@ class NowlanMoG:
     # following bishop p. 438 and then Neal and Hinton citing Nowlan 1991
     if not hasattr(self, 'converged_'):  # for init
       self.converged_ = False
+      self.init_stats()
       resp = np.random.rand(self.n_comp, data.shape[0])
     else:
       # print(self.weights_, self.means_)

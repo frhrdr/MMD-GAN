@@ -7,8 +7,8 @@ from sklearn.mixture import GaussianMixture
 
 def plot_encodings_2d(step, empirical_mog_clusters, dataset, setup):
 
-
-  base_path = 'Results/{}_{}/sngan_rep_5e-04_2e-04_k1.68_0.0_-1.0/encodings_step_{}.npz'.format(dataset, setup, step)
+  base_path = 'Results/{}_{}_log/sngan_rep_5e-04_2e-04_k1.68_0.0_-1.0/encodings_step_{}.npz'.format(dataset, setup,
+                                                                                                    step)
   mats = np.load(base_path)
   plt.figure()
   plt.scatter(mats['enc'][:, 0], mats['enc'][:, 1], c='xkcd:sea blue', s=3)
@@ -113,9 +113,9 @@ def first_loss_approx_plots():
 
 
 if __name__ == '__main__':
-  steps = [0, 49, 99, 199, 499, 1099]
+  steps = [0, 499, 1999, 2499, 4999, 9999]
   empirical_mog_clusters = 5
   dataset = 'fashion'
-  setup = 'nowlan_c5_test_re_init_log'
+  setup = 'nowlan_c5_test_ri200_g095_long_run'
   for step in steps:
     plot_encodings_2d(step, empirical_mog_clusters, dataset, setup)

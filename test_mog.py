@@ -79,7 +79,7 @@ def test_sklearn_mog(n_comp=5, max_iter=200, batch_size=50, n_steps=200, n_sampl
   plt.show()
 
 
-def test_nowlan_mog(n_comp=5, max_iter=200, batch_size=50, n_steps=500, n_samples=3000):
+def test_nowlan_mog(n_comp=5, max_iter=200, batch_size=50, n_steps=300, n_samples=3000):
 
   warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
@@ -91,7 +91,8 @@ def test_nowlan_mog(n_comp=5, max_iter=200, batch_size=50, n_steps=500, n_sample
 
   d_enc = data.shape[1]
   gammas = [0.8, 0.90, 0.95]
-  nowlan_mogs = [NowlanMoG(n_comp, d_enc, g) for g in gammas]
+  do_map = True
+  nowlan_mogs = [NowlanMoG(n_comp, d_enc, g, do_map) for g in gammas]
 
   assert n_samples % n_steps == 0
   idx = 0

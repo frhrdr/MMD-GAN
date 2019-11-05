@@ -1,5 +1,5 @@
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+# import os
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 import numpy as np
 import tensorflow as tf
 from GeneralTools.misc_fun import FLAGS
@@ -11,6 +11,7 @@ from dp_funcs.mog import EncodingMoG
 
 
 def main(ar):
+  tf.logging.set_verbosity(tf.logging.WARN)
 
   if ar.seed is not None:
     np.random.seed(ar.seed)

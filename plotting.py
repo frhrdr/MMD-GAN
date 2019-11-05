@@ -113,9 +113,10 @@ def first_loss_approx_plots():
 
 
 if __name__ == '__main__':
-  steps = [0, 499, 1999, 2499, 4999, 9999]
+  # steps = [0, 499, 1999, 2499, 3999]
+  steps = [5999, 9999]
   empirical_mog_clusters = 5
   dataset = 'fashion'
-  setup = 'nowlan_c5_test_ri200_g095_long_run'
+  setup = 'nowlan_c5_ri200_g09_bs500'
   for step in steps:
     plot_encodings_2d(step, empirical_mog_clusters, dataset, setup)

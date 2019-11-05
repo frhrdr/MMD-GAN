@@ -312,6 +312,7 @@ class NowlanMoG:
       self.converged_ = False
       resp = np.random.rand(self.n_comp, data.shape[0])
     else:
+      print(self.covariances_)
       resp = np.stack([self.weights_[k] * multivariate_normal.pdf(data, self.means_[k, :], self.covariances_[k, :, :])
                        for k in range(self.n_comp)])  # (n_comp, n_data)
     resp = resp / np.sum(resp, axis=0)

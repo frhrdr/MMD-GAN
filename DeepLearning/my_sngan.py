@@ -107,14 +107,14 @@ class SNGan(object):
             self.architecture['generator'], net_name='gen',
             data_format=FLAGS.IMAGE_FORMAT, num_class=self.num_class)
         # define layer connections in generator
-        print('---------GENERATOR DEF')
+        # print('---------GENERATOR DEF')
         self.Gen = Routine(g_net)
         self.Gen.add_input_layers([64, self.code_size], [0])
         self.Gen.seq_links(list(range(g_net.num_layers)))
         self.Gen.add_output_layers([g_net.num_layers - 1])
 
         # initialize the discriminator network
-        print('---------DISCRIMINATOR DEF')
+        # print('---------DISCRIMINATOR DEF')
         d_net = Net(
             self.architecture['discriminator'], net_name='dis',
             data_format=FLAGS.IMAGE_FORMAT, num_class=self.num_class)
@@ -124,7 +124,7 @@ class SNGan(object):
         self.Dis.seq_links(list(range(d_net.num_layers)))
         self.Dis.add_output_layers([d_net.num_layers - 1])
 
-        print('-----------SNGAN INIT NET done')
+        # print('-----------SNGAN INIT NET done')
         if self.mog_model is not None:
             self.mog_model.define_tfp_mog_vars(self.do_summary)
 
@@ -204,14 +204,14 @@ class SNGan(object):
                 code_batch = self.sample_codes(batch_size, name='code_tr')
             gen_batch = self.Gen(code_batch, is_training=is_training)
 
-            print('----------- defining gpu task')
+            # print('----------- defining gpu task')
             dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
             s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
             if self.mog_model is None or self.train_with_mog is False:
-                print('----------- mog not found or turned off')
+                # print('----------- mog not found or turned off')
                 s_mog = None
             else:
-                print('----------- mog found')
+                # print('----------- mog found')
                 s_mog = self.mog_model.sample_batch(batch_size)
                 # s_mog = tf.Print(s_x, [tf.norm(s_x), tf.reduce_mean(s_x), tf.reduce_max(s_x)], message='mog_enc')
             # loss function

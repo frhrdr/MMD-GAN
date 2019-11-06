@@ -76,7 +76,7 @@ class Agent(object):
                                 max_step=self.debug_step, print_loss=self.print_loss, query_step=self.query_step,
                                 imbalanced_update=self.imbalanced_update)
         elif self.debug is False:  # ---------------------------------------------------------------------- ALMOST THERE
-            print('-------------------------- starting session for full run')
+            # print('-------------------------- starting session for full run')
             with MySession(self.do_save, self.do_trace, self.save_path, self.load_ckpt) as sess:
                 sess.full_run(op_list, loss_list, max_step, step_per_epoch, global_step, summary_op, summary_image_op,
                               self.summary_folder, self.ckpt_folder, print_loss=self.print_loss,

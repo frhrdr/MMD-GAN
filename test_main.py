@@ -11,7 +11,7 @@ from dp_funcs.mog import EncodingMoG
 
 
 def main(ar):
-  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.FATAL)
 
   if ar.seed is not None:
     np.random.seed(ar.seed)

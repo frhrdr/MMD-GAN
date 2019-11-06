@@ -1,4 +1,5 @@
 import numpy as np
+import lhsmdu
 import tensorflow as tf
 import tensorflow_probability as tfp
 from sklearn.mixture import GaussianMixture
@@ -63,7 +64,6 @@ class EncodingMoG:
   def define_tfp_mog_vars(self, do_summary):
     self.pi = tf.compat.v1.get_variable('mog_pi', dtype=tf.float32,
                                         initializer=tf.ones((self.n_comp,)) / self.n_comp)
-    print('-------made a pi variable:', self.pi)
     self.mu = tf.compat.v1.get_variable('mog_mu', dtype=tf.float32,
                                         initializer=tf.random.normal((self.n_comp, self.n_dims)))
 
@@ -201,7 +201,8 @@ class EncodingMoG:
 
 
 class NumpyMAPMoG:
-  def __init__(self, n_comp, d_enc, do_map=True, reg_covar=None, dir_a=None, niw_k=None, niw_v=None, niw_s=None):
+  def __init__(self, n_comp, d_enc, do_map=True, reg_covar=None, init_params='random',
+               dir_a=None, niw_k=None, niw_v=None, niw_s=None):
     self.d_enc = d_enc
     self.n_comp = n_comp
 
@@ -217,16 +218,42 @@ class NumpyMAPMoG:
     self.niw_v = niw_v if niw_v is not None else self.d_enc + 2
     self.niw_s = niw_s if niw_s is not None else np.eye(self.d_enc) * 0.1
 
+    self.init_params = init_params
+    self.mu_init_range = [-3, 3]
+    self.cov_init_scale = 1.
+
   def _init_params(self, encodings):
+    if self.init_params == 'random':
+      pi, mu, sig = self._init_random(encodings)
+    elif self.init_params == 'lhs':
+      pi, mu, sig = self._init_lhs()
+    else:
+      raise ValueError
+    self.weights_, self.means_, self.covariances_ = pi, mu, sig
+
+  def _init_random(self, encodings):
     # random init only
     self.converged_ = False
     n_data = encodings.shape[0]
     resp = np.random.rand(self.n_comp, n_data)
     resp = resp / resp.sum(axis=0)
     n_k = np.sum(resp, axis=1)  # (n_comp)
-    pi_mle, mu_mle, sig_mle = self.m_step_mle(n_k, n_data, encodings, resp)
-    pi_map, mu_map, sig_map = self.map_from_mle(pi_mle, mu_mle, sig_mle, n_data, n_k)
-    self.weights_, self.means_, self.covariances_ = pi_map, mu_map, sig_map
+    pi, mu, sig = self.m_step_mle(n_k, n_data, encodings, resp)
+    if self.do_map:
+      pi, mu, sig = self.map_from_mle(pi, mu, sig, n_data, n_k)
+    return pi, mu, sig
+
+  def _init_lhs(self):
+    pi = np.zeros((self.d_enc,)) + self.d_enc
+    mu = self.lhs_mu_samples()
+    sig = np.stack([np.eye(self.d_enc) * self.cov_init_scale] * self.n_comp)
+    return pi, mu, sig
+
+  def lhs_mu_samples(self, seed=None):
+    seed = np.random.randint(99999) if seed is None else seed  # set seed
+    samples = lhsmdu.sample(self.d_enc, self.n_comp, randomSeed=seed).A.T  # get (n, d) array of samples
+    samples = samples * (self.mu_init_range[1] - self.mu_init_range[0]) + self.mu_init_range[0]  # scale up from [0,1]
+    return samples
 
   def fit(self, encodings):
     if not hasattr(self, 'converged_'):
@@ -372,9 +399,8 @@ def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em):
     mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=False)
   elif key == 'skfi_kmeans':
     mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='kmeans', n_init=1, warm_start=False)
-  elif key == 'map_full_init':
-    # mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
-    raise ValueError  # non-warm start not implemented yet
+  elif key == 'map_shl':
+    mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em, init_params='shl')
   elif key == 'nowlan':
     assert cov_type == 'full'
     assert decay_gamma is not None

@@ -400,7 +400,7 @@ def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em):
   elif key == 'skfi_kmeans':
     mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='kmeans', n_init=1, warm_start=False)
   elif key == 'map_shl':
-    mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em, init_params='shl')
+    mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em, init_params='lhs')
   elif key == 'nowlan':
     assert cov_type == 'full'
     assert decay_gamma is not None

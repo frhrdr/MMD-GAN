@@ -35,7 +35,7 @@ def parse_run_args():
   parser.add_argument('--mog-type', '-mog', type=str, default='nowlan')
 
   parser.add_argument('--n-comp', '-n-comp', type=int, default=10)
-  # parser.add_argument('--em-steps', type=int, default=1)
+  parser.add_argument('--em-steps', '-em', type=int, default=1)
   parser.add_argument('--cov-type', '-cov', type=str, default='full')
   parser.add_argument('--train-without-mog', action='store_true', default=False)
   parser.add_argument('--re-init-step', type=int, default=None)
@@ -46,7 +46,7 @@ def parse_run_args():
   parser.add_argument('--fix-cov', action='store_true', default=False)
   parser.add_argument('--fix-pi', action='store_true', default=False)
   parser.add_argument('--map-em', action='store_true', default=False)
-  parser.add_argument('--architecture_key', '-arch', type=str, default=None)
+  parser.add_argument('--d_enc', '-d', type=int, default=None)
 
   parser.add_argument('--seed', '-seed', type=int, default=None)
 
@@ -60,25 +60,17 @@ def post_parse_processing(args):
   args.filename = '{}_{}'.format(args.dataset, args.filename)
 
 
-def dataset_defaults(dataset, architecture_key):
+def dataset_defaults(dataset, d_enc):
   assert dataset in ['mnist', 'cifar', 'fashion']
 
   if dataset in ['mnist', 'fashion']:
     num_instance = 50000
-    if architecture_key == '2d':
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_2d_enc()
-    elif architecture_key == '2d_wide':
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_2d_enc_wide_init()
-    elif architecture_key is not None:
-      raise ValueError
-    else:
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default()
+    d_enc = 2 if d_enc is None else d_enc
+    architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default(d_enc)
   elif dataset == 'cifar':
     num_instance = 50000
-    if architecture_key is not None:
-      raise ValueError
-    else:
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.cifar_default()
+    d_enc = 16 if d_enc is None else d_enc
+    architecture, code_dim, act_k, d_enc = GeneralTools.architectures.cifar_default(d_enc)
   else:
     raise ValueError
   return num_instance, architecture, code_dim, act_k, d_enc

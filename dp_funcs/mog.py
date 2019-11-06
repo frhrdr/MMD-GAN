@@ -11,7 +11,7 @@ import os
 
 class EncodingMoG:
   def __init__(self, n_dims, n_comp, linked_gan, np_mog, n_data_samples, enc_batch_size, filename=None, cov_type='full',
-               fix_cov=False, fix_pi=False, re_init_at_step=None, decay_gamma=None, map_em=False):
+               em_steps=None, fix_cov=False, fix_pi=False, re_init_at_step=None, decay_gamma=None, map_em=False):
     self.n_dims = n_dims
     self.n_comp = n_comp
     self.cov_type = cov_type
@@ -27,7 +27,8 @@ class EncodingMoG:
 
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
-    self.np_mog = default_mogs(np_mog, n_comp, n_dims, cov_type, decay_gamma, map_em) if isinstance(np_mog, str) else np_mog
+    self.np_mog = default_mogs(np_mog, n_comp, n_dims, cov_type,
+                               decay_gamma, em_steps, map_em) if isinstance(np_mog, str) else np_mog
 
     self.tfp_mog = None
 
@@ -360,17 +361,17 @@ class NowlanMoG:
     pass
 
 
-def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma=None, map_em=False):
+def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em):
   if key == 'sklearn':
     assert map_em is False
-    mog = GaussianMixture(n_comp, cov_type, max_iter=1, init_params='random', n_init=1, warm_start=True)
+    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=True)
   elif key == 'map':
     assert cov_type == 'full'
     mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
   elif key == 'sklearn_full_init_random':
-    mog = GaussianMixture(n_comp, cov_type, max_iter=1, init_params='random', n_init=1, warm_start=False)
+    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=False)
   elif key == 'sklearn_full_init_kmeans':
-    mog = GaussianMixture(n_comp, cov_type, max_iter=1, init_params='kmeans', n_init=1, warm_start=False)
+    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='kmeans', n_init=1, warm_start=False)
   elif key == 'map_full_init':
     # mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
     raise ValueError  # non-warm start not implemented yet

@@ -21,7 +21,7 @@ def main(ar):
   FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + '{}_NCHW/'.format(ar.dataset)
   from DeepLearning.my_sngan import SNGan
 
-  num_instance, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.architecture_key)
+  num_instance, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.d_enc)
   # debug_mode = False
   # optimizer = 'adam'
   num_class = 0 if ar.n_class is None else ar.n_class
@@ -69,7 +69,7 @@ def main(ar):
   else:
     mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=ar.mog_type,
                             n_data_samples=num_instance, enc_batch_size=200,
-                            filename=ar.filename, cov_type=ar.cov_type,
+                            filename=ar.filename, cov_type=ar.cov_type, em_steps=ar.em_steps,
                             fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,
                             decay_gamma=ar.decay_gamma, map_em=ar.map_em)
     mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)

@@ -221,11 +221,11 @@ class MySession(object):
         self._check_thread_()
         extra_update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
         start_time = time.time()
-        if imbalanced_update is None:  # ------------------------------------------------------ SIMULTANOUS UPDATES HERE
+        if imbalanced_update is None:  # ----------------------------------------------------- SIMULTANEOUS UPDATES HERE
             if mog_model is not None and mog_model.linked_gan.train_with_mog:
                 mog_model.set_batch_encoding()
 
-            first = True
+            global_step_value = None
             for step in range(max_step):
                 # DEBUG
                 # nb = mog_model.linked_gan.data_batch
@@ -237,9 +237,12 @@ class MySession(object):
                 if mog_model is not None and mog_model.linked_gan.train_with_mog:
                     mog_model.update_by_batch(self.sess)
 
-                    if first:
-                        first = False
+                    if global_step_value is None:  # first iteration only
                         mog_model.store_encodings_and_params(self.sess, summary_folder, 0)
+
+                    elif global_step_value % query_step == (query_step-1):
+                        mog_model.store_encodings_and_params(self.sess, summary_folder, global_step_value)
+
                 # update the model
                 loss_value, _, _, global_step_value = self.sess.run(
                     [loss_list, op_list, extra_update_ops, global_step])
@@ -269,8 +272,7 @@ class MySession(object):
                     # if mog_model is not None and mog_model.approx_test:
                     #     print('------------------- mog model test start')
                     #     mog_model.test_mog_approx(self.sess)
-                    if mog_model is not None:
-                        mog_model.store_encodings_and_params(self.sess, summary_folder, global_step_value)
+
 
                 # save model at last step
                 if step == max_step - 1:

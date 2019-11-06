@@ -367,6 +367,13 @@ def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma=None, map_em=False):
   elif key == 'map':
     assert cov_type == 'full'
     mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
+  elif key == 'sklearn_full_init_random':
+    mog = GaussianMixture(n_comp, cov_type, max_iter=1, init_params='random', n_init=1, warm_start=False)
+  elif key == 'sklearn_full_init_kmeans':
+    mog = GaussianMixture(n_comp, cov_type, max_iter=1, init_params='kmeans', n_init=1, warm_start=False)
+  elif key == 'map_full_init':
+    # mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
+    raise ValueError  # non-warm start not implemented yet
   elif key == 'nowlan':
     assert cov_type == 'full'
     assert decay_gamma is not None

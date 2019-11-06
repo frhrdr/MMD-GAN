@@ -244,7 +244,7 @@ class NumpyMAPMoG:
     return pi, mu, sig
 
   def _init_lhs(self):
-    pi = np.zeros((self.n_comp,)) + self.n_comp
+    pi = np.ones((self.n_comp,)) / self.n_comp
     mu = self.lhs_mu_samples()
     sig = np.stack([np.eye(self.d_enc) * self.cov_init_scale] * self.n_comp)
     return pi, mu, sig

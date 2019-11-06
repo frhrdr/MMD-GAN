@@ -368,9 +368,9 @@ def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em):
   elif key == 'map':
     assert cov_type == 'full'
     mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
-  elif key == 'sklearn_full_init_random':
+  elif key == 'skfi_random':
     mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=False)
-  elif key == 'sklearn_full_init_kmeans':
+  elif key == 'skfi_kmeans':
     mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='kmeans', n_init=1, warm_start=False)
   elif key == 'map_full_init':
     # mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)

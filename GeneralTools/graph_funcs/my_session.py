@@ -251,7 +251,7 @@ class MySession(object):
 
                 # add summary and print loss every query step
                 if global_step_value % query_step == (query_step-1) or global_step_value == 1:
-                    if mog_model.means_summary_op is not None and summary_op is not None:
+                    if mog_model is not None and mog_model.means_summary_op is not None and summary_op is not None:
                         summary_str, summary_str_means = self.sess.run([summary_op, mog_model.means_summary_op])
                         self.summary_writer.add_summary(summary_str, global_step=global_step_value)
                         self.summary_writer.add_summary(summary_str_means, global_step=global_step_value)

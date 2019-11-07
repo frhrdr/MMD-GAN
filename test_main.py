@@ -7,8 +7,8 @@ from GeneralTools.misc_fun import FLAGS
 # FLAGS.WEIGHT_INITIALIZER = 'sn_paper'
 from GeneralTools.graph_funcs.agent import Agent
 from GeneralTools.run_args import parse_run_args, dataset_defaults
-from dp_funcs.mog import EncodingMoG
-
+from dp_funcs.mog import EncodingMoG, default_mogs
+from tf_privacy.analysis import privacy_ledger
 
 def main(ar):
   tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.FATAL)
@@ -21,7 +21,7 @@ def main(ar):
   FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + '{}_NCHW/'.format(ar.dataset)
   from DeepLearning.my_sngan import SNGan
 
-  num_instance, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.d_enc, ar.architecture_key)
+  n_data_samples, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.d_enc, ar.architecture_key)
   # debug_mode = False
   # optimizer = 'adam'
   num_class = 0 if ar.n_class is None else ar.n_class
@@ -37,6 +37,7 @@ def main(ar):
 
   # a case
   lr_list = [ar.lr_dis, ar.lr_gen]  # [dis, gen]
+  opt_list = [ar.optimizer_dis, ar.optimizer_gen]
   # rep - repulsive loss, rmb - repulsive loss with bounded rbf kernel
   # to test other losses, see GeneralTools/math_func/GANLoss
   # rep_weights = [0.0, -1.0]  # weights for e_kxy and -e_kyy, w[0]-w[1] must be 1
@@ -51,6 +52,14 @@ def main(ar):
   #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
   # sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
 
+  if ar.noise_multiplier is not None:
+    dp_specs = {'l2_norm_clip': ar.l2_norm_clip,
+                'noise_multiplier': ar.noise_multiplier,
+                'num_microbatches': ar.num_microbatches,
+                'ledger': privacy_ledger.PrivacyLedger(population_size=n_data_samples,
+                                                       selection_probability=ar.batch_size / n_data_samples)}
+  else:
+    dp_specs = None
   # imbalanced_update = None  # NetPicker(dis_steps=3, gen_steps=3)
 
   agent = Agent(
@@ -61,27 +70,27 @@ def main(ar):
 
   mdl = SNGan(
       architecture, num_class=num_class, loss_type=ar.loss_type,
-      optimizer=ar.optimizer, do_summary=True, do_summary_image=True,
+      optimizer=opt_list, do_summary=True, do_summary_image=True,
       num_summary_image=8, image_transpose=False)
 
   if ar.train_without_mog:
     mog_model = None
   else:
-    mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=ar.mog_type,
-                            n_data_samples=num_instance, enc_batch_size=200,
-                            filename=ar.filename, cov_type=ar.cov_type, em_steps=ar.em_steps,
-                            fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,
-                            decay_gamma=ar.decay_gamma, map_em=ar.map_em)
+    np_mog = default_mogs(ar.mog_type, ar.n_comp, d_enc, ar.cov_type, ar.decay_gamma, ar.em_steps, ar.map_em,
+                          ar.reg_covar)
+    mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=np_mog, n_data_samples=n_data_samples,
+                            enc_batch_size=200, filename=ar.filename, cov_type=ar.cov_type,
+                            fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step)
     mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
 
   grey_scale = ar.dataset in ['mnist', 'fashion']
 
   for i in range(ar.n_iterations):
       mdl.training(
-          ar.filename, agent, num_instance,
+          ar.filename, agent, n_data_samples,
           lr_list, end_lr=ar.lr_end, max_step=ar.save_per_step,
           batch_size=ar.batch_size, sample_same_class=ar.sample_same_class,
-          num_threads=ar.n_threads, mog_model=mog_model)
+          num_threads=ar.n_threads, mog_model=mog_model, dp_specs=dp_specs)
       if ar.debug_mode is not None:
           _ = mdl.eval_sampling(
               ar.filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,

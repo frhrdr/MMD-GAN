@@ -12,7 +12,7 @@ import os
 
 class EncodingMoG:
   def __init__(self, n_dims, n_comp, linked_gan, np_mog, n_data_samples, enc_batch_size, filename=None, cov_type='full',
-               em_steps=None, fix_cov=False, fix_pi=False, re_init_at_step=None, decay_gamma=None, map_em=False):
+               fix_cov=False, fix_pi=False, re_init_at_step=None):
     self.n_dims = n_dims
     self.n_comp = n_comp
     self.cov_type = cov_type
@@ -28,8 +28,7 @@ class EncodingMoG:
 
     self.enc_batch_size = enc_batch_size
     self.n_data_samples = n_data_samples
-    self.np_mog = default_mogs(np_mog, n_comp, n_dims, cov_type,
-                               decay_gamma, em_steps, map_em) if isinstance(np_mog, str) else np_mog
+    self.np_mog = np_mog
 
     self.tfp_mog = None
 
@@ -388,17 +387,20 @@ class NowlanMoG:
     pass
 
 
-def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em):
+def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em, reg_covar):
   if key == 'sklearn':
     assert map_em is False
-    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=True)
+    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=True,
+                          reg_covar=1e-6 if reg_covar is None else reg_covar)
   elif key == 'map':
     assert cov_type == 'full'
     mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em)
   elif key == 'skfi_random':
-    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=False)
+    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=False,
+                          reg_covar=1e-6 if reg_covar is None else reg_covar)
   elif key == 'skfi_kmeans':
-    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='kmeans', n_init=1, warm_start=False)
+    mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='kmeans', n_init=1, warm_start=False,
+                          reg_covar=1e-6 if reg_covar is None else reg_covar)
   elif key == 'map_shl':
     mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em, init_params='lhs')
   elif key == 'nowlan':

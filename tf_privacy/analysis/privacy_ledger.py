@@ -23,8 +23,8 @@ from distutils.version import LooseVersion
 import numpy as np
 import tensorflow as tf
 
-from privacy.analysis import tensor_buffer
-from privacy.dp_query import dp_query
+from tf_privacy.analysis import tensor_buffer
+from tf_privacy.dp_query import dp_query
 
 if LooseVersion(tf.__version__) < LooseVersion('2.0.0'):
   nest = tf.contrib.framework.nest

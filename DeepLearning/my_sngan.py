@@ -301,7 +301,7 @@ class SNGan(object):
     ###################################################################
     def training(self, filename, agent, num_instance,
                  lr_list, end_lr=1e-7, max_step=None, batch_size=64,
-                 sample_same_class=False, num_threads=7, gpu='/gpu:0', mog_model=None):
+                 sample_same_class=False, num_threads=7, gpu='/gpu:0', mog_model=None, dp_specs=None):
         """ This function defines the training process
 
         :param filename:
@@ -353,7 +353,7 @@ class SNGan(object):
             self.global_step = global_step_config()
             _, opt_ops = multi_opt_config(
                 lr_list, end_lr=end_lr,
-                optimizer=self.optimizer, global_step=self.global_step)
+                optimizer=self.optimizer, global_step=self.global_step, dp_specs=dp_specs)
             # assign tasks
             with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope()):
                 # calculate loss and gradients

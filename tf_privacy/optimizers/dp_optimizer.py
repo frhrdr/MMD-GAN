@@ -20,8 +20,8 @@ from __future__ import print_function
 from distutils.version import LooseVersion
 import tensorflow as tf
 
-from privacy.analysis import privacy_ledger
-from privacy.dp_query import gaussian_query
+from tf_privacy.analysis import privacy_ledger
+from tf_privacy.dp_query import gaussian_query
 
 if LooseVersion(tf.__version__) < LooseVersion('2.0.0'):
   nest = tf.contrib.framework.nest

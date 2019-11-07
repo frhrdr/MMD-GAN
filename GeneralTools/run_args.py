@@ -9,7 +9,8 @@ def parse_run_args():
   parser.add_argument('--dataset', '-data', type=str, default='mnist')
 
   parser.add_argument('--debug-mode', action='store_true', default=False)
-  parser.add_argument('--optimizer', '-opt', type=str, default='adam')
+  parser.add_argument('--optimizer_dis', '-opt_dis', type=str, default='adam')
+  parser.add_argument('--optimizer_gen', '-opt_gen', type=str, default='adam')
   parser.add_argument('--n-instance', type=int, default=None)
   parser.add_argument('--save-per-step', type=int, default=5000)
   parser.add_argument('--batch-size', '-bs', type=int, default=64)
@@ -32,6 +33,11 @@ def parse_run_args():
 
   parser.add_argument('--architecture-key', '-arch', type=str, default=None)
 
+  # DP
+  parser.add_argument('--l2-norm-clip', '-clip', type=float, default=100.)
+  parser.add_argument('--noise-multiplier', '-noise', type=float, default=None)
+  parser.add_argument('--num_microbatches', type=float, default=None)
+
   # MOG
   parser.add_argument('--mog-type', '-mog', type=str, default='nowlan')
 
@@ -40,10 +46,11 @@ def parse_run_args():
   parser.add_argument('--cov-type', '-cov', type=str, default='full')
   parser.add_argument('--train-without-mog', action='store_true', default=False)
   parser.add_argument('--re-init-step', type=int, default=None)
+  parser.add_argument('--reg-covar', type=float, default=None)
 
   parser.add_argument('--decay-gamma', '-decay', type=float, default=None)
 
-  parser.add_argument('--compute-fid', action='store_true', default=False)
+  parser.add_argument('--compute-fid', '-fid', action='store_true', default=False)
   parser.add_argument('--fix-cov', action='store_true', default=False)
   parser.add_argument('--fix-pi', action='store_true', default=False)
   parser.add_argument('--map-em', action='store_true', default=False)

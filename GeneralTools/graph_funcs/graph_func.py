@@ -342,7 +342,10 @@ def opt_config(
             FLAGS.print('Adam Optimizer is used.')
         else:
             opt_op = VectorizedDPAdam(
-                learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='DPAdam' + name_suffix)
+                dp_specs['l2_norm_clip'],
+                dp_specs['noise_multiplier'],
+                dp_specs['num_microbatches'],
+                learning_rate=learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='DPAdam' + name_suffix)
             FLAGS.print('DP-Adam Optimizer is used.')
     elif optimizer in ['RMSProp', 'rmsprop']:
         # RMSProp
@@ -358,7 +361,7 @@ def opt_config(
 
 def multi_opt_config(
         lr_list, lr_decay_steps=None, end_lr=1e-7,
-        optimizer='adam', global_step=None, target_step=1e5):
+        optimizer='adam', global_step=None, target_step=1e5, dp_specs=None):
     """ This function configures multiple optimizer
 
     :param lr_list: a list, e.g. [1e-4, 1e-3]
@@ -377,7 +380,7 @@ def multi_opt_config(
     if num_opt == 1:
         learning_rate, opt_op = opt_config(
             lr_list[0], lr_decay_steps, end_lr,
-            optimizer[0], '', global_step, target_step)
+            optimizer[0], '', global_step, target_step, dp_specs)
     else:
         if len(optimizer) == 1:  # match the length of lr_multiplier
             optimizer = optimizer*num_opt
@@ -385,7 +388,7 @@ def multi_opt_config(
         lr_opt_combo = [
             opt_config(
                 lr_list[i], lr_decay_steps, end_lr,
-                optimizer[i], '_'+str(i), global_step, target_step)
+                optimizer[i], '_'+str(i), global_step, target_step, dp_specs)
             for i in range(num_opt)]
         # separate lr and opt_op
         learning_rate = [lr_opt[0] for lr_opt in lr_opt_combo]

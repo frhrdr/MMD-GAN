@@ -25,13 +25,14 @@ def parse_run_args():
   parser.add_argument('--sample-same-class', action='store_true', default=False)
   parser.add_argument('--imbalanced-update', type=str, default=None)
 
-  parser.add_argument('--debug-step', '-dstep', type=int, default=400)
-  parser.add_argument('--query-step', '-qstep', type=int, default=100)
+  parser.add_argument('--debug-step', '-dstep', type=int, default=500)
+  parser.add_argument('--query-step', '-qstep', type=int, default=500)
   parser.add_argument('--n-threads', type=int, default=7)
   parser.add_argument('--n-iterations', '-n-it', type=int, default=8)
 
+  parser.add_argument('--architecture-key', '-arch', type=str, default=None)
+
   # MOG
-  # parser.add_argument('--d-encoding', '-denc', type=int, default=4)
   parser.add_argument('--mog-type', '-mog', type=str, default='nowlan')
 
   parser.add_argument('--n-comp', '-n-comp', type=int, default=10)
@@ -60,13 +61,18 @@ def post_parse_processing(args):
   args.filename = '{}_{}'.format(args.dataset, args.filename)
 
 
-def dataset_defaults(dataset, d_enc):
+def dataset_defaults(dataset, d_enc, architecture_key=None):
   assert dataset in ['mnist', 'cifar', 'fashion']
 
   if dataset in ['mnist', 'fashion']:
     num_instance = 50000
     d_enc = 2 if d_enc is None else d_enc
-    architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default(d_enc)
+    if architecture_key is None:
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default(d_enc)
+    elif architecture_key == 'lean':
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_lean(d_enc)
+    elif architecture_key == 'tiny':
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_tiny(d_enc)
   elif dataset == 'cifar':
     num_instance = 50000
     d_enc = 16 if d_enc is None else d_enc

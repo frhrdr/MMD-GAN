@@ -28,7 +28,7 @@ def mnist_default(d_enc=2):
 def mnist_lean(d_enc=2):
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
-  g = [{'name': 'l1', 'out': 16 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [32, 7, 7]},
+  g = [{'name': 'l1', 'out': 16 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [16, 7, 7]},
        {'name': 'l2_up',  'out': 16, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
        {'name': 'l3_up',  'out':  8, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
        {'name': 'l4_t28', 'out':  1, 'act': 'tanh'}]
@@ -52,7 +52,7 @@ def mnist_lean(d_enc=2):
 def mnist_tiny(d_enc=2):
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
-  g = [{'name': 'l1', 'out': 8 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [16, 7, 7]},
+  g = [{'name': 'l1', 'out': 8 * 7 * 7, 'op': 'd', 'act': 'linear', 'act_nm': None, 'out_reshape': [8, 7, 7]},
        {'name': 'l2_up',  'out': 8, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
        {'name': 'l3_up',  'out': 8, 'op': 'tc', 'act': 'relu', 'act_nm': 'bn', 'kernel': 4, 'strides': 2},
        {'name': 'l4_t28', 'out': 1, 'act': 'tanh'}]

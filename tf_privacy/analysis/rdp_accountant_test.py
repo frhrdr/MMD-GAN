@@ -29,8 +29,8 @@ from mpmath import npdf
 from mpmath import quad
 import numpy as np
 
-from privacy.analysis import privacy_ledger
-from privacy.analysis import rdp_accountant
+from tf_privacy.analysis import privacy_ledger
+from tf_privacy.analysis import rdp_accountant
 
 
 class TestGaussianMoments(parameterized.TestCase):

@@ -70,6 +70,7 @@ class GenerativeModelMetric(object):
         if num_images > 2500:
             raise MemoryError('The input is too big to possibly fit into memory. Consider using multiple runs.')
         if num_images >= 400:
+            print(num_images)
             # Note: need to validate the code below
 
             # somehow tfgan.eval.classifier_score does not work properly when splitting the datasets.

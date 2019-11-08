@@ -41,8 +41,8 @@ from absl import flags
 # Opting out of loading all sibling packages and their dependencies.
 sys.skip_tf_privacy_import = True
 
-from privacy.analysis.rdp_accountant import compute_rdp  # pylint: disable=g-import-not-at-top
-from privacy.analysis.rdp_accountant import get_privacy_spent
+from tf_privacy.analysis.rdp_accountant import compute_rdp  # pylint: disable=g-import-not-at-top
+from tf_privacy.analysis.rdp_accountant import get_privacy_spent
 
 FLAGS = flags.FLAGS
 

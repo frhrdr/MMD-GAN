@@ -90,18 +90,13 @@ class PrivacyLedger(object):
       init_capacity = np.int(np.ceil(1 / selection_probability))
 
     # The query buffer stores rows corresponding to GaussianSumQueryEntries.
-    self._query_buffer = tensor_buffer.TensorBuffer(
-        init_capacity, [3], tf.float32, 'query')
-    self._sample_var = tf.Variable(
-        initial_value=tf.zeros([3]), trainable=False, name='sample')
+    self._query_buffer = tensor_buffer.TensorBuffer(init_capacity, [3], tf.float32, 'query')
+    self._sample_var = tf.Variable(initial_value=tf.zeros([3]), trainable=False, name='sample')
 
     # The sample buffer stores rows corresponding to SampleEntries.
-    self._sample_buffer = tensor_buffer.TensorBuffer(
-        init_capacity, [3], tf.float32, 'sample')
-    self._sample_count = tf.Variable(
-        initial_value=0.0, trainable=False, name='sample_count')
-    self._query_count = tf.Variable(
-        initial_value=0.0, trainable=False, name='query_count')
+    self._sample_buffer = tensor_buffer.TensorBuffer(init_capacity, [3], tf.float32, 'sample')
+    self._sample_count = tf.Variable(initial_value=0.0, trainable=False, name='sample_count')
+    self._query_count = tf.Variable(initial_value=0.0, trainable=False, name='query_count')
     try:
       # Newer versions of TF
       self._cs = tf.CriticalSection()
@@ -121,8 +116,7 @@ class PrivacyLedger(object):
     """
 
     def _do_record_query():
-      with tf.control_dependencies(
-          [tf.compat.v1.assign(self._query_count, self._query_count + 1)]):
+      with tf.control_dependencies([tf.compat.v1.assign(self._query_count, self._query_count + 1)]):
         return self._query_buffer.append(
             [self._sample_count, l2_norm_bound, noise_stddev])
 
@@ -130,16 +124,11 @@ class PrivacyLedger(object):
 
   def finalize_sample(self):
     """Finalizes sample and records sample ledger entry."""
-    with tf.control_dependencies([
-        tf.compat.v1.assign(self._sample_var, [
-            self._population_size, self._selection_probability,
-            self._query_count
-        ])
-    ]):
-      with tf.control_dependencies([
-          tf.compat.v1.assign(self._sample_count, self._sample_count + 1),
-          tf.compat.v1.assign(self._query_count, 0)
-      ]):
+    with tf.control_dependencies([tf.compat.v1.assign(self._sample_var, [self._population_size,
+                                                                         self._selection_probability,
+                                                                         self._query_count])]):
+      with tf.control_dependencies([tf.compat.v1.assign(self._sample_count, self._sample_count + 1),
+                                    tf.compat.v1.assign(self._query_count, 0)]):
         return self._sample_buffer.append(self._sample_var)
 
   def get_unformatted_ledger(self):

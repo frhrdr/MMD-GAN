@@ -20,10 +20,10 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from privacy.analysis import privacy_ledger
-from privacy.dp_query import gaussian_query
-from privacy.dp_query import nested_query
-from privacy.dp_query import test_utils
+from tf_privacy.analysis import privacy_ledger
+from tf_privacy.dp_query import gaussian_query
+from tf_privacy.dp_query import nested_query
+from tf_privacy.dp_query import test_utils
 
 tf.enable_eager_execution()
 

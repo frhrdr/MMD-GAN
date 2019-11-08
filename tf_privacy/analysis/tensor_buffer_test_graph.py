@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from privacy.analysis import tensor_buffer
+from tf_privacy.analysis import tensor_buffer
 
 
 class TensorBufferTest(tf.test.TestCase):

@@ -51,10 +51,12 @@ def parse_run_args():
   parser.add_argument('--decay-gamma', '-decay', type=float, default=None)
 
   parser.add_argument('--compute-fid', '-fid', action='store_true', default=False)
+  parser.add_argument('--n-fid-batches', type=int, default=781)  # 781 is max for 50k data and bs=64, 100 for bs 500
+
   parser.add_argument('--fix-cov', action='store_true', default=False)
   parser.add_argument('--fix-pi', action='store_true', default=False)
   parser.add_argument('--map-em', action='store_true', default=False)
-  parser.add_argument('--d_enc', '-d', type=int, default=None)
+  parser.add_argument('--d-enc', '-d', type=int, default=None)
 
   parser.add_argument('--seed', '-seed', type=int, default=None)
 

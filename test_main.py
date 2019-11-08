@@ -10,8 +10,9 @@ from GeneralTools.run_args import parse_run_args, dataset_defaults
 from dp_funcs.mog import EncodingMoG, default_mogs
 from tf_privacy.analysis import privacy_ledger
 
+
 def main(ar):
-  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.FATAL)
+  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.WARN)
 
   if ar.seed is not None:
     np.random.seed(ar.seed)
@@ -22,35 +23,17 @@ def main(ar):
   from DeepLearning.my_sngan import SNGan
 
   n_data_samples, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.d_enc, ar.architecture_key)
-  # debug_mode = False
-  # optimizer = 'adam'
   num_class = 0 if ar.n_class is None else ar.n_class
-  # end_lr = 1e-7
-  # num_threads = 7
-  # n_iterations = 1  # 8
-
-  # random code to test model
   code_x = np.random.randn(400, code_dim).astype(np.float32)
-  # to show the model improvements over iterations, consider save the random codes and use later
-  # np.savetxt('MMD-GAN/z_128.txt', z_batch, fmt='%.6f', delimiter=',')
-  # code_x = np.genfromtxt('MMD-GAN/z_128.txt', delimiter=',', dtype=np.float32)
 
-  # a case
   lr_list = [ar.lr_dis, ar.lr_gen]  # [dis, gen]
   opt_list = [ar.optimizer_dis, ar.optimizer_gen]
-  # rep - repulsive loss, rmb - repulsive loss with bounded rbf kernel
-  # to test other losses, see GeneralTools/math_func/GANLoss
-  # rep_weights = [0.0, -1.0]  # weights for e_kxy and -e_kyy, w[0]-w[1] must be 1
 
   if ar.loss_type in {'rep', 'rmb'}:
       sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}_{:.1f}_{:.1f}'.format(
           ar.loss_type, lr_list[0], lr_list[1], act_k, ar.rep_weight_0, ar.rep_weight_1)
-  #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear_{:.1f}_{:.1f}'.format(
-  #         loss_type, lr_list[0], lr_list[1], rep_weights[0], rep_weights[1])
   else:
       sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(ar.loss_type, lr_list[0], lr_list[1], act_k)
-  #     sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
-  # sub_folder = 'sngan_{}_{:.0e}_{:.0e}_gl1_linear'.format(loss_type, lr_list[0], lr_list[1])
 
   if ar.noise_multiplier is not None:
     dp_specs = {'l2_norm_clip': ar.l2_norm_clip,
@@ -60,7 +43,6 @@ def main(ar):
                                                        selection_probability=ar.batch_size / n_data_samples)}
   else:
     dp_specs = None
-  # imbalanced_update = None  # NetPicker(dis_steps=3, gen_steps=3)
 
   agent = Agent(
       ar.filename, sub_folder, load_ckpt=True, do_trace=False,
@@ -96,7 +78,7 @@ def main(ar):
               ar.filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
               real_sample=False, do_embedding=False, do_sprite=True)
       if ar.compute_fid:  # v1 - inception score and fid, ms_ssim - MS-SSIM
-          scores = mdl.mdl_score(ar.filename, sub_folder, ar.batch_size, num_batch=781,
+          scores = mdl.mdl_score(ar.filename, sub_folder, ar.batch_size, num_batch=ar.n_fid_batches,
                                  model='v1', grey_scale=grey_scale)
           print('Epoch {} with scores: {}'.format(i, scores))
 

@@ -417,10 +417,8 @@ class SNGan(object):
 
             # run the session -----------------------------------------------------------GETTING CLOSER TO TRAINING LOOP
             FLAGS.print('loss_list name: {}.'.format(self.loss_names))
-            agent.train(
-                op_list, loss_list,
-                self.global_step, max_step, self.step_per_epoch,
-                summary_op, summary_image_op, self.force_print, mog_model, dp_specs)
+            agent.train(op_list, loss_list, self.global_step, max_step, self.step_per_epoch, summary_op,
+                        summary_image_op, force_print=self.force_print, mog_model=mog_model, dp_specs=dp_specs)
             self.force_print = False  # force print at the first call
 
     ###################################################################

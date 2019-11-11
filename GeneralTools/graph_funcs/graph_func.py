@@ -342,9 +342,9 @@ def opt_config(
             FLAGS.print('Adam Optimizer is used.')
         else:
             opt_op = DPAdamGaussianOptimizer(
-                dp_specs['l2_norm_clip'],
-                dp_specs['noise_multiplier'],
-                dp_specs['num_microbatches'],
+                l2_norm_clip=dp_specs['l2_norm_clip'],
+                noise_multiplier=dp_specs['noise_multiplier'],
+                num_microbatches=dp_specs['num_microbatches'],
                 learning_rate=learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='DPAdam' + name_suffix)
             FLAGS.print('DP-Adam Optimizer is used.')
     elif optimizer in ['RMSProp', 'rmsprop']:

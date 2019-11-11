@@ -9,6 +9,17 @@ from GeneralTools.graph_funcs.agent import Agent
 from GeneralTools.run_args import parse_run_args, dataset_defaults
 from dp_funcs.mog import EncodingMoG, default_mogs
 from tf_privacy.analysis import privacy_ledger
+from tf_privacy.analysis.rdp_accountant import compute_rdp_from_ledger, get_privacy_spent
+
+
+def epoch_dp_analysis(samples, queries):
+  samples = np.concatenate(samples)
+  queries = np.concatenate(queries)
+  orders = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+  formatted_ledger = privacy_ledger.format_ledger(samples, queries)
+  rdp = compute_rdp_from_ledger(formatted_ledger, orders)
+  eps = get_privacy_spent(orders, rdp, target_delta=1e-5)[0]
+  print('For delta=1e-5, the current epsilon is: %.2f' % eps)
 
 
 def main(ar):
@@ -40,7 +51,10 @@ def main(ar):
                 'noise_multiplier': ar.noise_multiplier,
                 'num_microbatches': ar.num_microbatches,
                 'ledger': privacy_ledger.PrivacyLedger(population_size=n_data_samples,
-                                                       selection_probability=ar.batch_size / n_data_samples)}
+                                                       selection_probability=ar.batch_size / n_data_samples),
+                'samples': [],
+                'queries': []}
+
   else:
     dp_specs = None
 
@@ -68,18 +82,14 @@ def main(ar):
   grey_scale = ar.dataset in ['mnist', 'fashion']
 
   for i in range(ar.n_iterations):
-      mdl.training(
-          ar.filename, agent, n_data_samples,
-          lr_list, end_lr=ar.lr_end, max_step=ar.save_per_step,
-          batch_size=ar.batch_size, sample_same_class=ar.sample_same_class,
-          num_threads=ar.n_threads, mog_model=mog_model, dp_specs=dp_specs)
+      mdl.training(ar.filename, agent, n_data_samples, lr_list, ar.lr_end, ar.save_per_step, ar.batch_size,
+                   ar.sample_same_class, ar.n_threads, mog_model=mog_model, dp_specs=dp_specs)
+      if dp_specs is not None:
+        epoch_dp_analysis(dp_specs['samples'], dp_specs['queries'])
       if ar.debug_mode is not None:
-          _ = mdl.eval_sampling(
-              ar.filename, sub_folder, mesh_num=(20, 20), mesh_mode=0, code_x=code_x,
-              real_sample=False, do_embedding=False, do_sprite=True)
+          mdl.eval_sampling(ar.filename, sub_folder, (20, 20), 0, code_x=code_x, do_sprite=True)
       if ar.compute_fid:  # v1 - inception score and fid, ms_ssim - MS-SSIM
-          scores = mdl.mdl_score(ar.filename, sub_folder, ar.batch_size, num_batch=ar.n_fid_batches,
-                                 model='v1', grey_scale=grey_scale)
+          scores = mdl.mdl_score(ar.filename, sub_folder, ar.batch_size, ar.n_fid_batches, 'v1', grey_scale=grey_scale)
           print('Epoch {} with scores: {}'.format(i, scores))
 
   # if mog_model is not None:

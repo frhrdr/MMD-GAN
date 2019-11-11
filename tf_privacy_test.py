@@ -31,20 +31,17 @@ from tf_privacy.optimizers import dp_optimizer
 
 GradientDescentOptimizer = tf.compat.v1.train.GradientDescentOptimizer
 
+opt_store = []
+
 FLAGS = flags.FLAGS
 
-flags.DEFINE_boolean(
-    'dpsgd', True, 'If True, train with DP-SGD. If False, '
-    'train with vanilla SGD.')
+flags.DEFINE_boolean('dpsgd', True, 'If True, train with DP-SGD. If False, train with vanilla SGD.')
 flags.DEFINE_float('learning_rate', .15, 'Learning rate for training')
-flags.DEFINE_float('noise_multiplier', 1.1,
-                   'Ratio of the standard deviation to the clipping norm')
+flags.DEFINE_float('noise_multiplier', 1.1, 'Ratio of the standard deviation to the clipping norm')
 flags.DEFINE_float('l2_norm_clip', 1.0, 'Clipping norm')
 flags.DEFINE_integer('batch_size', 256, 'Batch size')
 flags.DEFINE_integer('epochs', 60, 'Number of epochs')
-flags.DEFINE_integer(
-    'microbatches', 256, 'Number of microbatches '
-    '(must evenly divide batch_size)')
+flags.DEFINE_integer('microbatches', 16, 'Number of microbatches (must evenly divide batch_size)')
 flags.DEFINE_string('model_dir', None, 'Model directory')
 
 
@@ -60,10 +57,10 @@ class EpsilonPrintingTrainingHook(tf.estimator.SessionRunHook):
     self._samples, self._queries = ledger.get_unformatted_ledger()
 
   def end(self, session):
-    orders = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
     samples = session.run(self._samples)
     queries = session.run(self._queries)
     formatted_ledger = privacy_ledger.format_ledger(samples, queries)
+    orders = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
     rdp = compute_rdp_from_ledger(formatted_ledger, orders)
     eps = get_privacy_spent(orders, rdp, target_delta=1e-5)[0]
     print('For delta=1e-5, the current epsilon is: %.2f' % eps)
@@ -74,23 +71,16 @@ def cnn_model_fn(features, labels, mode):
 
   # Define CNN architecture using tf.keras.layers.
   input_layer = tf.reshape(features['x'], [-1, 28, 28, 1])
-  y = tf.keras.layers.Conv2D(16, 8,
-                             strides=2,
-                             padding='same',
-                             activation='relu').apply(input_layer)
+  y = tf.keras.layers.Conv2D(16, 8, strides=2, padding='same', activation='relu').apply(input_layer)
   y = tf.keras.layers.MaxPool2D(2, 1).apply(y)
-  y = tf.keras.layers.Conv2D(32, 4,
-                             strides=2,
-                             padding='valid',
-                             activation='relu').apply(y)
+  y = tf.keras.layers.Conv2D(32, 4, strides=2, padding='valid', activation='relu').apply(y)
   y = tf.keras.layers.MaxPool2D(2, 1).apply(y)
   y = tf.keras.layers.Flatten().apply(y)
   y = tf.keras.layers.Dense(32, activation='relu').apply(y)
   logits = tf.keras.layers.Dense(10).apply(y)
 
   # Calculate loss as a vector (to support microbatches in DP-SGD).
-  vector_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-      labels=labels, logits=logits)
+  vector_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
   # Define mean of loss across minibatch (for reporting through tf.Estimator).
   scalar_loss = tf.reduce_mean(input_tensor=vector_loss)
 
@@ -98,9 +88,7 @@ def cnn_model_fn(features, labels, mode):
   if mode == tf.estimator.ModeKeys.TRAIN:
 
     if FLAGS.dpsgd:
-      ledger = privacy_ledger.PrivacyLedger(
-          population_size=60000,
-          selection_probability=(FLAGS.batch_size / 60000))
+      ledger = privacy_ledger.PrivacyLedger(population_size=60000, selection_probability=(FLAGS.batch_size / 60000))
 
       # Use DP version of GradientDescentOptimizer. Other optimizers are
       # available in dp_optimizer. Most optimizers inheriting from
@@ -112,9 +100,9 @@ def cnn_model_fn(features, labels, mode):
           num_microbatches=FLAGS.microbatches,
           ledger=ledger,
           learning_rate=FLAGS.learning_rate)
-      training_hooks = [
-          EpsilonPrintingTrainingHook(ledger)
-      ]
+      training_hooks = [EpsilonPrintingTrainingHook(ledger)]
+
+      opt_store.append(optimizer)
       opt_loss = vector_loss
     else:
       optimizer = GradientDescentOptimizer(learning_rate=FLAGS.learning_rate)
@@ -126,23 +114,14 @@ def cnn_model_fn(features, labels, mode):
     # the vector_loss because tf.estimator requires a scalar loss. This is only
     # used for evaluation and debugging by tf.estimator. The actual loss being
     # minimized is opt_loss defined above and passed to optimizer.minimize().
-    return tf.estimator.EstimatorSpec(mode=mode,
-                                      loss=scalar_loss,
-                                      train_op=train_op,
-                                      training_hooks=training_hooks)
+    return tf.estimator.EstimatorSpec(mode=mode, loss=scalar_loss, train_op=train_op, training_hooks=training_hooks)
 
   # Add evaluation metrics (for EVAL mode).
   elif mode == tf.estimator.ModeKeys.EVAL:
-    eval_metric_ops = {
-        'accuracy':
-            tf.compat.v1.metrics.accuracy(
-                labels=labels,
-                predictions=tf.argmax(input=logits, axis=1))
-    }
+    eval_metric_ops = {'accuracy': tf.compat.v1.metrics.accuracy(labels=labels,
+                                                                 predictions=tf.argmax(input=logits, axis=1))}
 
-    return tf.estimator.EstimatorSpec(mode=mode,
-                                      loss=scalar_loss,
-                                      eval_metric_ops=eval_metric_ops)
+    return tf.estimator.EstimatorSpec(mode=mode, loss=scalar_loss, eval_metric_ops=eval_metric_ops)
 
 
 def load_mnist():
@@ -176,21 +155,14 @@ def main(unused_argv):
   train_data, train_labels, test_data, test_labels = load_mnist()
 
   # Instantiate the tf.Estimator.
-  mnist_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn,
-                                            model_dir=FLAGS.model_dir)
+  mnist_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir=FLAGS.model_dir)
 
   # Create tf.Estimator input functions for the training and test data.
-  train_input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(
-      x={'x': train_data},
-      y=train_labels,
-      batch_size=FLAGS.batch_size,
-      num_epochs=FLAGS.epochs,
-      shuffle=True)
-  eval_input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(
-      x={'x': test_data},
-      y=test_labels,
-      num_epochs=1,
-      shuffle=False)
+  train_input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(x={'x': train_data}, y=train_labels,
+                                                                batch_size=FLAGS.batch_size, num_epochs=FLAGS.epochs,
+                                                                shuffle=True)
+  eval_input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(x={'x': test_data}, y=test_labels, num_epochs=1,
+                                                               shuffle=False)
 
   # Training loop.
   steps_per_epoch = 60000 // FLAGS.batch_size
@@ -202,6 +174,20 @@ def main(unused_argv):
     eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
     test_accuracy = eval_results['accuracy']
     print('Test accuracy after %d epochs is: %.3f' % (epoch, test_accuracy))
+
+    assert len(opt_store) > 0
+
+    with tf.Session() as session:
+      ledge = opt_store[-1]._dp_sum_query.ledger
+      s, q = ledge.get_unformatted_ledger()
+      orders = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+      samples = session.run(s)
+      queries = session.run(q)
+      formatted_ledger = privacy_ledger.format_ledger(samples, queries)
+      rdp = compute_rdp_from_ledger(formatted_ledger, orders)
+      eps = get_privacy_spent(orders, rdp, target_delta=1e-5)[0]
+      print('For delta=1e-5, the current epsilon is: %.2f' % eps)
+
 
 
 if __name__ == '__main__':

@@ -31,11 +31,8 @@ if LooseVersion(tf.__version__) < LooseVersion('2.0.0'):
 else:
   nest = tf.nest
 
-SampleEntry = collections.namedtuple(  # pylint: disable=invalid-name
-    'SampleEntry', ['population_size', 'selection_probability', 'queries'])
-
-GaussianSumQueryEntry = collections.namedtuple(  # pylint: disable=invalid-name
-    'GaussianSumQueryEntry', ['l2_norm_bound', 'noise_stddev'])
+SampleEntry = collections.namedtuple('SampleEntry', ['population_size', 'selection_probability', 'queries'])
+GaussianSumQueryEntry = collections.namedtuple('GaussianSumQueryEntry', ['l2_norm_bound', 'noise_stddev'])
 
 
 def format_ledger(sample_array, query_array):
@@ -63,9 +60,7 @@ class PrivacyLedger(object):
   for the purpose of computing privacy guarantees.
   """
 
-  def __init__(self,
-               population_size,
-               selection_probability):
+  def __init__(self, population_size, selection_probability):
     """Initialize the PrivacyLedger.
 
     Args:
@@ -117,8 +112,7 @@ class PrivacyLedger(object):
 
     def _do_record_query():
       with tf.control_dependencies([tf.compat.v1.assign(self._query_count, self._query_count + 1)]):
-        return self._query_buffer.append(
-            [self._sample_count, l2_norm_bound, noise_stddev])
+        return self._query_buffer.append([self._sample_count, l2_norm_bound, noise_stddev])
 
     return self._cs.execute(_do_record_query)
 
@@ -172,9 +166,7 @@ class QueryWithLedger(dp_query.DPQuery):
   For example usage, see privacy_ledger_test.py.
   """
 
-  def __init__(self, query,
-               population_size=None, selection_probability=None,
-               ledger=None):
+  def __init__(self, query, population_size=None, selection_probability=None, ledger=None):
     """Initializes the QueryWithLedger.
 
     Args:

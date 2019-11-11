@@ -37,7 +37,8 @@ class Agent(object):
     def train(
             self, op_list, loss_list, global_step,
             max_step=None, step_per_epoch=None,
-            summary_op=None, summary_image_op=None, imbalanced_update=None, force_print=False, mog_model=None):
+            summary_op=None, summary_image_op=None, imbalanced_update=None, force_print=False,
+            mog_model=None, dp_specs=None):
         """ This method do the optimization process to minimizes loss_list
 
         :param op_list: [net0_op, net1_op, net2_op]
@@ -81,6 +82,6 @@ class Agent(object):
                 sess.full_run(op_list, loss_list, max_step, step_per_epoch, global_step, summary_op, summary_image_op,
                               self.summary_folder, self.ckpt_folder, print_loss=self.print_loss,
                               query_step=self.query_step, imbalanced_update=self.imbalanced_update,
-                              force_print=force_print, mog_model=mog_model)
+                              force_print=force_print, mog_model=mog_model, dp_specs=dp_specs)
         else:
             raise AttributeError('Current debug mode is not supported.')

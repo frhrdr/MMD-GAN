@@ -322,13 +322,12 @@ class SNGan(object):
         self.sample_same_class = sample_same_class
         if max_step >= self.step_per_epoch:
             from math import gcd
-            file_repeat = int(batch_size / gcd(num_instance, batch_size)) \
-                if self.num_class < 2 else int(batch_size / gcd(int(num_instance / self.num_class), batch_size))
+            file_repeat = int(batch_size / gcd(num_instance, batch_size)) if self.num_class < 2 \
+                else int(batch_size / gcd(int(num_instance / self.num_class), batch_size))
             shuffle_file = False
         else:
             if isinstance(filename, str) or (isinstance(filename, (list, tuple)) and len(filename) == 1):
-                raise AttributeError(
-                    'max_step should be larger than step_per_epoch when there is a single file.')
+                raise AttributeError('max_step should be larger than step_per_epoch when there is a single file.')
             else:
                 # for large dataset, the data are stored in multiple files. If all files cannot be visited
                 # within max_step, consider shuffle the filename list every max_step
@@ -421,7 +420,7 @@ class SNGan(object):
             agent.train(
                 op_list, loss_list,
                 self.global_step, max_step, self.step_per_epoch,
-                summary_op, summary_image_op, force_print=self.force_print, mog_model=mog_model)
+                summary_op, summary_image_op, self.force_print, mog_model, dp_specs)
             self.force_print = False  # force print at the first call
 
     ###################################################################

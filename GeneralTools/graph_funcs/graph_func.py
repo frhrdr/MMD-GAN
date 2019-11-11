@@ -6,7 +6,7 @@ import tensorflow as tf
 import warnings
 
 from GeneralTools.misc_fun import FLAGS
-from tf_privacy.optimizers.dp_optimizer_vectorized import VectorizedDPAdam
+from tf_privacy.optimizers.dp_optimizer import DPAdamGaussianOptimizer
 
 
 def prepare_folder(filename, sub_folder='', set_folder=True):
@@ -341,7 +341,7 @@ def opt_config(
                 learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='Adam' + name_suffix)
             FLAGS.print('Adam Optimizer is used.')
         else:
-            opt_op = VectorizedDPAdam(
+            opt_op = DPAdamGaussianOptimizer(
                 dp_specs['l2_norm_clip'],
                 dp_specs['noise_multiplier'],
                 dp_specs['num_microbatches'],

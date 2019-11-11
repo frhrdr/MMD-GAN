@@ -36,7 +36,7 @@ def parse_run_args():
   # DP
   parser.add_argument('--l2-norm-clip', '-clip', type=float, default=100.)
   parser.add_argument('--noise-multiplier', '-noise', type=float, default=None)
-  parser.add_argument('--num_microbatches', '-micro', type=float, default=None)
+  parser.add_argument('--num_microbatches', '-micro', type=int, default=None)
 
   # MOG
   parser.add_argument('--mog-type', '-mog', type=str, default='nowlan')

@@ -128,8 +128,6 @@ def make_optimizer_class(cls):
         if self._num_microbatches is None:
           self._num_microbatches = tf.shape(loss)[0]
 
-        print(self._num_microbatches)
-
         microbatches_losses = tf.reshape(loss, shape=(self._num_microbatches, -1))
         sample_params = (self._dp_sum_query.derive_sample_params(self._global_state))
 

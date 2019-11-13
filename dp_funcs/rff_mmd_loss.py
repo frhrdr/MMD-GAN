@@ -10,7 +10,7 @@ class RFFKMap:
     # initialize omega and b in numpy following the abcdp code by wittawat
     # set up tensorflow equivalents and initialize them with the numpy code
     #
-    assert rff_sigma < 0, 'sigma2 must be positive. Was {}'.format(rff_sigma)
+    assert rff_sigma > 0, 'sigma2 must be positive. Was {}'.format(rff_sigma)
     assert rff_dims > 0 and rff_dims % 2 == 0, 'rff_dims must be even positive int. Was {}'.format(rff_dims)
 
     assert gen_loss in {'rff', 'mog', 'data'}, 'gen loss must be in {rff, mog, data}'

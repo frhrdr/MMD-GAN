@@ -87,7 +87,7 @@ class SNGan(object):
         self.repeat_for_mog = False
 
         # for random fourier kerrnel approximation in loss
-        self.rff_specs = kwargs['rff_specs'] if 'rff_sigma' in kwargs else None
+        self.rff_specs = kwargs['rff_specs'] if 'rff_specs' in kwargs else None
 
     def register_mog(self, mog_model, train_with_mog, update_loss_type=False):
         self.mog_model = mog_model

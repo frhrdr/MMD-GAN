@@ -62,7 +62,7 @@ def parse_run_args():
 
   # random fourier features
   parser.add_argument('--rff-sigma', type=float, default=None)
-  parser.add_argument('--rff-dims', type=float, default=None)
+  parser.add_argument('--rff-dims', type=int, default=None)
   parser.add_argument('--rff-const-noise', action='store_true', default=False)
   parser.add_argument('--rff-gen-loss', type=str, default='data')  # options: data, mog, rff, (not yet: mog-rff
 

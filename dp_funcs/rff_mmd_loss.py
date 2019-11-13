@@ -22,13 +22,13 @@ class RFFKMap:
       self.tf_w = tf.constant(np.random.randn(enc_dims, rff_dims // 2) / np.sqrt(rff_sigma * 2.0 ** 0.5))
     else:
 
-      self.tf_w = tf.random_normal(shape=(enc_dims, rff_dims // 2)) / tf.sqrt(rff_sigma * 2.0 ** 0.5)
+      self.tf_w = tf.random_normal(shape=(enc_dims, rff_dims // 2)) / tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
 
   def gen_features(self, encoding):
     # The following block of code is deterministic given seed.
     # Fourier transform formula from http://mathworld.wolfram.com/FourierTransformGaussian.html
 
-    print(encoding.get_shape(), self.tf_w.get_shape())
+
     enc_w = tf.matmul(encoding, self.tf_w)  # (bs, d_enc) (d_enc, rff) -> (bs, rff)
     enc_z1 = tf.math.cos(enc_w)  # (bs, rff)
     enc_z2 = tf.math.sin(enc_w)  # (bs, rff)

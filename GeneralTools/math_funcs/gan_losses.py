@@ -33,8 +33,7 @@ class GANLoss(object):
         self.repulsive_weights = [0.0, -1.0]  # weights for e_kxy and -e_kyy; note that kyy is for the real data!
         # self.repulsive_weights = [-1.0, -2.0]  # weights for e_kxy and -e_kyy
 
-        self.rff_map = RFFKMap(rff_specs['sigma'], rff_specs['dims'], enc_dims,
-                               rff_specs['const_noise'], rff_specs['gen_loss'])
+        self.rff_map = RFFKMap(rff_specs.sigma, rff_specs.dims, enc_dims, rff_specs.const_noise, rff_specs.gen_loss)
 
     def _add_summary_(self):
         """ This function adds summaries

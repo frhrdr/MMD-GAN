@@ -88,10 +88,8 @@ def make_optimizer_class(cls):
         if self._num_microbatches is None:
           self._num_microbatches = tf.shape(vector_loss)[0]
         sample_state = self._dp_sum_query.initial_sample_state(var_list)
-        microbatches_losses = tf.reshape(vector_loss,
-                                         [self._num_microbatches, -1])
-        sample_params = (
-            self._dp_sum_query.derive_sample_params(self._global_state))
+        microbatches_losses = tf.reshape(vector_loss, [self._num_microbatches, -1])
+        sample_params = (self._dp_sum_query.derive_sample_params(self._global_state))
 
         def process_microbatch(i, sample_state):
           """Process one microbatch (record) with privacy helper."""

@@ -80,15 +80,14 @@ class SNGan(object):
             self.perm = None
 
         # initialize network
-        self.graph = None
-        self.Gen = None
-        self.Dis = None
+        self.graph, self.Gen, self.Dis = None, None, None
 
         # initialize MoG
-        self.mog_model = None
-        self.train_with_mog = None
+        self.mog_model, self.train_with_mog, self.data_batch = None, None, None
         self.repeat_for_mog = False
-        self.data_batch = None
+
+        # for random fourier kerrnel approximation in loss
+        self.rff_specs = kwargs['rff_specs'] if 'rff_sigma' in kwargs else None
 
     def register_mog(self, mog_model, train_with_mog, update_loss_type=False):
         self.mog_model = mog_model
@@ -215,20 +214,21 @@ class SNGan(object):
                 s_mog = self.mog_model.sample_batch(batch_size)
                 # s_mog = tf.Print(s_x, [tf.norm(s_x), tf.reduce_mean(s_x), tf.reduce_max(s_x)], message='mog_enc')
             # loss function
-            gan_losses = GANLoss(self.do_summary)
+
+            gan_losses = GANLoss(self.rff_specs, self.score_size, self.do_summary)
             if self.loss_type in {'rep', 'rmb'}:
-                loss_gen, loss_dis = gan_losses.apply(
-                    s_gen, s_x, score_mog=s_mog,
-                    loss_type=self.loss_type, batch_size=batch_size, d=self.score_size, rep_weights=self.rep_weights)
+                loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
+                                                      batch_size=batch_size, d=self.score_size,
+                                                      rep_weights=self.rep_weights)
             else:
-                loss_gen, loss_dis = gan_losses.apply(
-                    s_gen, s_x, score_mog=s_mog, loss_type=self.loss_type, batch_size=batch_size, d=self.score_size)
+                loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
+                                                      batch_size=batch_size, d=self.score_size)
 
             # form loss list
             # sigma = [layer.sigma for layer in self.Dis.net.layers]
             # kernel_norm = tf.squeeze(self.Dis.net.layers[-1].ops['kernel'].kernel_norm[1])
             loss_list = [loss_gen, loss_dis]
-            self.loss_names = '<loss_gen>, <loss_dis>'
+            self.loss_names = '<|loss_gen|>, <|loss_dis|>'
 
             # compute gradient
             # grads is a list of (gradient, variable) tuples

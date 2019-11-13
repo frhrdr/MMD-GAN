@@ -10,7 +10,7 @@ from GeneralTools.run_args import parse_run_args, dataset_defaults
 from dp_funcs.mog import EncodingMoG, default_mogs
 from tf_privacy.analysis import privacy_ledger
 from tf_privacy.analysis.rdp_accountant import compute_rdp_from_ledger, get_privacy_spent
-
+from dp_funcs.rff_mmd_loss import rff_specs
 
 def epoch_dp_analysis(samples, queries):
   samples = np.concatenate(samples)
@@ -58,16 +58,11 @@ def main(ar):
   else:
     dp_specs = None
 
-  agent = Agent(
-      ar.filename, sub_folder, load_ckpt=True, do_trace=False,
-      do_save=True, debug_mode=ar.debug_mode, debug_step=ar.debug_step,
-      query_step=ar.query_step, log_device=False, imbalanced_update=ar.imbalanced_update,
-      print_loss=True)
+  agent = Agent(ar.filename, sub_folder, load_ckpt=True, debug_mode=ar.debug_mode, debug_step=ar.debug_step,
+                query_step=ar.query_step, imbalanced_update=ar.imbalanced_update)
 
-  mdl = SNGan(
-      architecture, num_class=num_class, loss_type=ar.loss_type,
-      optimizer=opt_list, do_summary=True, do_summary_image=True,
-      num_summary_image=8, image_transpose=False)
+  mdl = SNGan(architecture, num_class, ar.loss_type, opt_list,
+              rff_specs=rff_specs(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss))
 
   if ar.train_without_mog:
     mog_model = None

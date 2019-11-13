@@ -60,6 +60,12 @@ def parse_run_args():
 
   parser.add_argument('--seed', '-seed', type=int, default=None)
 
+  # random fourier features
+  parser.add_argument('--rff-sigma', type=float, default=None)
+  parser.add_argument('--rff-dims', type=float, default=None)
+  parser.add_argument('--rff-const-noise', action='store_true', default=False)
+  parser.add_argument('--rff-gen-loss', type=str, default='data')  # options: data, mog, rff, (not yet: mog-rff
+
   args = parser.parse_args()
 
   post_parse_processing(args)
@@ -82,6 +88,8 @@ def dataset_defaults(dataset, d_enc, architecture_key=None):
       architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_lean(d_enc)
     elif architecture_key == 'tiny':
       architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_tiny(d_enc)
+    else:
+      raise ValueError
   elif dataset == 'cifar':
     num_instance = 50000
     d_enc = 16 if d_enc is None else d_enc

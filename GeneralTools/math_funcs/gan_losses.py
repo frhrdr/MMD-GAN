@@ -45,7 +45,6 @@ class GANLoss(object):
                 tf.compat.v1.summary.scalar('GANLoss/gen', self.loss_gen)
                 tf.compat.v1.summary.scalar('GANLoss/dis', self.loss_dis)
 
-
     def _default_loss_summary_(self):
         if self.dis_penalty is not None:
             self.loss_dis = self.loss_dis + self.dis_penalty
@@ -137,10 +136,10 @@ class GANLoss(object):
         rff_dat = self.rff_map.gen_features(self.score_data)  # (bs, d_rff)
         rffk_gen = tf.compat.v1.reduce_mean(rff_gen, axis=0)  # (d_rff)
         rffk_dat = tf.compat.v1.reduce_mean(rff_dat, axis=0)  # (d_rff)
-        self.loss_dis = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g')  # ()
+        self.loss_dis = -tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g')  # ()
 
         if self.rff_map.gen_loss == 'rff':
-            self.loss_gen = self.loss_dis
+            self.loss_gen = -self.loss_dis
         else:
             assert self.rff_map.gen_loss in {'data', 'mog'}
             comp_data = self.score_data if self.rff_map.gen_loss == 'data' else self.score_mog

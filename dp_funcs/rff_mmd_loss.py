@@ -12,20 +12,20 @@ class RFFKMap:
     #
     assert rff_sigma > 0, 'sigma2 must be positive. Was {}'.format(rff_sigma)
     assert rff_dims > 0 and rff_dims % 2 == 0, 'rff_dims must be even positive int. Was {}'.format(rff_dims)
-
+    half_dims = rff_dims // 2
     assert gen_loss in {'rff', 'mog', 'data'}, 'gen loss must be in {rff, mog, data}'
     self.gen_loss = gen_loss
     self.const_noise = const_noise
 
     if self.const_noise:
       # with NumpySeedContext(seed=self.seed):
-      self.tf_w = tf.constant(np.random.randn(enc_dims, rff_dims // 2) / np.sqrt(rff_sigma * 2.0 ** 0.5))
+      self.tf_w = tf.constant(np.random.randn(enc_dims, half_dims) / np.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32)))
     else:
-      num = tf.random_normal(shape=(enc_dims, rff_dims // 2))
-      den = tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
-      print('num', num.dtype, 'den', den.dtype)
-      self.tf_w = num / den
-      # self.tf_w = tf.random_normal(shape=(enc_dims, rff_dims // 2)) / tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
+      # num = tf.random_normal(shape=(enc_dims, rff_dims // 2))
+      # den = tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
+      # print('num', num.dtype, 'den', den.dtype)
+      # self.tf_w = num / den
+      self.tf_w = tf.random_normal(shape=(enc_dims, half_dims)) / tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
 
   def gen_features(self, encoding):
     # The following block of code is deterministic given seed.

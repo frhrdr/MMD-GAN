@@ -18,9 +18,10 @@ class RFFKMap:
     self.const_noise = const_noise
 
     denom = tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
+    print(denom.dtype)
     if self.const_noise:
       # with NumpySeedContext(seed=self.seed):
-      self.tf_w = tf.constant(np.random.randn(enc_dims, half_dims)) / denom
+      self.tf_w = tf.constant(np.random.randn(enc_dims, half_dims), dtype=tf.float32) / denom
     else:
       # num = tf.random_normal(shape=(enc_dims, rff_dims // 2))
       # den = tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))

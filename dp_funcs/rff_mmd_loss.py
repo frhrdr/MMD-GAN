@@ -28,6 +28,7 @@ class RFFKMap:
     # The following block of code is deterministic given seed.
     # Fourier transform formula from http://mathworld.wolfram.com/FourierTransformGaussian.html
 
+    print(encoding.get_shape(), self.tf_w.get_shape())
     enc_w = tf.matmul(encoding, self.tf_w)  # (bs, d_enc) (d_enc, rff) -> (bs, rff)
     enc_z1 = tf.math.cos(enc_w)  # (bs, rff)
     enc_z2 = tf.math.sin(enc_w)  # (bs, rff)

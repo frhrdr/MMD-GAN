@@ -19,6 +19,7 @@
 import tensorflow as tf
 GATE_OP = tf.train.Optimizer.GATE_OP
 GATE_GRAPH = tf.train.Optimizer.GATE_GRAPH
+import time
 
 
 def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
@@ -31,6 +32,7 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
     print('------------------------------------------------------calling process_sample_loss')
     grads_list = sample_grads(loss[i, :], optimizer, var_list)
     print('------------------------------------------------------called process_sample_loss')
+    time.sleep(3)
     # grads_list = zip(grads_n_vars)  # get grads
     # source: DPQuery.accumulate_record in gaussianquery.py
     # GaussianSumQuery.preprocess_record in dp_query.py

@@ -52,7 +52,7 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
   # unrolling microbatches does not seem like an option right now - may be worth revisiting after trying while loop
   _, sample_state = tf.while_loop(cond=lambda i, _: tf.less(i, batch_size),
                                   body=lambda i, state: [tf.add(i, 1), process_sample_loss(i, state)],
-                                  loop_vars=[tf.constant(0), sample_state])
+                                  loop_vars=[tf.constant(0), sample_state], name='dp_grads_while')
 
   # grad_sums, global_state = dp_sum_query.get_noised_result(sample_state, global_state)
   def add_noise(v):

@@ -91,9 +91,6 @@ class SNGan(object):
         # for random fourier kerrnel approximation in loss
         self.rff_specs = kwargs['rff_specs'] if 'rff_specs' in kwargs else None
 
-        # specs for private gradient computation
-        self.dp_specs = kwargs['dp_specs'] if 'dp_specs' in kwargs else None
-
     def register_mog(self, mog_model, train_with_mog, update_loss_type=False):
         self.mog_model = mog_model
         self.train_with_mog = train_with_mog

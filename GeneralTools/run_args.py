@@ -41,7 +41,7 @@ def parse_run_args():
   # MOG
   parser.add_argument('--mog-type', '-mog', type=str, default='nowlan')
 
-  parser.add_argument('--n-comp', '-n-comp', type=int, default=10)
+  parser.add_argument('--n-comp', '-n-comp', type=int, default=5)
   parser.add_argument('--em-steps', '-em', type=int, default=1)
   parser.add_argument('--cov-type', '-cov', type=str, default='full')
   parser.add_argument('--train-without-mog', action='store_true', default=False)

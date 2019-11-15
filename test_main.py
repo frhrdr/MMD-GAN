@@ -47,6 +47,7 @@ def main(ar):
       sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(ar.loss_type, lr_list[0], lr_list[1], act_k)
 
   if ar.noise_multiplier is not None:
+
     dp_specs = {'l2_norm_clip': ar.l2_norm_clip,
                 'noise_multiplier': ar.noise_multiplier,
                 'num_microbatches': ar.num_microbatches,

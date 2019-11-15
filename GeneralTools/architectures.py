@@ -73,6 +73,23 @@ def mnist_tiny(d_enc=2):
   return architecture, code_dim, act_k, d_enc
 
 
+def mnist_minimal(d_enc=2):
+  act_k = np.power(64.0, 0.125)  # multiplier
+  w_nm = 's'  # spectral normalization
+  g = [{'name': 'l1', 'out': 28 * 28, 'op': 'd', 'act': 'tanh', 'act_nm': None, 'out_reshape': [1, 28, 28]}]
+
+  d = [{'name': 'l2_s', 'out': d_enc,  'op': 'd', 'act_k': act_k, 'bias': 'b', 'w_nm': w_nm}]
+
+  code_dim = 8
+  architecture = {'input': [(1, 28, 28)],
+                  'code': [(code_dim, 'linear')],
+                  'generator': g,
+                  'discriminator': d}
+
+  return architecture, code_dim, act_k, d_enc
+
+
+
 def cifar_default(d_enc=16):
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization

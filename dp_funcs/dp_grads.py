@@ -20,7 +20,7 @@ import tensorflow as tf
 GATE_OP = tf.train.Optimizer.GATE_OP
 
 
-def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor, aggregation_method=None):
+def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
   nest = tf.contrib.framework.nest
   batch_size = loss.get_shape()[0]
   rff_dim = loss.get_shape()[1]
@@ -28,7 +28,7 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor, aggr
   def process_sample_loss(i, sample_state):
     """Process one microbatch (record) with privacy helper."""
 
-    grads_list = zip(sample_grads(loss[i, :], optimizer, var_list, aggregation_method=aggregation_method))  # get grads
+    grads_list = zip(sample_grads(loss[i, :], optimizer, var_list))  # get grads
 
     # source: DPQuery.accumulate_record in gaussianquery.py
     # GaussianSumQuery.preprocess_record in dp_query.py
@@ -61,18 +61,18 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor, aggr
   return final_grads
 
 
-def single_grad(loss, optimizer, var_list, gate_gradients, aggregation_method):
+def single_grad(loss, optimizer, var_list):
   # compute a gradients for a single scalar loss associated with one sample
-  grads, _ = optimizer.compute_gradients(loss, var_list, gate_gradients, aggregation_method)
+  grads, _ = optimizer.compute_gradients(loss, var_list)
   # fill up none gradients with zeros
   grads_list = [g if g is not None else tf.zeros_like(v) for (g, v) in zip(list(grads), var_list)]
   return grads_list
 
 
-def sample_grads(sample_loss, optimizer, var_list, gate_gradients=GATE_OP, aggregation_method=None):
+def sample_grads(sample_loss, optimizer, var_list):
   # all gradiend beloning to one sample (i.e. #RFF many)
   n_rff = sample_loss.get_shape()[0]
-  grads = [single_grad(sample_loss[i], optimizer, var_list, gate_gradients, aggregation_method) for i in range(n_rff)]
+  grads = [single_grad(sample_loss[i], optimizer, var_list) for i in range(n_rff)]
   return [tf.stack(k) for k in zip(*grads)]
 
 
@@ -111,14 +111,13 @@ def loss_dis_from_rff(rff_dis_loss, rff_gen_loss):
   return tf.reduce_sum((tf.reduce_sum(rff_dis_loss, axis=0) - rff_gen_loss)**2) / rff_dis_loss.get_shape()[0]**2
 
 
-def dp_compute_grads(loss_ops, opt_ops, dp_spec, aggregation_method=None):
+def dp_compute_grads(loss_ops, opt_ops, dp_spec):
   """
   computes dp gradients for discriminator update with rff mmd estimator
 
   :param loss_ops:
   :param opt_ops: optimizer for gen and dis
   :param dp_spec:
-  :param aggregation_method:
   :return: lists of gradient-variable pairs for generator and discriminator updates
   """
   # get relevant variables
@@ -126,14 +125,12 @@ def dp_compute_grads(loss_ops, opt_ops, dp_spec, aggregation_method=None):
   vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
 
   # generator op:
-  grads_n_vars_gen = opt_ops.gen.compute_gradients(loss_ops.gen, var_list=vars_gen,
-                                                   aggregation_method=aggregation_method)
+  grads_n_vars_gen = opt_ops.gen.compute_gradients(loss_ops.gen, var_list=vars_gen)
   # discriminator op
   # - compute the partial gradients
-  grad_rff_gen = sample_grads(loss_ops.dis.fgen, opt_ops.dis, vars_dis, aggregation_method)
+  grad_rff_gen = sample_grads(loss_ops.dis.fgen, opt_ops.dis, vars_dis)
   grad_rff_dis_release = dp_rff_gradients(opt_ops.dis, loss_ops.dis.fdat, vars_dis,
-                                          dp_spec['grad_clip'], dp_spec['grad_noise'],
-                                          aggregation_method)
+                                          dp_spec['grad_clip'], dp_spec['grad_noise'])
   # - clip & perturb loss
   loss_rff_dis_release = release_loss_dis(loss_ops.dis.fdat, dp_spec['loss_clip'], dp_spec['loss_noise'])
 

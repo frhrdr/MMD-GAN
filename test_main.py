@@ -8,18 +8,8 @@ from GeneralTools.misc_fun import FLAGS
 from GeneralTools.graph_funcs.agent import Agent
 from GeneralTools.run_args import parse_run_args, dataset_defaults
 from dp_funcs.mog import EncodingMoG, default_mogs
-from tf_privacy.analysis import privacy_ledger
-from tf_privacy.analysis.rdp_accountant import compute_rdp_from_ledger, get_privacy_spent
 from dp_funcs.rff_mmd_loss import rff_specs
-
-def epoch_dp_analysis(samples, queries):
-  samples = np.concatenate(samples)
-  queries = np.concatenate(queries)
-  orders = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
-  formatted_ledger = privacy_ledger.format_ledger(samples, queries)
-  rdp = compute_rdp_from_ledger(formatted_ledger, orders)
-  eps = get_privacy_spent(orders, rdp, target_delta=1e-5)[0]
-  print('For delta=1e-5, the current epsilon is: %.2f' % eps)
+from collections import namedtuple
 
 
 def main(ar):
@@ -37,33 +27,29 @@ def main(ar):
   num_class = 0 if ar.n_class is None else ar.n_class
   code_x = np.random.randn(400, code_dim).astype(np.float32)
 
-  lr_list = [ar.lr_dis, ar.lr_gen]  # [dis, gen]
-  opt_list = [ar.optimizer_dis, ar.optimizer_gen]
+  lr_spec = namedtuple('lr_spec', ['dis', 'gen'])(ar.lr_dis, ar.lr_gen)
+  # lr_list = []  # [dis, gen]
+  opt_spec = namedtuple('opt_spec', ['dis', 'gen'])(ar.optimizer_dis, ar.optimizer_gen)
 
   if ar.loss_type in {'rep', 'rmb'}:
       sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}_{:.1f}_{:.1f}'.format(
-          ar.loss_type, lr_list[0], lr_list[1], act_k, ar.rep_weight_0, ar.rep_weight_1)
+          ar.loss_type, lr_spec.dis, lr_spec.gen, act_k, ar.rep_weight_0, ar.rep_weight_1)
   else:
-      sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(ar.loss_type, lr_list[0], lr_list[1], act_k)
+      sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(ar.loss_type, lr_spec.dis, lr_spec.gen, act_k)
 
   if ar.noise_multiplier is not None:
-
-    dp_specs = {'l2_norm_clip': ar.l2_norm_clip,
-                'noise_multiplier': ar.noise_multiplier,
-                'num_microbatches': ar.num_microbatches,
-                'ledger': privacy_ledger.PrivacyLedger(population_size=n_data_samples,
-                                                       selection_probability=ar.batch_size / n_data_samples),
-                'samples': [],
-                'queries': []}
-
+    dp_spec = {'loss_clip': ar.l2_norm_clip,
+               'grad_clip': ar.l2_norm_clip,
+               'loss_noise': ar.noise_multiplier,
+               'grad_noise': ar.noise_multiplier}
   else:
-    dp_specs = None
+    dp_spec = None
 
   agent = Agent(ar.filename, sub_folder, load_ckpt=True, debug_mode=ar.debug_mode, debug_step=ar.debug_step,
                 query_step=ar.query_step, imbalanced_update=ar.imbalanced_update)
 
   print(rff_specs(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss))
-  mdl = SNGan(architecture, num_class, ar.loss_type, opt_list,
+  mdl = SNGan(architecture, num_class, ar.loss_type, opt_spec,
               rff_specs=rff_specs(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss))
 
   if ar.train_without_mog:
@@ -79,10 +65,8 @@ def main(ar):
   grey_scale = ar.dataset in ['mnist', 'fashion']
 
   for i in range(ar.n_iterations):
-      mdl.training(ar.filename, agent, n_data_samples, lr_list, ar.lr_end, ar.save_per_step, ar.batch_size,
-                   ar.sample_same_class, ar.n_threads, mog_model=mog_model, dp_specs=dp_specs)
-      if dp_specs is not None:
-        epoch_dp_analysis(dp_specs['samples'], dp_specs['queries'])
+      mdl.training(ar.filename, agent, n_data_samples, lr_spec, ar.lr_end, ar.save_per_step, ar.batch_size,
+                   ar.sample_same_class, ar.n_threads, mog_model=mog_model, dp_spec=dp_spec)
       if ar.debug_mode is not None:
           mdl.eval_sampling(ar.filename, sub_folder, (20, 20), 0, code_x=code_x, do_sprite=True)
       if ar.compute_fid:  # v1 - inception score and fid, ms_ssim - MS-SSIM

@@ -34,9 +34,11 @@ def parse_run_args():
   parser.add_argument('--architecture-key', '-arch', type=str, default=None)
 
   # DP
-  parser.add_argument('--l2-norm-clip', '-clip', type=float, default=100.)
-  parser.add_argument('--noise-multiplier', '-noise', type=float, default=None)
-  parser.add_argument('--num_microbatches', '-micro', type=int, default=None)
+  parser.add_argument('--l2-norm-clip-loss', '-lclip', type=float, default=100.)
+  parser.add_argument('--l2-norm-clip-grad', '-gclip', type=float, default=100.)
+  parser.add_argument('--noise-factor-loss', '-lnoise', type=float, default=None)
+  parser.add_argument('--noise-factor-grad', '-gnoise', type=float, default=None)
+  # parser.add_argument('--num_microbatches', '-micro', type=int, default=None)
 
   # MOG
   parser.add_argument('--mog-type', '-mog', type=str, default='nowlan')

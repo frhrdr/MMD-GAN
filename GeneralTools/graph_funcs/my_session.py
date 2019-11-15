@@ -238,6 +238,8 @@ class MySession(object):
                     elif global_step_value % query_step == (query_step-1):
                         mog_model.store_encodings_and_params(self.sess, summary_folder, global_step_value)
 
+                if not isinstance(loss_list, list):  # go from namedtuple to list
+                    loss_list = list(loss_list)
                 # update the model
                 loss_value, _, _, global_step_value = self.sess.run(
                     [loss_list, op_list, extra_update_ops, global_step])

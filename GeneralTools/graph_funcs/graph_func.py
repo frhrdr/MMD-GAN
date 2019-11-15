@@ -6,7 +6,7 @@ import tensorflow as tf
 import warnings
 
 from GeneralTools.misc_fun import FLAGS
-from tf_privacy.optimizers.dp_optimizer import DPAdamGaussianOptimizer
+from collections import namedtuple
 
 
 def prepare_folder(filename, sub_folder='', set_folder=True):
@@ -288,7 +288,7 @@ def global_step_config(name='global_step'):
 
 def opt_config(
         initial_lr, lr_decay_steps=None, end_lr=1e-7,
-        optimizer='adam', name_suffix='', global_step=None, target_step=1e5, dp_specs=None):
+        optimizer='adam', name_suffix='', global_step=None, target_step=1e5):
     """ This function configures optimizer.
 
     :param initial_lr:
@@ -300,8 +300,6 @@ def opt_config(
     :param target_step:
     :return:
     """
-
-    assert dp_specs is None or optimizer == 'adam'  # only implementing dp for adam for now
 
     if optimizer in ['SGD', 'sgd']:
         # sgd
@@ -336,17 +334,10 @@ def opt_config(
         learning_rate = tf.constant(initial_lr)
         # opt_op = tf.train.AdamOptimizer(
         #     learning_rate, beta1=0.9, beta2=0.99, epsilon=1e-8, name='Adam'+name_suffix)
-        if dp_specs is None:
-            opt_op = tf.compat.v1.train.AdamOptimizer(
-                learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='Adam' + name_suffix)
-            FLAGS.print('Adam Optimizer is used.')
-        else:
-            opt_op = DPAdamGaussianOptimizer(
-                l2_norm_clip=dp_specs['l2_norm_clip'],
-                noise_multiplier=dp_specs['noise_multiplier'],
-                num_microbatches=dp_specs['num_microbatches'],
-                learning_rate=learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='DPAdam' + name_suffix)
-            FLAGS.print('DP-Adam Optimizer is used.')
+        opt_op = tf.compat.v1.train.AdamOptimizer(
+            learning_rate, beta1=0.5, beta2=0.999, epsilon=1e-8, name='Adam' + name_suffix)
+        FLAGS.print('Adam Optimizer is used.')
+
     elif optimizer in ['RMSProp', 'rmsprop']:
         # RMSProp
         learning_rate = tf.constant(initial_lr)
@@ -359,9 +350,7 @@ def opt_config(
     return learning_rate, opt_op
 
 
-def multi_opt_config(
-        lr_list, lr_decay_steps=None, end_lr=1e-7,
-        optimizer='adam', global_step=None, target_step=1e5, dp_specs=None):
+def multi_opt_config(lr_spec, lr_decay_steps=None, end_lr=1e-7, optimizer='adam', global_step=None, target_step=1e5):
     """ This function configures multiple optimizer
 
     :param lr_list: a list, e.g. [1e-4, 1e-3]
@@ -372,23 +361,23 @@ def multi_opt_config(
     :param target_step:
     :return:
     """
-    num_opt = len(lr_list)
+    num_opt = len(lr_spec)
     if isinstance(optimizer, str):
         optimizer = [optimizer]
     # if one lr_multiplier is provided, configure one op
     # in this case, multi_opt_config is the same as opt_config
     if num_opt == 1:
         learning_rate, opt_op = opt_config(
-            lr_list[0], lr_decay_steps, end_lr,
-            optimizer[0], '', global_step, target_step, dp_specs)
+            lr_spec[0], lr_decay_steps, end_lr,
+            optimizer[0], '', global_step, target_step)
     else:
         if len(optimizer) == 1:  # match the length of lr_multiplier
             optimizer = optimizer*num_opt
         # get a list of (lr, opt_op) tuple
         lr_opt_combo = [
             opt_config(
-                lr_list[i], lr_decay_steps, end_lr,
-                optimizer[i], '_'+str(i), global_step, target_step, dp_specs)
+                lr_spec[i], lr_decay_steps, end_lr,
+                optimizer[i], '_'+str(i), global_step, target_step)
             for i in range(num_opt)]
         # separate lr and opt_op
         learning_rate = [lr_opt[0] for lr_opt in lr_opt_combo]
@@ -396,6 +385,28 @@ def multi_opt_config(
 
     return learning_rate, opt_op
 
+
+def dis_gen_opt_config(lr_spec, lr_decay_steps=None, end_lr=1e-7, optimizer=None, global_step=None, target_step=1e5):
+    """ This function configures multiple optimizer
+
+    :param lr_list: a list, e.g. [1e-4, 1e-3]
+    :param lr_decay_steps:
+    :param end_lr:
+    :param optimizer: a string, or a list same len as lr_multiplier
+    :param global_step:
+    :param target_step:
+    :return:
+    """
+    assert len(lr_spec) == 2
+    assert len(optimizer) == 2
+    # get a list of (lr, opt_op) tuple
+    lr_opt_dis = opt_config(lr_spec.dis, lr_decay_steps, end_lr, optimizer.dis, '_dis', global_step, target_step)
+    lr_opt_gen = opt_config(lr_spec.gen, lr_decay_steps, end_lr, optimizer.gen, '_gen', global_step, target_step)
+
+    # separate lr and opt_op
+    learning_rate = namedtuple('tf_lr', ['dis', 'gen'])(lr_opt_dis[0], lr_opt_gen[0])
+    opt_op = namedtuple('tf_lr', ['dis', 'gen'])(lr_opt_dis[1], lr_opt_gen[1])
+    return learning_rate, opt_op
 
 def rollback(var_list, ckpt_folder, ckpt_file=None):
     """ This function provides a shortcut for reloading a model and calculating a list of variables

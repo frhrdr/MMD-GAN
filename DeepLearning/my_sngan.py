@@ -9,18 +9,19 @@
 # default modules
 import numpy as np
 import tensorflow as tf
+from collections import namedtuple
 
 # helper functions
 from GeneralTools.misc_fun import FLAGS
 from GeneralTools.input_func import ReadTFRecords
 from GeneralTools.graph_funcs.graph_func import prepare_folder, write_sprite_wrapper, \
-    global_step_config, multi_opt_config, embedding_image_wrapper, rollback
+    global_step_config, dis_gen_opt_config, embedding_image_wrapper, rollback
 from GeneralTools.graph_funcs.generative_model_metric import GenerativeModelMetric
 from GeneralTools.layer_func import Net, Routine
 from GeneralTools.math_funcs.sn_gan_support import MeshCode
 from GeneralTools.math_funcs.gan_losses import GANLoss
 from dp_funcs.net_picker import NetPicker
-from dp_funcs.dp_grads import dp_rff_gradients
+from dp_funcs.dp_grads import dp_compute_grads
 
 ########################################################################
 # from GeneralTools.misc_fun import FLAGS
@@ -63,7 +64,7 @@ class SNGan(object):
         self.do_summary = do_summary
         self.do_summary_image = do_summary_image
         self.num_summary_image = num_summary_image
-        self.loss_names = None
+        self.loss_tuple = None
         self.global_step = None
         self.step_per_epoch = None
         self.sample_same_class = False
@@ -189,57 +190,30 @@ class SNGan(object):
                 return {'x': tf.concat([batch1['x'], batch2['x']], axis=0)}
 
     ###################################################################
-    def __gpu_task__(self, batch_size=64, is_training=False, data_batch=None, opt_op=None, code_batch=None):
+    def __gpu_task__(self, batch_size=64, is_training=False, data_batch=None,
+                     opt_ops=None, code_batch=None, dp_spec=None):
         """ This function defines the task on a gpu
 
         :param batch_size:
         :param is_training:
         :param data_batch: dict. ['x'] is a 4-D tensor, either in channels_first or channels_last format
-        :param opt_op:
+        :param opt_ops:
         :param code_batch:
+        :param dp_spec
         :return:
         """
         if is_training:
-            # sample new data, [batch_size*2, height, weight, channels]
-            if self.sample_same_class:
-                code_batch = self.sample_codes(batch_size, code_y=data_batch['y'], name='code_tr')
-            else:
-                code_batch = self.sample_codes(batch_size, name='code_tr')
-            gen_batch = self.Gen(code_batch, is_training=is_training)
+            s_x, s_gen, s_mog, gen_batch = self.get_encodings(data_batch, batch_size, is_training)
 
-            # print('----------- defining gpu task')
-            dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
-            s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
-            if self.mog_model is None or self.train_with_mog is False:
-                # print('----------- mog not found or turned off')
-                s_mog = None
-            else:
-                # print('----------- mog found')
-                s_mog = self.mog_model.sample_batch(batch_size)
-                # s_mog = tf.Print(s_x, [tf.norm(s_x), tf.reduce_mean(s_x), tf.reduce_max(s_x)], message='mog_enc')
             # loss function
+            loss_ops = self.get_losses(s_gen, s_x, s_mog, batch_size)
 
-            gan_losses = GANLoss(self.rff_specs, self.score_size, self.do_summary)
-            if self.loss_type in {'rep', 'rmb'}:
-                loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
-                                                      batch_size=batch_size, d=self.score_size,
-                                                      rep_weights=self.rep_weights)
+            if dp_spec is not None:
+                grads_list, loss_list = dp_compute_grads(loss_ops, opt_ops, dp_spec)
+                loss_ops = self.loss_tuple(loss_list[0], loss_list[1])
             else:
-                loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
-                                                      batch_size=batch_size, d=self.score_size)
-
-            # form loss list
-            # sigma = [layer.sigma for layer in self.Dis.net.layers]
-            # kernel_norm = tf.squeeze(self.Dis.net.layers[-1].ops['kernel'].kernel_norm[1])
-            loss_list = [loss_gen, loss_dis]
-            self.loss_names = '<|loss_gen|>, <|loss_dis|>'
-
-            # compute gradient
-            # grads is a list of (gradient, variable) tuples
-            if 'dp' in self.loss_type:
-                grads_list = self.compute_grads_dp(opt_op, loss_list)
-            else:
-                grads_list = self.compute_grads(opt_op, loss_list)
+                # compute gradient: grads is a list of (gradient, variable) tuples
+                grads_list = self.compute_grads(opt_ops, loss_ops)
 
             # summary op is always pinned to CPU
             # add summary to loss and intermediate variables
@@ -257,30 +231,53 @@ class SNGan(object):
                 self.Gen.net.add_summary('kernel_norm')
                 self.Dis.net.add_summary('kernel_norm')
 
-            return grads_list, loss_list
+            return grads_list, loss_ops
         else:
             if code_batch is None:
                 code_batch = self.sample_codes(batch_size, name='code_te')
             # generate new images
             gen_batch = self.Gen(code_batch, is_training=is_training)
+            assert isinstance(gen_batch, dict)
             return gen_batch
 
-    def compute_grads(self, opt_op, loss_list):
-        loss_gen, loss_dis = loss_list
+    def get_encodings(self, data_batch, batch_size, is_training):
+        # sample new data, [batch_size*2, height, weight, channels]
+        if self.sample_same_class:
+            code_batch = self.sample_codes(batch_size, code_y=data_batch['y'], name='code_tr')
+        else:
+            code_batch = self.sample_codes(batch_size, name='code_tr')
+        gen_batch = self.Gen(code_batch, is_training=is_training)
+
+        dis_out = self.Dis(self.concat_two_batches(data_batch, gen_batch), is_training=True)
+        s_x, s_gen = tf.split(dis_out['x'], num_or_size_splits=2, axis=0)
+
+        s_mog = self.mog_model.sample_batch(batch_size) if self.mog_model is not None and self.train_with_mog else None
+        return s_x, s_gen, s_mog, gen_batch
+
+    def get_losses(self, s_gen, s_x, s_mog, batch_size):
+        gan_losses = GANLoss(self.rff_specs, self.score_size, self.do_summary)
+        if self.loss_type in {'rep', 'rmb'}:
+            loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
+                                                  batch_size=batch_size, d=self.score_size,
+                                                  rep_weights=self.rep_weights)
+        else:
+            loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
+                                                  batch_size=batch_size, d=self.score_size)
+
+        # form loss list
+        # sigma = [layer.sigma for layer in self.Dis.net.layers]
+        # kernel_norm = tf.squeeze(self.Dis.net.layers[-1].ops['kernel'].kernel_norm[1])
+        self.loss_tuple = namedtuple('losses', ['dis', 'gen'])
+        loss_ops = self.loss_tuple(loss_dis, loss_gen)
+        return loss_ops
+
+    @staticmethod
+    def compute_grads(opt_op, loss_list):
         vars_dis = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "dis")
-        grads_dis = opt_op[0].compute_gradients(loss_dis, var_list=vars_dis)
+        grads_dis = opt_op.dis.compute_gradients(loss_list.dis, var_list=vars_dis)
         vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
-        grads_gen = opt_op[1].compute_gradients(loss_gen, var_list=vars_gen)
+        grads_gen = opt_op.gen.compute_gradients(loss_list.gen, var_list=vars_gen)
         return [grads_dis, grads_gen]
-
-    def compute_grads_dp(self, opt_op, loss_list):
-        loss_gen, loss_dis = loss_list
-        grads_dis = dp_rff_gradients(opt_op[0], loss_dis)
-
-        vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
-        grads_gen = opt_op[1].compute_gradients(loss_gen, var_list=vars_gen)
-
-        return [grads_dis ,grads_gen]
 
     def get_data_batch(self, filename, batch_size, file_repeat=1, num_threads=7, shuffle_file=False, name='data',
                        repeat_for_mog=False):
@@ -292,6 +289,7 @@ class SNGan(object):
         :param num_threads:
         :param shuffle_file: bool, whether to shuffle the filename list
         :param name:
+        :param repeat_for_mog:
         :return data_batch: a dictionary with key 'x' and optionally 'y'
         """
         with tf.name_scope(name):
@@ -317,15 +315,14 @@ class SNGan(object):
         return data_batch
 
     ###################################################################
-    def training(self, filename, agent, num_instance,
-                 lr_list, end_lr=1e-7, max_step=None, batch_size=64,
-                 sample_same_class=False, num_threads=7, gpu='/gpu:0', mog_model=None, dp_specs=None):
+    def training(self, filename, agent, num_instance, lr_spec, end_lr=1e-7, max_step=None, batch_size=64,
+                 sample_same_class=False, num_threads=7, gpu='/gpu:0', mog_model=None, dp_spec=None):
         """ This function defines the training process
 
         :param filename:
         :param agent:
         :param num_instance:
-        :param lr_list:
+        :param lr_spec:
         :param end_lr:
         :param max_step:
         :type max_step: int
@@ -334,6 +331,7 @@ class SNGan(object):
         :param num_threads:
         :param gpu: which gpu to use
         :param mog_model:
+        :param dp_spec:
         :return:
         """
         self.step_per_epoch = np.floor(num_instance / batch_size).astype(np.int32)
@@ -368,65 +366,15 @@ class SNGan(object):
             # setup training process
             # with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(), reuse=tf.compat.v1.AUTO_REUSE):
             self.global_step = global_step_config()
-            _, opt_ops = multi_opt_config(
-                lr_list, end_lr=end_lr,
-                optimizer=self.optimizer, global_step=self.global_step, dp_specs=dp_specs)
+            _, opt_ops = dis_gen_opt_config(lr_spec, end_lr=end_lr, optimizer=self.optimizer,
+                                            global_step=self.global_step)
             # assign tasks
-            with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope()):
+            with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope()):  # --------------------------- GPU TASK
                 # calculate loss and gradients
-                grads_list, loss_list = self.__gpu_task__(
-                    batch_size=batch_size, is_training=True, data_batch=data_batch,
-                    opt_op=opt_ops)  # ------------------------------------------------------------------------ GPU TASK
+                grads_list, loss_list = self.__gpu_task__(batch_size, True, data_batch, opt_ops, dp_spec=dp_spec)
 
             # apply the gradient
-
-            def apply_grads(step_dis=False, step_gen=False):
-                dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step if step_dis else None)
-                gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step if step_gen else None)
-                return [dis_op, gen_op]
-
-            if agent.imbalanced_update is None:
-                op_list = apply_grads(step_dis=True)
-                # dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step)
-                # gen_op = opt_ops[1].apply_gradients(grads_list[1])
-                # op_list = [dis_op, gen_op]
-            elif isinstance(agent.imbalanced_update, (list, tuple)):
-                FLAGS.print('Imbalanced update used: dis per {} run and gen per {} run'.format(
-                    agent.imbalanced_update[0], agent.imbalanced_update[1]))
-                if agent.imbalanced_update[0] == 1:
-                    op_list = apply_grads(step_dis=True)
-                    # dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step)
-                    # gen_op = opt_ops[1].apply_gradients(grads_list[1])
-                    # op_list = [dis_op, gen_op]
-                elif agent.imbalanced_update[1] == 1:
-                    op_list = apply_grads(step_gen=True)
-                    # dis_op = opt_ops[0].apply_gradients(grads_list[0])
-                    # gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step)
-                    # op_list = [dis_op, gen_op]
-                elif agent.imbalanced_update[0] == -agent.imbalanced_update[1]:
-                    # handle the alternating setting, since only one op is called at each step, both get the global step
-                    op_list = apply_grads(step_dis=True, step_gen=True)
-                    # dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step)
-                    # gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step)
-                    # op_list = [dis_op, gen_op]
-
-                else:
-                    raise AttributeError('One of the imbalanced_update must be 1 or they must alternate exactly.')
-            elif isinstance(agent.imbalanced_update, str):
-                op_list = apply_grads(step_gen=True)
-                # dis_op = opt_ops[0].apply_gradients(grads_list[0])
-                # gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step)
-                # op_list = [dis_op, gen_op]
-            elif isinstance(agent.imbalanced_update, NetPicker):
-                # updates are laternating, so give globalstep to both (even though creating separate steps may make
-                # sense in the long rung if either model is trained for a long time at once
-                print('netpicker setting used in sngan')
-                op_list = apply_grads(step_dis=True, step_gen=True)
-                # dis_op = opt_ops[0].apply_gradients(grads_list[0], global_step=self.global_step)
-                # gen_op = opt_ops[1].apply_gradients(grads_list[1], global_step=self.global_step)
-                # op_list = [dis_op, gen_op]
-            else:
-                raise AttributeError('Imbalanced_update not identified.')
+            op_list = self.apply_grads(opt_ops, grads_list, iu_spec=agent.imbalanced_update)
 
             # summary op is always pinned to CPU
             # add summary for all trainable variables
@@ -447,10 +395,39 @@ class SNGan(object):
                 summary_image_op = None
 
             # run the session -----------------------------------------------------------GETTING CLOSER TO TRAINING LOOP
-            FLAGS.print('loss_list name: {}.'.format(self.loss_names))
+            FLAGS.print('loss_list name: {}.'.format(self.loss_tuple))
             agent.train(op_list, loss_list, self.global_step, max_step, self.step_per_epoch, summary_op,
-                        summary_image_op, force_print=self.force_print, mog_model=mog_model, dp_specs=dp_specs)
+                        summary_image_op, force_print=self.force_print, mog_model=mog_model, dp_specs=dp_spec)
             self.force_print = False  # force print at the first call
+
+    def apply_grads(self, opt_ops, grads_list, iu_spec):
+        step_dis, step_gen = False, False
+        if iu_spec is None:
+            step_dis = True
+        elif isinstance(iu_spec, (list, tuple)):
+            FLAGS.print('Imbalanced update used: dis per {} run and gen per {} run'.format(iu_spec[0], iu_spec[1]))
+            if iu_spec[0] == 1:
+                step_dis = True
+            elif iu_spec[1] == 1:
+                step_gen = True
+            elif iu_spec[0] == -iu_spec[1]:
+                # handle the alternating setting, since only one op is called at each step, both get the global step
+                step_dis, step_gen = True, True
+            else:
+                raise AttributeError('One of the imbalanced_update must be 1 or they must alternate exactly.')
+        elif isinstance(iu_spec, str):
+            step_gen = True
+        elif isinstance(iu_spec, NetPicker):
+            # updates are laternating, so give globalstep to both (even though creating separate steps may make
+            # sense in the long rung if either model is trained for a long time at once
+            print('netpicker setting used in sngan')
+            step_dis, step_gen = True, True
+        else:
+            raise AttributeError('Imbalanced_update not identified.')
+
+        dis_op = opt_ops.dis.apply_gradients(grads_list[0], global_step=self.global_step if step_dis else None)
+        gen_op = opt_ops.gen.apply_gradients(grads_list[1], global_step=self.global_step if step_gen else None)
+        return [dis_op, gen_op]
 
     ###################################################################
     def summary_image_sampling(self, data_batch):
@@ -592,6 +569,7 @@ class SNGan(object):
         :param model: whether to use inception_v1 or inception_v3 (v3 is not working for now)
         :param ckpt_file: in case an older ckpt file is needed, provide it here, e.g. 'cifar.ckpt-6284'
         :param num_threads:
+        :param grey_scale:
         :return:
         """
         # prepare folder

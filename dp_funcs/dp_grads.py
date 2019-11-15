@@ -44,6 +44,7 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
       arg = tf.convert_to_tensor(arg)  # pretty sure everything is a tensor at this point, try removing this...
     except TypeError:
       pass
+    print([rff_dim] + list(arg.shape))
     return tf.zeros([rff_dim] + list(arg.shape), arg.dtype)  # aggregate gradients have extra rff dimension in this case
 
   sample_state = nest.map_structure(zeros_like, var_list)

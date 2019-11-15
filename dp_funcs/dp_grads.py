@@ -93,6 +93,7 @@ def sample_grads(sample_loss, optimizer, var_list):
   print('-----------------------stacking sample grads')
   grad_stack = [tf.stack(k) for k in zip(*grads)]
   print('-----------------------returning sample grads')
+  time.sleep(1)
   return grad_stack
 
 

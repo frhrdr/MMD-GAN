@@ -30,6 +30,7 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
   def process_sample_loss(i, sample_state):
     """Process one microbatch (record) with privacy helper."""
     print('------------------------------------------------------calling process_sample_loss')
+    time.sleep(1)
     grads_list = sample_grads(loss[i, :], optimizer, var_list)
     print('------------------------------------------------------called process_sample_loss')
     time.sleep(3)

@@ -22,8 +22,8 @@ GATE_OP = tf.train.Optimizer.GATE_OP
 
 def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor, aggregation_method=None):
   nest = tf.contrib.framework.nest
-  batch_size = tf.shape(loss)[0]
-  rff_dim = tf.shape(loss)[1]
+  batch_size = loss.get_shape()[0]
+  rff_dim = loss.get_shape()[1]
 
   def process_sample_loss(i, sample_state):
     """Process one microbatch (record) with privacy helper."""
@@ -71,7 +71,7 @@ def single_grad(loss, optimizer, var_list, gate_gradients, aggregation_method):
 
 def sample_grads(sample_loss, optimizer, var_list, gate_gradients=GATE_OP, aggregation_method=None):
   # all gradiend beloning to one sample (i.e. #RFF many)
-  n_rff = tf.shape(sample_loss)[0]
+  n_rff = sample_loss.get_shape()[0]
   grads = [single_grad(sample_loss[i], optimizer, var_list, gate_gradients, aggregation_method) for i in range(n_rff)]
   return [tf.stack(k) for k in zip(*grads)]
 
@@ -139,7 +139,7 @@ def dp_compute_grads(loss_ops, opt_ops, dp_spec, aggregation_method=None):
 
   # get full grads, then couple with variables
   grads = compose_full_grads(fx_dp=loss_rff_dis_release, fy=loss_ops.dis.fgen,
-                             dfx_dp=grad_rff_dis_release, dfy=grad_rff_gen, batch_size=tf.shape(loss_ops.gen)[0])
+                             dfx_dp=grad_rff_dis_release, dfy=grad_rff_gen, batch_size=loss_ops.gen.get_shape()[0])
   grads_n_vars_dis = list(zip(grads, vars_dis))
 
   # compute the actual discriminator loss for completion

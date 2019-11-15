@@ -87,12 +87,12 @@ def single_grad(loss, optimizer, var_list):
 
 def sample_grads(sample_loss, optimizer, var_list):
   # all gradiend beloning to one sample (i.e. #RFF many)
-  print('-----------------------calling sample grads')
+  print('---------------------------calling sample grads')
   n_rff = sample_loss.get_shape()[0]
   grads = [single_grad(sample_loss[i], optimizer, var_list) for i in range(n_rff)]
-  print('-----------------------stacking sample grads')
+  print('---------------------------stacking sample grads')
   grad_stack = [tf.stack(k) for k in zip(*grads)]
-  print('-----------------------returning sample grads')
+  print('---------------------------returning sample grads')
   time.sleep(1)
   return grad_stack
 

@@ -208,12 +208,17 @@ class SNGan(object):
             # loss function
             loss_ops = self.get_losses(s_gen, s_x, s_mog, batch_size)
 
+            vars_dis = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "dis")
+            vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
+
             if dp_spec is not None:
-                grads_list, loss_list = dp_compute_grads(loss_ops, opt_ops, dp_spec)
+                grads_list, loss_list = dp_compute_grads(loss_ops, opt_ops, dp_spec, vars_dis, vars_gen)
                 loss_ops = self.loss_tuple(loss_list[0], loss_list[1])
             else:
                 # compute gradient: grads is a list of (gradient, variable) tuples
-                grads_list = self.compute_grads(opt_ops, loss_ops)
+                grads_dis = opt_ops.dis.compute_gradients(loss_ops.dis, var_list=vars_dis)
+                grads_gen = opt_ops.gen.compute_gradients(loss_ops.gen, var_list=vars_gen)
+                grads_list = [grads_dis, grads_gen]
 
             # summary op is always pinned to CPU
             # add summary to loss and intermediate variables
@@ -270,14 +275,6 @@ class SNGan(object):
         self.loss_tuple = namedtuple('losses', ['dis', 'gen'])
         loss_ops = self.loss_tuple(loss_dis, loss_gen)
         return loss_ops
-
-    @staticmethod
-    def compute_grads(opt_op, loss_list):
-        vars_dis = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "dis")
-        grads_dis = opt_op.dis.compute_gradients(loss_list.dis, var_list=vars_dis)
-        vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
-        grads_gen = opt_op.gen.compute_gradients(loss_list.gen, var_list=vars_gen)
-        return [grads_dis, grads_gen]
 
     def get_data_batch(self, filename, batch_size, file_repeat=1, num_threads=7, shuffle_file=False, name='data',
                        repeat_for_mog=False):

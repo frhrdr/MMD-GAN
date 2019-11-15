@@ -28,23 +28,22 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
 
   def process_sample_loss(i, sample_state):
     """Process one microbatch (record) with privacy helper."""
-
+    print('calling process_sample_loss')
     grads_list = zip(sample_grads(loss[i, :], optimizer, var_list))  # get grads
 
     # source: DPQuery.accumulate_record in gaussianquery.py
     # GaussianSumQuery.preprocess_record in dp_query.py
+
     grads_list = list(grads_list)
     print('g', grads_list)
     record_as_list = nest.flatten(grads_list)  # flattening list. should already be flat after removing queries
-    # record_as_list = list(record_as_list)
     print('r', record_as_list)
-    # record_as_list = [k[0] for k in record_as_list]
     clipped_as_list, norm = tf.clip_by_global_norm(record_as_list, l2_norm_clip)
     print('c', clipped_as_list)
     print('n', norm)
-    preprocessed_record = nest.pack_sequence_as(grads_list, clipped_as_list)
     preprocessed_record = clipped_as_list
     print('p', preprocessed_record)
+
     # preprocessed_record, norm = tf.clip_by_global_norm(grads_list, l2_norm_clip)  # trying this simpler line for now
 
     return nest.map_structure(tf.add, sample_state, preprocessed_record)  # add clipped sample grad to sum of grads

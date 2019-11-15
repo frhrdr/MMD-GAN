@@ -27,6 +27,11 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
   batch_size = loss.get_shape()[0]
   rff_dim = loss.get_shape()[1]
 
+  print('l', loss)
+  print('v', var_list)
+  print('c', l2_norm_clip)
+  print('n', noise_factor)
+
   def process_sample_loss(i, sample_state):
     """Process one microbatch (record) with privacy helper."""
     print('------------------------------------------------------calling process_sample_loss')

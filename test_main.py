@@ -37,11 +37,11 @@ def main(ar):
   else:
       sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(ar.loss_type, lr_spec.dis, lr_spec.gen, act_k)
 
-  if ar.noise_multiplier is not None:
-    dp_spec = {'loss_clip': ar.l2_norm_clip,
-               'grad_clip': ar.l2_norm_clip,
-               'loss_noise': ar.noise_multiplier,
-               'grad_noise': ar.noise_multiplier}
+  if ar.noise_factor_loss is not None:
+    dp_spec = {'loss_clip':  ar.l2_norm_clip_loss,
+               'grad_clip':  ar.l2_norm_clip_grad,
+               'loss_noise': ar.noise_factor_loss,
+               'grad_noise': ar.noise_factor_grad}
   else:
     dp_spec = None
 

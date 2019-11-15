@@ -267,7 +267,8 @@ class GANLoss(object):
         else:
             raise NotImplementedError('Not implemented.')
 
-        self._add_summary_()
+        if loss_type not in {'dp_rff'}:
+            self._add_summary_()
 
         return self.loss_gen, self.loss_dis
 

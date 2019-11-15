@@ -30,7 +30,7 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
     """Process one microbatch (record) with privacy helper."""
     print('------------------------------------------------------calling process_sample_loss')
     grads_list = zip(sample_grads(loss[i, :], optimizer, var_list))  # get grads
-
+    print('------------------------------------------------------called process_sample_loss')
     # source: DPQuery.accumulate_record in gaussianquery.py
     # GaussianSumQuery.preprocess_record in dp_query.py
 

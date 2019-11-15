@@ -87,7 +87,9 @@ def sample_grads(sample_loss, optimizer, var_list):
   n_rff = sample_loss.get_shape()[0]
   grads = [single_grad(sample_loss[i], optimizer, var_list) for i in range(n_rff)]
   print('-----------------------stacking sample grads')
-  return [tf.stack(k) for k in zip(*grads)]
+  grad_stack = [tf.stack(k) for k in zip(*grads)]
+  print('-----------------------returning sample grads')
+  return grad_stack
 
 
 def compose_full_grads(fx_dp, fy, dfx_dp, dfy, batch_size):

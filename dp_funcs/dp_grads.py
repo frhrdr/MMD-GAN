@@ -86,6 +86,7 @@ def sample_grads(sample_loss, optimizer, var_list):
   print('-----------------------calling sample grads')
   n_rff = sample_loss.get_shape()[0]
   grads = [single_grad(sample_loss[i], optimizer, var_list) for i in range(n_rff)]
+  print('-----------------------stacking sample grads')
   return [tf.stack(k) for k in zip(*grads)]
 
 

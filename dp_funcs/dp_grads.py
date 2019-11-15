@@ -168,9 +168,9 @@ def dp_compute_grads(loss_ops, opt_ops, dp_spec, vars_dis, vars_gen):
   grads_n_vars_gen = opt_ops.gen.compute_gradients(loss_ops.gen, var_list=vars_gen)
   # discriminator op
   # - compute the partial gradients
-  grad_rff_gen = sample_grads(loss_ops.dis.fgen, opt_ops.dis, vars_dis)
   grad_rff_dis_release = dp_rff_gradients(opt_ops.dis, loss_ops.dis.fdat, vars_dis,
                                           dp_spec['grad_clip'], dp_spec['grad_noise'])
+  grad_rff_gen = sample_grads(loss_ops.dis.fgen, opt_ops.dis, vars_dis)
   # - clip & perturb loss
   loss_rff_dis_release = release_loss_dis(loss_ops.dis.fdat, dp_spec['loss_clip'], dp_spec['loss_noise'])
 

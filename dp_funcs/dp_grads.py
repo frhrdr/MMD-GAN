@@ -22,7 +22,7 @@ GATE_GRAPH = tf.train.Optimizer.GATE_GRAPH
 import time
 
 
-def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
+def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
   nest = tf.contrib.framework.nest
   batch_size = loss.get_shape()[0]
   rff_dim = loss.get_shape()[1]
@@ -30,10 +30,7 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
   def process_sample_loss(i, sample_state):
     """Process one microbatch (record) with privacy helper."""
     print('------------------------------------------------------calling process_sample_loss')
-    time.sleep(3)
-    grads_list = sample_grads(loss[i, :], optimizer, var_list)
-    print('------------------------------------------------------called process_sample_loss')
-    time.sleep(3)
+    grads_list = sample_grads(loss[i, :], var_list)
     # grads_list = zip(grads_n_vars)  # get grads
     # source: DPQuery.accumulate_record in gaussianquery.py
     # GaussianSumQuery.preprocess_record in dp_query.py
@@ -76,7 +73,16 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
   return final_grads
 
 
-def single_grad(loss, optimizer, var_list):
+def sample_grads(sample_loss, var_list):
+  # all gradiend beloning to one sample (i.e. #RFF many)
+  print('---------------------------calling sample grads')
+  n_rff = sample_loss.get_shape()[0]
+  grads = [single_grad(sample_loss[i], var_list) for i in range(n_rff)]
+  grad_stack = [tf.stack(k) for k in zip(*grads)]
+  return grad_stack
+
+
+def single_grad(loss, var_list):
   # compute a gradients for a single scalar loss associated with one sample
   # grads, _ = zip(*optimizer.compute_gradients(loss, var_list, gate_gradients=GATE_GRAPH))
   print('-----------------------calling single grad')
@@ -84,20 +90,6 @@ def single_grad(loss, optimizer, var_list):
   # fill up none gradients with zeros
   grads_list = [g if g is not None else tf.zeros_like(v) for (g, v) in zip(list(grads), var_list)]
   return grads_list
-
-
-def sample_grads(sample_loss, optimizer, var_list):
-  # all gradiend beloning to one sample (i.e. #RFF many)
-  print('---------------------------calling sample grads')
-  time.sleep(1)
-  n_rff = sample_loss.get_shape()[0]
-  grads = [single_grad(sample_loss[i], optimizer, var_list) for i in range(n_rff)]
-  print('---------------------------stacking sample grads')
-  time.sleep(1)
-  grad_stack = [tf.stack(k) for k in zip(*grads)]
-  print('---------------------------returning sample grads')
-  time.sleep(1)
-  return grad_stack
 
 
 def compose_full_grads(fx_dp, fy, dfx_dp, dfy, batch_size):
@@ -164,13 +156,10 @@ def dp_compute_grads(loss_ops, opt_ops, dp_spec, vars_dis, vars_gen):
   :return: lists of gradient-variable pairs for generator and discriminator updates
   """
   batch_size = int(loss_ops.dis.fdat.get_shape()[0])
-  # generator op:
-  grads_n_vars_gen = opt_ops.gen.compute_gradients(loss_ops.gen, var_list=vars_gen)
   # discriminator op
   # - compute the partial gradients
-  grad_rff_dis_release = dp_rff_gradients(opt_ops.dis, loss_ops.dis.fdat, vars_dis,
-                                          dp_spec['grad_clip'], dp_spec['grad_noise'])
-  grad_rff_gen = sample_grads(loss_ops.dis.fgen, opt_ops.dis, vars_dis)
+  grad_rff_dis_release = dp_rff_gradients(loss_ops.dis.fdat, vars_dis, dp_spec['grad_clip'], dp_spec['grad_noise'])
+  grad_rff_gen = sample_grads(loss_ops.dis.fgen, vars_dis)
   # - clip & perturb loss
   loss_rff_dis_release = release_loss_dis(loss_ops.dis.fdat, dp_spec['loss_clip'], dp_spec['loss_noise'])
 
@@ -181,6 +170,9 @@ def dp_compute_grads(loss_ops, opt_ops, dp_spec, vars_dis, vars_gen):
 
   # compute the actual discriminator loss for completion
   loss_dis = loss_dis_from_rff(loss_ops.dis.fdat, loss_ops.dis.fgen, batch_size)
+
+  # generator op:
+  grads_n_vars_gen = opt_ops.gen.compute_gradients(loss_ops.gen, var_list=vars_gen)
 
   grads_list = [grads_n_vars_dis, grads_n_vars_gen]
   loss_list = [loss_dis, loss_ops.gen]

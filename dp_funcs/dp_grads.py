@@ -73,7 +73,8 @@ def dp_rff_gradients(optimizer, loss, var_list, l2_norm_clip, noise_factor):
 
 def single_grad(loss, optimizer, var_list):
   # compute a gradients for a single scalar loss associated with one sample
-  grads, _ = zip(*optimizer.compute_gradients(loss, var_list, gate_gradients=GATE_GRAPH))
+  # grads, _ = zip(*optimizer.compute_gradients(loss, var_list, gate_gradients=GATE_GRAPH))
+  grads = tf.gradients(loss, var_list, gate_gradients=GATE_GRAPH)
   # fill up none gradients with zeros
   grads_list = [g if g is not None else tf.zeros_like(v) for (g, v) in zip(list(grads), var_list)]
   return grads_list

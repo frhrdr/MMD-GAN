@@ -90,7 +90,6 @@ def mnist_minimal(d_enc=2):
   return architecture, code_dim, act_k, d_enc
 
 
-
 def cifar_default(d_enc=16):
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization

@@ -12,12 +12,13 @@ class RFFKMap:
     #
     assert rff_sigma > 0, 'sigma2 must be positive. Was {}'.format(rff_sigma)
     assert rff_dims > 0 and rff_dims % 2 == 0, 'rff_dims must be even positive int. Was {}'.format(rff_dims)
+    self.rff_dims = rff_dims
     half_dims = rff_dims // 2
     assert gen_loss in {'rff', 'mog', 'data'}, 'gen loss must be in {rff, mog, data}'
     self.gen_loss = gen_loss
     self.const_noise = const_noise
 
-    denom = tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
+    denom = tf.sqrt(tf.cast(rff_sigma, tf.float32))
     print(denom.dtype)
     if self.const_noise:
       # with NumpySeedContext(seed=self.seed):
@@ -37,7 +38,7 @@ class RFFKMap:
     enc_w = tf.matmul(encoding, self.tf_w)  # (bs, d_enc) (d_enc, rff) -> (bs, rff)
     enc_z1 = tf.math.cos(enc_w)  # (bs, rff)
     enc_z2 = tf.math.sin(enc_w)  # (bs, rff)
-    enc_rff = tf.concat((enc_z1, enc_z2), axis=1)
+    enc_rff = tf.concat((enc_z1, enc_z2), axis=1) * tf.sqrt(2.0 / self.rff_dims)
     return enc_rff
 
 

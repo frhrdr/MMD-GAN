@@ -17,9 +17,8 @@
 # but clip and perturb parts of the gradient instead
 # also removed all the bookkeeping including query objects. dp analysis is done separately
 import tensorflow as tf
-GATE_OP = tf.train.Optimizer.GATE_OP
-GATE_GRAPH = tf.train.Optimizer.GATE_GRAPH
-import time
+GATE_OP = tf.compat.v1.train.Optimizer.GATE_OP
+GATE_GRAPH = tf.compat.v1.train.Optimizer.GATE_GRAPH
 
 
 def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
@@ -27,28 +26,17 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
   batch_size = loss.get_shape()[0]
   rff_dim = loss.get_shape()[1]
 
-  print('l', loss)
-  print('v', var_list)
-  print('c', l2_norm_clip)
-  print('n', noise_factor)
-
   def process_sample_loss(i, sample_state):
     """Process one microbatch (record) with privacy helper."""
-    print('------------------------------------------------------calling process_sample_loss')
     grads_list = sample_grads(loss[i, :], var_list)
     # grads_list = zip(grads_n_vars)  # get grads
     # source: DPQuery.accumulate_record in gaussianquery.py
     # GaussianSumQuery.preprocess_record in dp_query.py
 
     grads_list = list(grads_list)
-    print('g', grads_list)
     record_as_list = nest.flatten(grads_list)  # flattening list. should already be flat after removing queries
-    print('r', record_as_list)
     clipped_as_list, norm = tf.clip_by_global_norm(record_as_list, l2_norm_clip)
-    print('c', clipped_as_list)
-    print('n', norm)
     preprocessed_record = clipped_as_list
-    print('p', preprocessed_record)
 
     # preprocessed_record, norm = tf.clip_by_global_norm(grads_list, l2_norm_clip)  # trying this simpler line for now
 
@@ -59,20 +47,31 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
       arg = tf.convert_to_tensor(arg)  # pretty sure everything is a tensor at this point, try removing this...
     except TypeError:
       pass
-    # print([rff_dim] + list(arg.shape))
     return tf.zeros([rff_dim] + list(arg.shape), arg.dtype)  # aggregate gradients have extra rff dimension in this case
 
   sample_state = nest.map_structure(zeros_like, var_list)
 
-  # unrolling microbatches does not seem like an option right now - may be worth revisiting after trying while loop
-  _, sample_state = tf.while_loop(cond=lambda i, _: tf.less(i, batch_size),
-                                  body=lambda i, state: [tf.add(i, 1), process_sample_loss(i, state)],
-                                  loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
+  def cond(i, _state):
+    return tf.less(i, batch_size)
+
+  def body(i, state):
+    new_state = process_sample_loss(i, state)
+    # with tf.control_dependencies(new_state):
+    new_count = tf.add(i, 1)
+    return [new_count, new_state]
+
+  _, sample_state = tf.while_loop(cond=cond, body=body, loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
                                   parallel_iterations=1)
+
+  # # unrolling microbatches does not seem like an option right now - may be worth revisiting after trying while loop
+  # _, sample_state = tf.while_loop(cond=lambda i, _: tf.less(i, batch_size),
+  #                                 body=lambda i, state: [tf.add(i, 1), process_sample_loss(i, state)],
+  #                                 loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
+  #                                 parallel_iterations=1)
 
   # grad_sums, global_state = dp_sum_query.get_noised_result(sample_state, global_state)
   def add_noise(v):
-    return v + tf.random_normal(tf.shape(v), stddev=noise_factor)
+    return v + tf.random.normal(tf.shape(v), stddev=noise_factor)
 
   final_grads = nest.map_structure(add_noise, sample_state)  # normalization comes later
   return final_grads
@@ -80,8 +79,6 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
 
 def sample_grads(sample_loss, var_list):
   # all gradiend beloning to one sample (i.e. #RFF many)
-  print('---------------------------calling sample grads')
-  print(sample_loss.get_shape())
   n_rff = sample_loss.get_shape()[0]
   grads = [single_grad(sample_loss[i], var_list) for i in range(n_rff)]
   grad_stack = [tf.stack(k) for k in zip(*grads)]
@@ -91,8 +88,7 @@ def sample_grads(sample_loss, var_list):
 def single_grad(loss, var_list):
   # compute a gradients for a single scalar loss associated with one sample
   # grads, _ = zip(*optimizer.compute_gradients(loss, var_list, gate_gradients=GATE_GRAPH))
-  print('-----------------------calling single grad')
-  print(loss.get_shape())
+  # print('-----------------------calling single grad')
   grads = tf.gradients(loss, var_list, gate_gradients=None)
   # fill up none gradients with zeros
   grads_list = [g if g is not None else tf.zeros_like(v) for (g, v) in zip(list(grads), var_list)]
@@ -112,16 +108,16 @@ def compose_full_grads(fx_dp, fy, dfx_dp, dfy, batch_size):
   loss_diff_normed = (fx_dp - fy) / batch_size**2  # (rff_dims)
 
   def full_grad(x, y):
-    print('grad_x_shape', x.get_shape())  # (rff, w_dims)
-    print('grad_y_shape', y.get_shape())
-    print('loss_shape', loss_diff_normed.get_shape())  # (rff)
+    # print('grad_x_shape', x.get_shape())  # (rff, w_dims)
+    # print('grad_y_shape', y.get_shape())
+    # print('loss_shape', loss_diff_normed.get_shape())  # (rff)
     # return tf.malmul(loss_diff_normed, x - y)  # dimensions are not clear here. target shape: (w_dims)
     ldn = loss_diff_normed
     for _ in range(len(x.get_shape()) - 1):
       ldn = tf.expand_dims(ldn, axis=-1)
     grad = tf.reduce_sum(ldn * (x - y), axis=0)
 
-    print('comp_grad_shape', grad.get_shape())
+    # print('comp_grad_shape', grad.get_shape())
     return grad
 
   return tf.contrib.framework.nest.map_structure(full_grad, dfx_dp, dfy)
@@ -137,7 +133,7 @@ def release_loss_dis(loss_dis, l2_norm_clip, noise_factor):
   """
   loss_clip = tf.clip_by_norm(loss_dis, l2_norm_clip, axes=1)
   loss_sum = tf.reduce_sum(loss_clip, axis=0)
-  return loss_sum + tf.random_normal(tf.shape(loss_sum), stddev=noise_factor)
+  return loss_sum + tf.random.normal(tf.shape(loss_sum), stddev=noise_factor)
 
 
 def loss_dis_from_rff(rff_dis_loss, rff_gen_loss, batch_size):

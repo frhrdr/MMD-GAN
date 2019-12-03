@@ -29,7 +29,7 @@ def test_dp_compute_grads():
              'loss_noise': 0.1,
              'grad_noise': 0.1}
   n_samples = 53
-  d_in = 1000
+  d_in = 10
   d_out = 5
 
   x = tf.constant(np.random.randn(n_samples, d_in).astype(np.float32))  # 3 samples of dim 4

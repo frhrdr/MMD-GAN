@@ -98,9 +98,9 @@ class GaussianSumQuery(dp_query.SumAggregationDPQuery):
     """See base class."""
     if LooseVersion(tf.__version__) < LooseVersion('2.0.0'):
       def add_noise(v):
-        return v + tf.random_normal(tf.shape(v), stddev=global_state.stddev)
+        return v + tf.random.normal(tf.shape(v), stddev=global_state.stddev)
     else:
-      random_normal = tf.random_normal_initializer(stddev=global_state.stddev)
+      random_normal = tf.random.normal_initializer(stddev=global_state.stddev)
       def add_noise(v):
         return v + random_normal(tf.shape(v))
 

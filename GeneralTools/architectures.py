@@ -76,6 +76,7 @@ def mnist_tiny(d_enc=2):
 def mnist_minimal(d_enc=2):
   act_k = np.power(64.0, 0.125)  # multiplier
   w_nm = 's'  # spectral normalization
+  # w_nm = None
   g = [{'name': 'l1', 'out': 28 * 28, 'op': 'd', 'act': 'tanh', 'act_nm': None, 'out_reshape': [1, 28, 28]}]
 
   d = [{'name': 'l5',     'out': 1, 'op': 'c', 'act': 'lrelu', 'act_k': act_k, 'w_nm': w_nm, 'out_reshape': [1*28*28]},

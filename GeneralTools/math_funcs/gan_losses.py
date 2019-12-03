@@ -159,6 +159,7 @@ class GANLoss(object):
         # dis loss
         rff_gen = self.rff_map.gen_features(self.score_gen)  # (bs, d_rff)
         rff_dat = self.rff_map.gen_features(self.score_data)  # (bs, d_rff)
+        # print('0000000000000000000000', rff_dat, rff_gen)
         rffk_gen = tf.compat.v1.reduce_mean(rff_gen, axis=0)  # (d_rff)
         self.loss_dis = namedtuple('rff_loss', ['fdat', 'fgen'])(rff_dat, rffk_gen)
 
@@ -173,6 +174,32 @@ class GANLoss(object):
             dist_gg, dist_gd, dist_dd = get_squared_dist(self.score_gen, comp_data, do_summary=self.do_summary)
             self.loss_gen, _ = mmd_g(dist_gg, dist_gd, dist_dd, self.batch_size, name=name,
                                      do_summary=self.do_summary, custom_weights=self.repulsive_weights)
+
+    def _dp_rff_dummy(self):
+        """
+        random fourier feature approximation of MMD for discriminator (i.e. attractive loss) in DP setting
+        provides the n+1 losses used to compute per-sample-clipped gradients
+        """
+        # dis loss
+        # rff_gen = self.score_data  # (bs, d_rff)
+        # rff_dat = self.score_data  # (bs, d_rff)
+        rff_dat = self.score_data
+        # print('0000000000000000000000', rff_dat)  # rff_gen)
+        # rffk_gen = tf.compat.v1.reduce_mean(rff_dat, axis=0)  # (d_rff)
+        self.loss_dis = namedtuple('rff_loss', ['fdat', 'fgen'])(rff_dat, None)
+
+        # gen loss
+        self.loss_gen = 0
+        # if self.rff_map.gen_loss == 'rff':
+        #     rffk_dat = tf.compat.v1.reduce_mean(rff_dat, axis=0)
+        #     self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g')
+        # else:
+        #     assert self.rff_map.gen_loss in {'data', 'mog'}
+        #     comp_data = self.score_data if self.rff_map.gen_loss == 'data' else self.score_mog
+        #     name = 'mmd_g' if self.rff_map.gen_loss == 'data' else 'mmd_g_mog'
+        #     dist_gg, dist_gd, dist_dd = get_squared_dist(self.score_gen, comp_data, do_summary=self.do_summary)
+        #     self.loss_gen, _ = mmd_g(dist_gg, dist_gd, dist_dd, self.batch_size, name=name,
+        #                              do_summary=self.do_summary, custom_weights=self.repulsive_weights)
 
     def _repulsive_mmd_g_bounded_(self):
         """ rmb loss
@@ -257,6 +284,8 @@ class GANLoss(object):
             self._rff_gaussian_kernel_approx()
         elif loss_type == 'dp_rff':
             self._dp_rff_gaussian_kernel_approx()
+        elif loss_type == 'dp_dummy':
+            self._dp_rff_dummy()
         # elif loss_type == 'rep_inv_disc':
         #     self._repulsive_mmd_g_inv_disc()
         # elif isinstance(loss_type, dict):
@@ -267,7 +296,7 @@ class GANLoss(object):
         else:
             raise NotImplementedError('Not implemented.')
 
-        if loss_type not in {'dp_rff'}:
+        if loss_type not in {'dp_rff', 'dp_dummy'}:
             self._add_summary_()
 
         return self.loss_gen, self.loss_dis

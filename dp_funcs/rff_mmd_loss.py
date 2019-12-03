@@ -19,22 +19,22 @@ class RFFKMap:
     self.const_noise = const_noise
 
     denom = tf.sqrt(tf.cast(rff_sigma, tf.float32))
-    print(denom.dtype)
+    # print(denom.dtype)
     if self.const_noise:
       # with NumpySeedContext(seed=self.seed):
       self.tf_w = tf.constant(np.random.randn(enc_dims, half_dims), dtype=tf.float32) / denom
     else:
-      # num = tf.random_normal(shape=(enc_dims, rff_dims // 2))
+      # num = tf.random.normal(shape=(enc_dims, rff_dims // 2))
       # den = tf.sqrt(tf.cast(rff_sigma * 2.0**0.5, tf.float32))
       # print('num', num.dtype, 'den', den.dtype)
       # self.tf_w = num / den
-      self.tf_w = tf.random_normal(shape=(enc_dims, half_dims)) / denom
+      self.tf_w = tf.random.normal(shape=(enc_dims, half_dims)) / denom
 
   def gen_features(self, encoding):
     # The following block of code is deterministic given seed.
     # Fourier transform formula from http://mathworld.wolfram.com/FourierTransformGaussian.html
 
-    print(encoding.dtype, self.tf_w.dtype)
+    # print(encoding.dtype, self.tf_w.dtype)
     enc_w = tf.matmul(encoding, self.tf_w)  # (bs, d_enc) (d_enc, rff) -> (bs, rff)
     enc_z1 = tf.math.cos(enc_w)  # (bs, rff)
     enc_z2 = tf.math.sin(enc_w)  # (bs, rff)

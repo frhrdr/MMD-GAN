@@ -34,7 +34,7 @@ def weight_initializer(act_fun, init_w_scale=1.0):
             # else:
             if act_fun == 'relu':
                 initializer = tf.variance_scaling_initializer(
-                    scale=2.0 * init_w_scale, mode='fan_in', distribution='normal')
+                    scale=2.0 * init_w_scale, mode='fan_in', distribution='truncated_normal')
             # elif act_fun == 'tanh':
             #     initializer = tf.variance_scaling_initializer(
             #         scale=1.0 * init_w_scale, mode='fan_avg', distribution='uniform')
@@ -42,7 +42,7 @@ def weight_initializer(act_fun, init_w_scale=1.0):
             #         factor=3.0 * init_w_scale, mode='FAN_AVG', uniform=True)
             elif act_fun == 'lrelu':  # assume alpha = 0.1
                 initializer = tf.variance_scaling_initializer(
-                    scale=2.0 / 1.01 * init_w_scale, mode='fan_in', distribution='normal')
+                    scale=2.0 / 1.01 * init_w_scale, mode='fan_in', distribution='truncated_normal')
             elif act_fun == 'sigmoid':
                 initializer = tf.variance_scaling_initializer(
                     scale=16.0 * init_w_scale, mode='fan_avg', distribution='uniform')

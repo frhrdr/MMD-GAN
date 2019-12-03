@@ -187,8 +187,8 @@ class SNGan(object):
                 return {'x': tf.concat([batch1['x'], batch2['x']], axis=0)}
 
     ###################################################################
-    def __gpu_task__(self, batch_size=64, is_training=False, data_batch=None,
-                     opt_ops=None, code_batch=None, dp_spec=None):
+    def _gpu_task(self, batch_size=64, is_training=False, data_batch=None,
+                  opt_ops=None, code_batch=None, dp_spec=None):
         """ This function defines the task on a gpu
 
         :param batch_size:
@@ -352,9 +352,9 @@ class SNGan(object):
         with self.graph.as_default(), tf.device(gpu):
             self.init_net()
             # get next batch
-            data_batch = self.get_data_batch(
-                filename, batch_size, file_repeat, num_threads, shuffle_file, 'data_tr',
-                repeat_for_mog=self.repeat_for_mog)
+            data_batch = self.get_data_batch(filename, batch_size, file_repeat, num_threads, shuffle_file, 'data_tr',
+                                             repeat_for_mog=self.repeat_for_mog)
+
             FLAGS.print('Shape of input batch: {}'.format(data_batch['x'].get_shape().as_list()))
 
             # setup training process
@@ -365,7 +365,7 @@ class SNGan(object):
             # assign tasks
             with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope()):  # --------------------------- GPU TASK
                 # calculate loss and gradients
-                grads_list, loss_list = self.__gpu_task__(batch_size, True, data_batch, opt_ops, dp_spec=dp_spec)
+                grads_list, loss_list = self._gpu_task(batch_size, True, data_batch, opt_ops, dp_spec=dp_spec)
 
             # apply the gradient
             op_list = self.apply_grads(opt_ops, grads_list, iu_spec=agent.imbalanced_update)
@@ -391,7 +391,7 @@ class SNGan(object):
             # run the session -----------------------------------------------------------GETTING CLOSER TO TRAINING LOOP
             FLAGS.print('loss_list name: {}.'.format(self.loss_tuple))
             agent.train(op_list, loss_list, self.global_step, max_step, self.step_per_epoch, summary_op,
-                        summary_image_op, force_print=self.force_print, mog_model=mog_model, dp_specs=dp_spec)
+                        summary_image_op, force_print=self.force_print, mog_model=mog_model)
             self.force_print = False  # force print at the first call
 
     def apply_grads(self, opt_ops, grads_list, iu_spec):
@@ -434,7 +434,7 @@ class SNGan(object):
         # down sample x
         x_real = data_batch['x'][0:self.num_summary_image, :]
         # generate new images
-        gen_batch = self.__gpu_task__(batch_size=self.num_summary_image, is_training=False)
+        gen_batch = self._gpu_task(batch_size=self.num_summary_image, is_training=False)
         # do clipping
         x_gen = tf.clip_by_value(gen_batch['x'], clip_value_min=-1, clip_value_max=1)
         # tf.compat.v1.summary.image only accepts [batch_size, height, width, channels]
@@ -503,7 +503,7 @@ class SNGan(object):
                 code_y = data_batch['y']
             code_batch = self.sample_codes(batch_size, code_x, code_y, name='code_te')
             # generate new images
-            gen_batch = self.__gpu_task__(code_batch=code_batch, is_training=False)
+            gen_batch = self._gpu_task(code_batch=code_batch, is_training=False)
             # do clipping
             gen_batch['x'] = tf.clip_by_value(gen_batch['x'], clip_value_min=-1, clip_value_max=1)
 
@@ -578,7 +578,7 @@ class SNGan(object):
 
             # generate new images
             code_batch = self.sample_codes(batch_size)
-            gen_batch = self.__gpu_task__(code_batch=code_batch, is_training=False)
+            gen_batch = self._gpu_task(code_batch=code_batch, is_training=False)
             # do clipping
             gen_batch['x'] = tf.clip_by_value(gen_batch['x'], clip_value_min=-1, clip_value_max=1)
 

@@ -283,6 +283,13 @@ class SpectralNorm(object):
 
         return sigma, x_update, step + 1
 
+    def _power_iter_no_step(self, x):
+        y = self._l2_normalize_(self.forward(x))
+        x_update = self._l2_normalize_(self.backward(y))
+        sigma = self._l2_norm(self.forward(x))
+
+        return sigma, x_update
+
     def __call__(self, kernel, **kwargs):
         """ This function calculates spectral normalization for kernel
 
@@ -348,11 +355,18 @@ class SpectralNorm(object):
                 else:
                     sigma_init = tf.constant(0.0, dtype=tf.float32)
                 # do power iterations
-                sigma, x_update, _ = tf.while_loop(
-                    cond=lambda _1, _2, i: i < self.num_iter,
-                    body=lambda _1, x, i: self._power_iter_(x, step=i),
-                    loop_vars=(sigma_init, self.x, tf.constant(0, dtype=tf.int32)),
-                    name='spectral_norm_while')
+                # NEW: If num num_iter is 1, which it typically should be, don't build a loop, just call it once!
+                if self.num_iter == 1:
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ no sn loop')
+                    sigma, x_update = self._power_iter_no_step(self.x)
+                else:
+                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ doing sn loop: may interfere with DP-SGD')
+
+                    sigma, x_update, _ = tf.while_loop(
+                        cond=lambda _1, _2, i: i < self.num_iter,
+                        body=lambda _1, x, i: self._power_iter_(x, step=i),
+                        loop_vars=(sigma_init, self.x, tf.constant(0, dtype=tf.int32)),
+                        name='spectral_norm_while')
                 # update the random input
                 tf.compat.v1.add_to_collection(tf.compat.v1.GraphKeys.UPDATE_OPS, tf.compat.v1.assign(self.x, x_update))
 

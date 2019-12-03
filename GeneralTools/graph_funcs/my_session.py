@@ -193,7 +193,7 @@ class MySession(object):
     def full_run(self, op_list, loss_list, max_step, step_per_epoch, global_step, summary_op=None,
                  summary_image_op=None, summary_folder=None, ckpt_folder=None, ckpt_file=None, print_loss=True,
                  query_step=500, imbalanced_update=None, force_print=False,
-                 mog_model=None, dp_specs=None):
+                 mog_model=None):
         """ This function run the session with all monitor functions.
 
         :param op_list: the first op in op_list runs every extra_steps when the rest run once.
@@ -264,12 +264,6 @@ class MySession(object):
                         epoch = step // step_per_epoch
                         self.print_loss(loss_value, global_step_value, epoch)
 
-                # retrieve ledger information accumulated by the DP Optimizer
-                if dp_specs is not None:
-                    samples, queries = self.sess.run(dp_specs['ledger'].get_unformatted_ledger())
-                    dp_specs['samples'].append(samples)
-                    dp_specs['queries'].append(queries)
-
                 # save model at last step
                 if step == max_step - 1:
                     if self.saver is not None:
@@ -277,9 +271,6 @@ class MySession(object):
                     if summary_image_op is not None:
                         summary_image_str = self.sess.run(summary_image_op)
                         self.summary_writer.add_summary(summary_image_str, global_step=global_step_value)
-
-
-
 
         elif isinstance(imbalanced_update, (list, tuple, NetPicker)):  # <-------------------- ALTERNATING TRAINING HERE
 

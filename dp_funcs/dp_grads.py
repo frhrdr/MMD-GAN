@@ -61,7 +61,7 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
     return [new_count, new_state]
 
   _, sample_state = tf.while_loop(cond=cond, body=body, loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
-                                  parallel_iterations=1)
+                                  parallel_iterations=100)
 
   # # unrolling microbatches does not seem like an option right now - may be worth revisiting after trying while loop
   # _, sample_state = tf.while_loop(cond=lambda i, _: tf.less(i, batch_size),

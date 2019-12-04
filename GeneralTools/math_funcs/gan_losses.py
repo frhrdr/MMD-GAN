@@ -166,7 +166,7 @@ class GANLoss(object):
         # gen loss
         if self.rff_map.gen_loss == 'rff':
             rffk_dat = tf.compat.v1.reduce_mean(rff_dat, axis=0)
-            self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g')
+            self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g') / self.batch_size**2
         else:
             assert self.rff_map.gen_loss in {'data', 'mog'}
             comp_data = self.score_data if self.rff_map.gen_loss == 'data' else self.score_mog

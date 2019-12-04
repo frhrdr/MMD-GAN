@@ -190,6 +190,13 @@ class MySession(object):
              else '<{:.3f}>'.format(l_value)
              for l_value in loss_value]))
 
+    def save_model(self, global_step_value, summary_image_op):
+        if self.saver is not None:
+            self.saver.save(self.sess, save_path=self.save_path, global_step=global_step_value)
+        if summary_image_op is not None:
+            summary_image_str = self.sess.run(summary_image_op)
+            self.summary_writer.add_summary(summary_image_str, global_step=global_step_value)
+
     def full_run(self, op_list, loss_list, max_step, step_per_epoch, global_step, summary_op=None,
                  summary_image_op=None, summary_folder=None, ckpt_folder=None, ckpt_file=None, print_loss=True,
                  query_step=500, imbalanced_update=None, force_print=False,
@@ -211,6 +218,7 @@ class MySession(object):
         :param imbalanced_update: a list indicating the period to update each ops in op_list;
             the first op must have period = 1 as it updates the global step
         :param force_print:
+        :param mog_model:
         :return:
         """
         # prepare writer
@@ -266,11 +274,7 @@ class MySession(object):
 
                 # save model at last step
                 if step == max_step - 1:
-                    if self.saver is not None:
-                        self.saver.save(self.sess, save_path=self.save_path, global_step=global_step_value)
-                    if summary_image_op is not None:
-                        summary_image_str = self.sess.run(summary_image_op)
-                        self.summary_writer.add_summary(summary_image_str, global_step=global_step_value)
+                    self.save_model(global_step_value, summary_image_op)
 
         elif isinstance(imbalanced_update, (list, tuple, NetPicker)):  # <-------------------- ALTERNATING TRAINING HERE
 
@@ -313,11 +317,7 @@ class MySession(object):
 
                 # save model at last step
                 if step == max_step - 1:
-                    if self.saver is not None:
-                        self.saver.save(self.sess, save_path=self.save_path, global_step=global_step_value)
-                    if summary_image_op is not None:
-                        summary_image_str = self.sess.run(summary_image_op)
-                        self.summary_writer.add_summary(summary_image_str, global_step=global_step_value)
+                    self.save_model(global_step_value, summary_image_op)
 
         elif imbalanced_update == 'dynamic':
             # This case is used for sngan_mmd_rand_g only
@@ -347,11 +347,7 @@ class MySession(object):
 
                 # save model at last step
                 if step == max_step - 1:
-                    if self.saver is not None:
-                        self.saver.save(self.sess, save_path=self.save_path, global_step=global_step_value)
-                    if summary_image_op is not None:
-                        summary_image_str = self.sess.run(summary_image_op)
-                        self.summary_writer.add_summary(summary_image_str, global_step=global_step_value)
+                    self.save_model(global_step_value, summary_image_op)
 
         # calculate sess duration
         duration = time.time() - start_time
@@ -383,6 +379,38 @@ class MySession(object):
             return True
         else:
             return False
+
+    def summary_and_save(self, summary_op, global_step_value, loss_value, step, max_step):
+        if (summary_op is not None) and (global_step_value % 100 == 99):
+            summary_str = self.sess.run(summary_op)
+            # add summary and print out loss
+            self.summary_writer.add_summary(summary_str, global_step=global_step_value)
+
+        # in abnormal cases, save the model
+        if self.abnormal_save(loss_value, global_step_value, summary_op):
+            return 'break'
+
+        if step == max_step - 1 and self.saver is not None:
+            self.saver.save(self.sess, save_path=self.save_path, global_step=global_step_value)
+        return None
+
+    def do_imbalanced_update(self, step, max_step, loss_list, update_ops, extra_update_ops, run_options, run_metadata,
+                             global_step_value, multi_runs_timeline):
+        if self.do_trace and (step >= max_step - 5):
+            # update the model in trace mode
+            loss_value, _, _ = self.sess.run(
+                [loss_list, update_ops, extra_update_ops],
+                options=run_options, run_metadata=run_metadata)
+            # add time line
+            self.summary_writer.add_run_metadata(
+                run_metadata, tag='step%d' % global_step_value, global_step=global_step_value)
+            trace = timeline.Timeline(step_stats=run_metadata.step_stats)
+            chrome_trace = trace.generate_chrome_trace_format()
+            multi_runs_timeline.update_timeline(chrome_trace)
+        else:
+            # update the model
+            loss_value, _, _ = self.sess.run([loss_list, update_ops, extra_update_ops])
+        return loss_value
 
     def debug_mode(self, op_list, loss_list, global_step, summary_op=None, summary_folder=None, ckpt_folder=None,
                    ckpt_file=None, max_step=200, print_loss=True, query_step=100, imbalanced_update=None):
@@ -468,37 +496,16 @@ class MySession(object):
                 # update_ops = [op_list[i] for i in range(num_ops) if global_step_value % imbalanced_update[i] == 0]
                 update_ops = select_ops_to_update(op_list, global_step_value, imbalanced_update)
 
-                if self.do_trace and (step >= max_step - 5):
-                    # update the model in trace mode
-                    loss_value, _, _ = self.sess.run(
-                        [loss_list, update_ops, extra_update_ops],
-                        options=run_options, run_metadata=run_metadata)
-                    # add time line
-                    self.summary_writer.add_run_metadata(
-                        run_metadata, tag='step%d' % global_step_value, global_step=global_step_value)
-                    trace = timeline.Timeline(step_stats=run_metadata.step_stats)
-                    chrome_trace = trace.generate_chrome_trace_format()
-                    multi_runs_timeline.update_timeline(chrome_trace)
-                else:
-                    # update the model
-                    loss_value, _, _ = self.sess.run([loss_list, update_ops, extra_update_ops])
+                loss_value = self.do_imbalanced_update(step, max_step, loss_list, update_ops, extra_update_ops,
+                                                       run_options, run_metadata, global_step_value,
+                                                       multi_runs_timeline)
 
                 # print(loss_value)
                 if print_loss and (step % query_step == 0):
                     self.print_loss(loss_value, global_step_value)
 
-                # add summary
-                if (summary_op is not None) and (global_step_value % 100 == 99):
-                    summary_str = self.sess.run(summary_op)
-                    # add summary and print out loss
-                    self.summary_writer.add_summary(summary_str, global_step=global_step_value)
-
-                # in abnormal cases, save the model
-                if self.abnormal_save(loss_value, global_step_value, summary_op):
+                if self.summary_and_save(summary_op, global_step_value, loss_value, step, max_step) == 'break':
                     break
-
-                if step == max_step - 1 and self.saver is not None:
-                    self.saver.save(self.sess, save_path=self.save_path, global_step=global_step_value)
 
         elif isinstance(imbalanced_update, str) and imbalanced_update == 'dynamic':
             # This case is used for sngan_mmd_rand_g only
@@ -511,20 +518,9 @@ class MySession(object):
                     np.random.uniform(low=0.0, high=1.0) < 0.1 / np.maximum(mmd_average, 0.1) else \
                     op_list[1:]
 
-                if self.do_trace and (step >= max_step - 5):
-                    # update the model in trace mode
-                    loss_value, _, _ = self.sess.run(
-                        [loss_list, update_ops, extra_update_ops],
-                        options=run_options, run_metadata=run_metadata)
-                    # add time line
-                    self.summary_writer.add_run_metadata(
-                        run_metadata, tag='step%d' % global_step_value, global_step=global_step_value)
-                    trace = timeline.Timeline(step_stats=run_metadata.step_stats)
-                    chrome_trace = trace.generate_chrome_trace_format()
-                    multi_runs_timeline.update_timeline(chrome_trace)
-                else:
-                    # update the model
-                    loss_value, _, _ = self.sess.run([loss_list, update_ops, extra_update_ops])
+                loss_value = self.do_imbalanced_update(step, max_step, loss_list, update_ops, extra_update_ops,
+                                                       run_options, run_metadata, global_step_value,
+                                                       multi_runs_timeline)
 
                 # update mmd_average
                 mmd_average = loss_value[2]
@@ -533,18 +529,8 @@ class MySession(object):
                 if print_loss and (step % query_step == 0):
                     self.print_loss(loss_value, global_step_value)
 
-                # add summary
-                if (summary_op is not None) and (global_step_value % 100 == 99):
-                    summary_str = self.sess.run(summary_op)
-                    # add summary and print out loss
-                    self.summary_writer.add_summary(summary_str, global_step=global_step_value)
-
-                # in abnormal cases, save the model
-                if self.abnormal_save(loss_value, global_step_value, summary_op):
+                if self.summary_and_save(summary_op, global_step_value, loss_value, step, max_step) == 'break':
                     break
-
-                if step == max_step - 1 and self.saver is not None:
-                    self.saver.save(self.sess, save_path=self.save_path, global_step=global_step_value)
 
         # calculate sess duration
         duration = time.time() - start_time
@@ -563,11 +549,10 @@ def select_ops_to_update(op_list, global_step_value, imbalanced_update):
     else:  # -> in addition, select all negative vals which don't divide the step count
         update_ops = []
         for idx, iup in enumerate(imbalanced_update):
-            if iup > 0 and (global_step_value % iup) == 0:
+            if iup > 0 and global_step_value % iup == 0:
                 update_ops.append(op_list[idx])
-            if iup < 0 and (global_step_value % -iup) > 0:
+            elif iup < 0 and global_step_value % iup != 0:
                 update_ops.append(op_list[idx])
-
     return update_ops
 
 

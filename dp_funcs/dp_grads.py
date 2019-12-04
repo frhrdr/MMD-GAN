@@ -176,7 +176,7 @@ def dp_compute_grads(loss_ops, dp_spec, vars_dis, vars_gen):
 
   # generator op:
   # grads_n_vars_gen = opt_ops.gen.compute_gradients(loss_ops.gen, var_list=vars_gen)
-  grads_n_vars_gen = list(zip(tf.gradients(loss_ops.gen, vars_gen), vars_dis))
+  grads_n_vars_gen = list(zip(tf.gradients(loss_ops.gen, vars_gen), vars_gen))
 
   grads_list = [grads_n_vars_dis, grads_n_vars_gen]
   loss_list = [loss_dis, loss_ops.gen]

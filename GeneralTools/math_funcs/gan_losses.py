@@ -160,12 +160,12 @@ class GANLoss(object):
         rff_gen = self.rff_map.gen_features(self.score_gen)  # (bs, d_rff)
         rff_dat = self.rff_map.gen_features(self.score_data)  # (bs, d_rff)
         # print('0000000000000000000000', rff_dat, rff_gen)
-        rffk_gen = tf.compat.v1.reduce_mean(rff_gen, axis=0)  # (d_rff)
+        rffk_gen = tf.compat.v1.reduce_sum(rff_gen, axis=0)  # (d_rff)
         self.loss_dis = namedtuple('rff_loss', ['fdat', 'fgen'])(rff_dat, rffk_gen)
 
         # gen loss
         if self.rff_map.gen_loss == 'rff':
-            rffk_dat = tf.compat.v1.reduce_mean(rff_dat, axis=0)
+            rffk_dat = tf.compat.v1.reduce_sum(rff_dat, axis=0)
             self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g') / self.batch_size**2
         else:
             assert self.rff_map.gen_loss in {'data', 'mog'}

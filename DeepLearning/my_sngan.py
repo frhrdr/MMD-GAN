@@ -209,7 +209,7 @@ class SNGan(object):
             vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
 
             if dp_spec is not None:
-                grads_list, loss_list = dp_compute_grads(loss_ops, opt_ops, dp_spec, vars_dis, vars_gen)
+                grads_list, loss_list = dp_compute_grads(loss_ops, dp_spec, vars_dis, vars_gen)
                 loss_ops = self.loss_tuple(loss_list[0], loss_list[1])
             else:
                 # compute gradient: grads is a list of (gradient, variable) tuples

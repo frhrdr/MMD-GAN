@@ -105,7 +105,7 @@ def compose_full_grads(fx_dp, fy, dfx_dp, dfy, batch_size):
   :param batch_size: for normalization
   :return:
   """
-  loss_diff_normed = 2 * (fx_dp - fy) / batch_size**2  # (rff_dims)
+  loss_diff_normed = -2 * (fx_dp - fy) / batch_size**2  # (rff_dims)
 
   def full_grad(x, y):
     # print('grad_x_shape', x.get_shape())  # (rff, w_dims)
@@ -144,7 +144,7 @@ def loss_dis_from_rff(rff_dis_loss, rff_gen_loss, batch_size):
   :param batch_size
   :return:
   """
-  return tf.reduce_sum((tf.reduce_sum(rff_dis_loss, axis=0) - rff_gen_loss)**2) / batch_size**2
+  return -tf.reduce_sum((tf.reduce_sum(rff_dis_loss, axis=0) - rff_gen_loss)**2) / batch_size**2
 
 
 def dp_compute_grads(loss_ops, dp_spec, vars_dis, vars_gen):

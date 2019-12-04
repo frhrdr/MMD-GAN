@@ -211,12 +211,6 @@ class SNGan(object):
             if dp_spec is not None:
                 grads_list, loss_list = dp_compute_grads(loss_ops, dp_spec, vars_dis, vars_gen)
                 loss_ops = self.loss_tuple(loss_list[0], loss_list[1])
-                print('g1')
-                for g in grads_list[0]:
-                    print(g)
-                print('g2')
-                for g in grads_list[1]:
-                    print(g)
                 # print(grads_list[1])
             else:
                 # compute gradient: grads is a list of (gradient, variable) tuples

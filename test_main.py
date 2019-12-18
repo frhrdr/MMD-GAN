@@ -56,7 +56,8 @@ def main(ar):
     mog_model = None
   else:
     np_mog = default_mogs(ar.mog_type, ar.n_comp, d_enc, ar.cov_type, ar.decay_gamma, ar.em_steps, ar.map_em,
-                          ar.reg_covar, ar.mog_max_norm, ar.pi_nf, ar.mu_nf, ar.sig_nf)
+                          ar.reg_covar,
+                          ar.l2_norm_clip_mog, ar.pi_nf, ar.mu_nf, ar.sig_nf)
     mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=np_mog, n_data_samples=n_data_samples,
                             enc_batch_size=200, filename=ar.filename, cov_type=ar.cov_type,
                             fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step)

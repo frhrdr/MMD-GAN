@@ -36,8 +36,12 @@ def parse_run_args():
   # DP
   parser.add_argument('--l2-norm-clip-loss', '-lclip', type=float, default=100.)
   parser.add_argument('--l2-norm-clip-grad', '-gclip', type=float, default=100.)
-  parser.add_argument('--noise-factor-loss', '-lnoise', type=float, default=None)
-  parser.add_argument('--noise-factor-grad', '-gnoise', type=float, default=None)
+  parser.add_argument('--l2-norm-clip-mog',  '-mclip', type=float, default=None)
+  parser.add_argument('--noise-factor-loss',    '-lnoise',   type=float, default=None)
+  parser.add_argument('--noise-factor-grad',    '-gnoise',   type=float, default=None)
+  parser.add_argument('--noise-factor-mog-pi',  '-pinoise',  type=float, default=None)
+  parser.add_argument('--noise-factor-mog-mu',  '-munoise',  type=float, default=None)
+  parser.add_argument('--noise-factor-mog-sig', '-signoise', type=float, default=None)
   # parser.add_argument('--num_microbatches', '-micro', type=int, default=None)
 
   # MOG

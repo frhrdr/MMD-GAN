@@ -201,7 +201,8 @@ class EncodingMoG:
 
 class NumpyMAPMoG:
   def __init__(self, n_comp, d_enc, do_map=True, reg_covar=None, init_params='random',
-               dir_a=None, niw_k=None, niw_v=None, niw_s=None):
+               dir_a=None, niw_k=None, niw_v=None, niw_s=None,
+               max_norm=None, pi_noise_factor=None, mu_noise_factor=None, sig_noise_factor=None):
     self.d_enc = d_enc
     self.n_comp = n_comp
 
@@ -220,6 +221,12 @@ class NumpyMAPMoG:
     self.init_params = init_params
     self.mu_init_range = [-3, 3]
     self.cov_init_scale = 1.
+
+    self.max_norm = max_norm
+    self.pi_noise_factor = pi_noise_factor
+    self.mu_noise_factor = mu_noise_factor
+    self.sig_noise_factor = sig_noise_factor
+    self.do_dp = None not in {pi_noise_factor, mu_noise_factor, sig_noise_factor}
 
   def _init_params(self, encodings):
     if self.init_params == 'random':
@@ -260,12 +267,23 @@ class NumpyMAPMoG:
 
     n_data = encodings.shape[0]
 
+    if self.max_norm is not None:
+      encodings = self.clip_encodings(encodings)
+
     n_k, resp = self.e_step(encodings)
 
     pi, mu, sig = self.m_step_mle(n_k, n_data, encodings, resp)
+
+    if self.do_dp:
+      pi, mu, sig = self.mle_pert(mu, sig, n_data, n_k)
+
     if self.do_map:
       pi, mu, sig = self.map_from_mle(pi, mu, sig, n_data, n_k)
     self.weights_, self.means_, self.covariances_ = pi, mu, sig
+
+  def clip_encodings(self, encodings):
+    # encodings (bs, d_enc) are clipped to norm
+    return encodings * np.minimum(1., self.max_norm / np.linalg.norm(encodings, axis=1))[:, None]
 
   def e_step(self, x):
     # following bishop p. 438
@@ -281,6 +299,7 @@ class NumpyMAPMoG:
     # following bishop p. 439
     pi_mle = n_k / n_data
     mu_mle = resp @ x / n_k[:, None]  # (n_c, n_d) (n_d, d) / (n_c) -> (n_c, d) / (n_c) -> (n_c,d)
+
     # centering: (n_d, d) (n_c, d) -> (n_c, n_d, d)
     x_centered = x[None, :, :] - mu_mle[:, None, :]
 
@@ -289,6 +308,28 @@ class NumpyMAPMoG:
     if self.reg_covar is not None:
       sig_mle = sig_mle + self.reg_covar
     return pi_mle, mu_mle, sig_mle
+
+  def mle_pert(self, mu, sig, n_data, n_k):
+    # follow dp-em
+    n_k_pert = n_k + np.random.normal(loc=np.zeros((self.n_comp,)), scale=2. * self.pi_noise_factor)
+    pi_pert = n_k_pert / n_data
+
+    mu_pert = mu + np.random.normal(scale=2. * self.mu_noise_factor / np.repeat(n_k[:, None], self.d_enc, axis=1))
+
+    def noise_up_symmetric(mat, k, min_eigenval=1e-4):
+      # sample symmetric noise, then apply
+      noise = np.random.normal(loc=np.zeros(mat.shape), scale=2 * self.sig_noise_factor / k)
+      noise = np.triu(noise) + np.triu(noise, k=1).T
+      mat = mat + noise
+
+      # ensure sig pert is positive semidefinite --> has only positive singular values
+      e_vals, e_vecs = np.linalg.eig(mat)
+      e_vals[np.nonzero(e_vals < 0)] = min_eigenval
+      return np.dot(e_vecs, np.dot(np.diag(e_vals), e_vecs.transpose()))
+
+    sig_pert = np.stack([noise_up_symmetric(sig[i, :, :], n_k[i]) for i in range(self.n_comp)], axis=0)
+
+    return pi_pert, mu_pert, sig_pert
 
   def map_from_mle(self, pi_mle, mu_mle, sig_mle, n_data, n_k):
     # following the dp-em appendix 1
@@ -387,7 +428,8 @@ class NowlanMoG:
     pass
 
 
-def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em, reg_covar):
+def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em, reg_covar,
+                 max_norm=None, pi_noise_factor=None, mu_noise_factor=None, sig_noise_factor=None):
   if key == 'sklearn':
     assert map_em is False
     mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='random', n_init=1, warm_start=True,
@@ -401,8 +443,10 @@ def default_mogs(key, n_comp, d_enc, cov_type, decay_gamma, em_steps, map_em, re
   elif key == 'skfi_kmeans':
     mog = GaussianMixture(n_comp, cov_type, max_iter=em_steps, init_params='kmeans', n_init=1, warm_start=False,
                           reg_covar=1e-6 if reg_covar is None else reg_covar)
-  elif key == 'map_shl':
-    mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em, init_params='lhs')
+  elif key == 'map_lhs':
+    mog = NumpyMAPMoG(n_comp, d_enc, do_map=map_em, init_params='lhs',
+                      max_norm=max_norm, pi_noise_factor=pi_noise_factor,
+                      mu_noise_factor=mu_noise_factor, sig_noise_factor=sig_noise_factor)
   elif key == 'nowlan':
     assert cov_type == 'full'
     assert decay_gamma is not None

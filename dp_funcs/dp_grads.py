@@ -71,7 +71,7 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
 
   # grad_sums, global_state = dp_sum_query.get_noised_result(sample_state, global_state)
   def add_noise(v):
-    return v + tf.random.normal(tf.shape(v), stddev=noise_factor)
+    return v + tf.random.normal(tf.shape(v), stddev=l2_norm_clip * noise_factor)
 
   final_grads = nest.map_structure(add_noise, sample_state)  # normalization comes later
   return final_grads
@@ -133,7 +133,7 @@ def release_loss_dis(loss_dis, l2_norm_clip, noise_factor):
   """
   loss_clip = tf.clip_by_norm(loss_dis, l2_norm_clip, axes=1)
   loss_sum = tf.reduce_sum(loss_clip, axis=0)
-  return loss_sum + tf.random.normal(tf.shape(loss_sum), stddev=noise_factor)
+  return loss_sum + tf.random.normal(tf.shape(loss_sum), stddev=l2_norm_clip * noise_factor)
 
 
 def loss_dis_from_rff(rff_dis_loss, rff_gen_loss, batch_size):

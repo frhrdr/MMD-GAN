@@ -35,7 +35,8 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
 
     grads_list = list(grads_list)
     record_as_list = nest.flatten(grads_list)  # flattening list. should already be flat after removing queries
-    clipped_as_list, norm = tf.clip_by_global_norm(record_as_list, l2_norm_clip)
+
+    clipped_as_list, subgrad_norm = tf.clip_by_global_norm(record_as_list, l2_norm_clip)
     preprocessed_record = clipped_as_list
 
     # preprocessed_record, norm = tf.clip_by_global_norm(grads_list, l2_norm_clip)  # trying this simpler line for now
@@ -68,6 +69,8 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
   #                                 body=lambda i, state: [tf.add(i, 1), process_sample_loss(i, state)],
   #                                 loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
   #                                 parallel_iterations=1)
+  with tf.name_scope(None):  # return to root scope to avoid scope overlap
+    tf.compat.v1.summary.scalar('DPSGD/grad_norm_post_clip', tf.linalg.global_norm(sample_state))
 
   # grad_sums, global_state = dp_sum_query.get_noised_result(sample_state, global_state)
   def add_noise(v):
@@ -131,6 +134,9 @@ def release_loss_dis(loss_dis, l2_norm_clip, noise_factor):
   :param noise_factor:
   :return:
   """
+  with tf.name_scope(None):  # return to root scope to avoid scope overlap
+    tf.compat.v1.summary.scalar('DPSGD/loss_norm', tf.reduce_mean(tf.norm(loss_dis, axis=1)))
+
   loss_clip = tf.clip_by_norm(loss_dis, l2_norm_clip, axes=1)
   loss_sum = tf.reduce_sum(loss_clip, axis=0)
   return loss_sum + tf.random.normal(tf.shape(loss_sum), stddev=l2_norm_clip * noise_factor)

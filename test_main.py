@@ -45,7 +45,7 @@ def main(ar):
   else:
     dp_spec = None
 
-  agent = Agent(ar.filename, sub_folder, load_ckpt=True, debug_mode=ar.debug_mode, debug_step=ar.debug_step,
+  agent = Agent(ar.filename, sub_folder, load_ckpt=True, debug_mode=ar.debug_mode,
                 query_step=ar.query_step, imbalanced_update=ar.imbalanced_update)
 
   # print(rff_specs(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss))

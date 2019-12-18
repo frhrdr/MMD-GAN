@@ -283,7 +283,10 @@ class NumpyMAPMoG:
 
   def clip_encodings(self, encodings):
     # encodings (bs, d_enc) are clipped to norm
-    return encodings * np.minimum(1., self.max_norm / np.linalg.norm(encodings, axis=1))[:, None]
+    enc_norm = np.linalg.norm(encodings, axis=1)
+    with tf.name_scope(None):  # return to root scope to avoid scope overlap
+      tf.compat.v1.summary.scalar('DPSGD/mog_norm', np.mean(enc_norm))
+    return encodings * np.minimum(1., self.max_norm / enc_norm)[:, None]
 
   def e_step(self, x):
     # following bishop p. 438

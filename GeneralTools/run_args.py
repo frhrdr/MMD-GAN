@@ -12,8 +12,8 @@ def parse_run_args():
   parser.add_argument('--optimizer_dis', '-opt_dis', type=str, default='adam')
   parser.add_argument('--optimizer_gen', '-opt_gen', type=str, default='adam')
   parser.add_argument('--n-instance', type=int, default=None)
-  parser.add_argument('--save-per-step', type=int, default=5000)
-  parser.add_argument('--batch-size', '-bs', type=int, default=64)
+  parser.add_argument('--save-per-step', type=int, default=1000)
+  parser.add_argument('--batch-size', '-bs', type=int, default=128)
   parser.add_argument('--n-class', type=int, default=None)
 
   parser.add_argument('--lr-dis', '-lr-dis', type=float, default=5e-4)
@@ -26,8 +26,7 @@ def parse_run_args():
   parser.add_argument('--sample-same-class', action='store_true', default=False)
   parser.add_argument('--imbalanced-update', type=str, default=None)
 
-  parser.add_argument('--debug-step', '-dstep', type=int, default=500)
-  parser.add_argument('--query-step', '-qstep', type=int, default=500)
+  parser.add_argument('--query-step', '-qstep', type=int, default=250)
   parser.add_argument('--n-threads', type=int, default=7)
   parser.add_argument('--n-iterations', '-n-it', type=int, default=8)
 
@@ -45,7 +44,7 @@ def parse_run_args():
   # parser.add_argument('--num_microbatches', '-micro', type=int, default=None)
 
   # MOG
-  parser.add_argument('--mog-type', '-mog', type=str, default='nowlan')
+  parser.add_argument('--mog-type', '-mog', type=str, default='map_lhs')
 
   parser.add_argument('--n-comp', '-n-comp', type=int, default=5)
   parser.add_argument('--em-steps', '-em', type=int, default=1)

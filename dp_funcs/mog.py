@@ -284,8 +284,9 @@ class NumpyMAPMoG:
   def clip_encodings(self, encodings):
     # encodings (bs, d_enc) are clipped to norm
     enc_norm = np.linalg.norm(encodings, axis=1)
-    with tf.name_scope(None):  # return to root scope to avoid scope overlap
-      tf.compat.v1.summary.scalar('DPSGD/mog_norm', np.mean(enc_norm))
+    # with tf.name_scope(None):  # return to root scope to avoid scope overlap
+    #   tf.compat.v1.summary.scalar('DPSGD/mog_norm', np.mean(enc_norm))  ... is what i'd do in TensorFlow...
+    print('enc_norm:', enc_norm)
     return encodings * np.minimum(1., self.max_norm / enc_norm)[:, None]
 
   def e_step(self, x):

@@ -91,8 +91,12 @@ def dataset_defaults(dataset, d_enc, architecture_key=None):
       architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default(d_enc)
     elif architecture_key == 'lean':
       architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_lean(d_enc)
+    elif architecture_key == 'small':
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_small(d_enc)
     elif architecture_key == 'tiny':
       architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_tiny(d_enc)
+    elif architecture_key in {'dim', 'diminuitive'}:
+      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_diminuitive(d_enc)
     elif architecture_key == 'minimal':
       architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_minimal(d_enc)
     else:

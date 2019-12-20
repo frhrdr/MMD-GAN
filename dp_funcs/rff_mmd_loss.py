@@ -39,9 +39,9 @@ class RFFKMap:
     enc_z1 = tf.math.cos(enc_w)  # (bs, rff)
     enc_z2 = tf.math.sin(enc_w)  # (bs, rff)
     enc_rff = tf.concat((enc_z1, enc_z2), axis=1) * tf.sqrt(2.0 / self.rff_dims)
-    enc_rff = tf.Print(enc_rff, [tf.reduce_mean(tf.gradients(enc_rff, [encoding]))], message='rff_grads_avg')
-    enc_rff = tf.Print(enc_rff, [tf.reduce_max(tf.gradients(enc_rff, [encoding]))], message='rff_grads_max')
-    enc_rff = tf.Print(enc_rff, [tf.reduce_min(tf.gradients(enc_rff, [encoding]))], message='rff_grads_min')
+    enc_rff = tf.Print(enc_rff, [tf.norm(tf.gradients(enc_rff, [encoding]))], message='rff_grads_avg')
+    # enc_rff = tf.Print(enc_rff, [tf.norm(tf.gradients(enc_rff, [encoding]))], message='rff_grads_max')
+    # enc_rff = tf.Print(enc_rff, [tf.norm(tf.gradients(enc_rff, [encoding]))], message='rff_grads_min')
     return enc_rff
 
 

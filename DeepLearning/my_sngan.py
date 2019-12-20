@@ -104,9 +104,7 @@ class SNGan(object):
         :return:
         """
         # initialize the generator network
-        g_net = Net(
-            self.architecture['generator'], net_name='gen',
-            data_format=FLAGS.IMAGE_FORMAT, num_class=self.num_class)
+        g_net = Net(self.architecture['generator'], 'gen', FLAGS.IMAGE_FORMAT, num_class=self.num_class)
         # define layer connections in generator
         # print('---------GENERATOR DEF')
         self.Gen = Routine(g_net)
@@ -116,9 +114,7 @@ class SNGan(object):
 
         # initialize the discriminator network
         # print('---------DISCRIMINATOR DEF')
-        d_net = Net(
-            self.architecture['discriminator'], net_name='dis',
-            data_format=FLAGS.IMAGE_FORMAT, num_class=self.num_class)
+        d_net = Net(self.architecture['discriminator'], 'dis', FLAGS.IMAGE_FORMAT, num_class=self.num_class)
         # define layer connections in discriminator
         self.Dis = Routine(d_net)
         self.Dis.add_input_layers([64] + list(self.architecture['input'][0]), [0])
@@ -260,9 +256,8 @@ class SNGan(object):
     def get_losses(self, s_gen, s_x, s_mog, batch_size):
         gan_losses = GANLoss(self.rff_specs, self.score_size, self.do_summary)
         if self.loss_type in {'rep', 'rmb'}:
-            loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
-                                                  batch_size=batch_size, d=self.score_size,
-                                                  rep_weights=self.rep_weights)
+            loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type, batch_size=batch_size,
+                                                  d=self.score_size, rep_weights=self.rep_weights)
         else:
             loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
                                                   batch_size=batch_size, d=self.score_size)

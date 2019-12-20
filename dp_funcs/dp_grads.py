@@ -70,7 +70,9 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
   #                                 loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
   #                                 parallel_iterations=1)
   with tf.name_scope(None):  # return to root scope to avoid scope overlap
-    tf.compat.v1.summary.scalar('DPSGD/grad_norm_post_clip', tf.linalg.global_norm(sample_state))
+    tf.compat.v1.summary.scalar('DPSGD/grad_norm_post_clip_global', tf.linalg.global_norm(sample_state))
+    for idx, grad in enumerate(sample_state):
+      tf.compat.v1.summary.scalar(f'DPSGD/grad_norm_post_clip_tensor_{idx}', tf.norm(grad))
 
   # grad_sums, global_state = dp_sum_query.get_noised_result(sample_state, global_state)
   def add_noise(v):
@@ -84,6 +86,10 @@ def sample_grads(sample_loss, var_list):
   # all gradiend beloning to one sample (i.e. #RFF many)
   n_rff = sample_loss.get_shape()[0]
   grads = [single_grad(sample_loss[i], var_list) for i in range(n_rff)]
+  # THIS IS WHERE WE COULD CLIP PER LOSS DIMENSION IF THAT SEEMS LIKE IT WILL BE USEFUL
+  if 1 % 1 > 1:  # don't do it for now
+    made_up_clip = 2.
+    grads = [tf.clip_by_global_norm(k, made_up_clip)[0] for k in grads]
   grad_stack = [tf.stack(k) for k in zip(*grads)]
   return grad_stack
 

@@ -670,8 +670,9 @@ class ParametricOperation(object):
                 # check multiplier
                 if self.design.get('w_nm') in ['s', 'l2'] and \
                         self.design['op'] in {'d', 'c', 'tc', 'dcd', 'dck', 'cck'}:
-                    multiplier = 1.0 / self.kernel_norm \
-                        if self.multiplier is None else self.multiplier / self.kernel_norm
+                    # multiplier = 1.0 / self.kernel_norm \
+                    #     if self.multiplier is None else self.multiplier / self.kernel_norm
+                    multiplier = (1.0 if self.multiplier is None else self.multiplier) / self.kernel_norm
 
                 elif FLAGS.WEIGHT_INITIALIZER == 'pg_paper':
                     multiplier = self.multiplier

@@ -23,7 +23,9 @@ def main(ar):
   FLAGS.DEFAULT_IN = FLAGS.DEFAULT_IN + '{}_NCHW/'.format(ar.dataset)
   from DeepLearning.my_sngan import SNGan
 
-  n_data_samples, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.d_enc, ar.architecture_key)
+  n_data_samples, architecture, code_dim, act_k, d_enc = dataset_defaults(ar.dataset, ar.d_enc,
+                                                                          ar.architecture_gen_key,
+                                                                          ar.architecture_dis_key)
   num_class = 0 if ar.n_class is None else ar.n_class
   code_x = np.random.randn(400, code_dim).astype(np.float32)
 

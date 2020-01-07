@@ -30,7 +30,8 @@ def parse_run_args():
   parser.add_argument('--n-threads', type=int, default=7)
   parser.add_argument('--n-iterations', '-n-it', type=int, default=8)
 
-  parser.add_argument('--architecture-key', '-arch', type=str, default=None)
+  parser.add_argument('--architecture-gen-key', '-gen_key', type=str, default=None)
+  parser.add_argument('--architecture-dis-key', '-dis_key', type=str, default=None)
 
   # DP
   parser.add_argument('--l2-norm-clip-loss', '-lclip', type=float, default=100.)
@@ -81,26 +82,34 @@ def post_parse_processing(args):
   args.filename = '{}_{}'.format(args.dataset, args.filename)
 
 
-def dataset_defaults(dataset, d_enc, architecture_key=None):
+def dataset_defaults(dataset, d_enc, gen_key, dis_key):
   assert dataset in ['mnist', 'cifar', 'fashion']
+
+  def clean_key(key):
+    key = 'default' if key is None else key
+    key = 'dim' if key == 'diminuitive' else key
+    assert key in {'default', 'lean', 'small', 'tiny', 'dim', 'min'}
+    return key
 
   if dataset in ['mnist', 'fashion']:
     num_instance = 50000
     d_enc = 2 if d_enc is None else d_enc
-    if architecture_key is None:
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_default(d_enc)
-    elif architecture_key == 'lean':
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_lean(d_enc)
-    elif architecture_key == 'small':
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_small(d_enc)
-    elif architecture_key == 'tiny':
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_tiny(d_enc)
-    elif architecture_key in {'dim', 'diminuitive'}:
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_diminuitive(d_enc)
-    elif architecture_key == 'minimal':
-      architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_minimal(d_enc)
-    else:
-      raise ValueError
+
+    architecture, code_dim, act_k, d_enc = GeneralTools.architectures.get_mnist_architectures(clean_key(gen_key),
+                                                                                              clean_key(dis_key),
+                                                                                              d_enc)
+      # elif architecture_key == 'lean':
+      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_lean(d_enc)
+      # elif architecture_key == 'small':
+      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_small(d_enc)
+      # elif architecture_key == 'tiny':
+      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_tiny(d_enc)
+      # elif architecture_key in {'dim', 'diminuitive'}:
+      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_diminuitive(d_enc)
+      # elif architecture_key == 'minimal':
+      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_minimal(d_enc)
+      # else:
+      #   raise ValueError
   elif dataset == 'cifar':
     num_instance = 50000
     d_enc = 16 if d_enc is None else d_enc

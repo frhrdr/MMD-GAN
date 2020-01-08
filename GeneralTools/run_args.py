@@ -1,5 +1,5 @@
 import argparse
-import GeneralTools.architectures
+from GeneralTools.architectures import get_mnist_architectures, cifar_default
 
 
 def parse_run_args():
@@ -74,7 +74,6 @@ def parse_run_args():
 
   parser.add_argument('--store-encodings', action='store_true', default=False)
 
-
   args = parser.parse_args()
 
   post_parse_processing(args)
@@ -97,26 +96,12 @@ def dataset_defaults(dataset, d_enc, gen_key, dis_key):
   if dataset in ['mnist', 'fashion']:
     num_instance = 50000
     d_enc = 2 if d_enc is None else d_enc
+    architecture, code_dim, act_k, d_enc = get_mnist_architectures(clean_key(gen_key), clean_key(dis_key), d_enc)
 
-    architecture, code_dim, act_k, d_enc = GeneralTools.architectures.get_mnist_architectures(clean_key(gen_key),
-                                                                                              clean_key(dis_key),
-                                                                                              d_enc)
-      # elif architecture_key == 'lean':
-      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_lean(d_enc)
-      # elif architecture_key == 'small':
-      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_small(d_enc)
-      # elif architecture_key == 'tiny':
-      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_tiny(d_enc)
-      # elif architecture_key in {'dim', 'diminuitive'}:
-      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_diminuitive(d_enc)
-      # elif architecture_key == 'minimal':
-      #   architecture, code_dim, act_k, d_enc = GeneralTools.architectures.mnist_minimal(d_enc)
-      # else:
-      #   raise ValueError
   elif dataset == 'cifar':
     num_instance = 50000
     d_enc = 16 if d_enc is None else d_enc
-    architecture, code_dim, act_k, d_enc = GeneralTools.architectures.cifar_default(d_enc)
+    architecture, code_dim, act_k, d_enc = cifar_default(d_enc)
   else:
     raise ValueError
   return num_instance, architecture, code_dim, act_k, d_enc

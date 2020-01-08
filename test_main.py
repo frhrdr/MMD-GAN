@@ -10,9 +10,13 @@ from GeneralTools.run_args import parse_run_args, dataset_defaults
 from dp_funcs.mog import EncodingMoG, default_mogs
 from dp_funcs.rff_mmd_loss import rff_specs
 from collections import namedtuple
-
+import os
 
 def main(ar):
+  FLAGS.print('Verifying that paths are found:')
+  FLAGS.print(os.environ['LD_LIBRARY_PATH'])
+  FLAGS.print(os.environ['CUDA_HOME'])
+
   tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.WARN)
 
   if ar.seed is not None:

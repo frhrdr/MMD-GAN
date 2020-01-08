@@ -70,15 +70,16 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
   #                                 loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
   #                                 parallel_iterations=1)
   with tf.name_scope(None):  # return to root scope to avoid scope overlap
-    tf.compat.v1.summary.scalar('DPSGD/grad_norm_post_clip_global', tf.linalg.global_norm(sample_state))
+    tf.compat.v1.summary.scalar('DPSGD/grad_norm_sum_post_clip_global', tf.linalg.global_norm(sample_state))
     for idx, grad in enumerate(sample_state):
-      tf.compat.v1.summary.scalar(f'DPSGD/grad_norm_post_clip_tensor_{idx}', tf.norm(grad))
+      tf.compat.v1.summary.scalar(f'DPSGD/grad_norm_sum_post_clip_tensor_{idx}', tf.norm(grad))
 
   # grad_sums, global_state = dp_sum_query.get_noised_result(sample_state, global_state)
   def add_noise(v):
     return v + tf.random.normal(tf.shape(v), stddev=l2_norm_clip * noise_factor)
 
   final_grads = nest.map_structure(add_noise, sample_state)  # normalization comes later
+
   return final_grads
 
 

@@ -12,7 +12,7 @@ import os
 
 class EncodingMoG:
   def __init__(self, n_dims, n_comp, linked_gan, np_mog, n_data_samples, enc_batch_size, filename=None, cov_type='full',
-               fix_cov=False, fix_pi=False, re_init_at_step=None):
+               fix_cov=False, fix_pi=False, re_init_at_step=None, store_encodings=False):
     self.n_dims = n_dims
     self.n_comp = n_comp
     self.cov_type = cov_type
@@ -50,6 +50,7 @@ class EncodingMoG:
     self.starting_means = None
     self.means_summary_op = None
     self.approx_test = False  # approximation quality test. now mostly obsolete
+    self.store_encodings = store_encodings
 
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
 

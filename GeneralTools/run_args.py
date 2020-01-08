@@ -28,10 +28,10 @@ def parse_run_args():
 
   parser.add_argument('--query-step', '-qstep', type=int, default=250)
   parser.add_argument('--n-threads', type=int, default=7)
-  parser.add_argument('--n-iterations', '-n-it', type=int, default=8)
+  parser.add_argument('--n-iterations', '-n-it', type=int, default=4)
 
-  parser.add_argument('--architecture-gen-key', '-gen_key', type=str, default=None)
-  parser.add_argument('--architecture-dis-key', '-dis_key', type=str, default=None)
+  parser.add_argument('--architecture-gen-key', '-archg', type=str, default=None)
+  parser.add_argument('--architecture-dis-key', '-archd', type=str, default=None)
 
   # DP
   parser.add_argument('--l2-norm-clip-loss', '-lclip', type=float, default=100.)
@@ -71,6 +71,9 @@ def parse_run_args():
   parser.add_argument('--rff-dims', type=int, default=None)
   parser.add_argument('--rff-const-noise', action='store_true', default=False)
   parser.add_argument('--rff-gen-loss', type=str, default='data')  # options: data, mog, rff, (not yet: mog-rff
+
+  parser.add_argument('--store-encodings', action='store_true', default=False)
+
 
   args = parser.parse_args()
 

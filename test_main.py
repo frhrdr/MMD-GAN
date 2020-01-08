@@ -62,7 +62,8 @@ def main(ar):
                           ar.l2_norm_clip_mog, ar.noise_factor_mog_pi, ar.noise_factor_mog_mu, ar.noise_factor_mog_sig)
     mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=np_mog, n_data_samples=n_data_samples,
                             enc_batch_size=200, filename=ar.filename, cov_type=ar.cov_type,
-                            fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step)
+                            fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,
+                            store_encodings=ar.store_encodings)
     mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
 
   grey_scale = ar.dataset in ['mnist', 'fashion']

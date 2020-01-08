@@ -240,11 +240,12 @@ class MySession(object):
                 if mog_model is not None and mog_model.linked_gan.train_with_mog:
                     mog_model.update_by_batch(self.sess)
 
-                    if global_step_value is None:  # first iteration only
-                        mog_model.store_encodings_and_params(self.sess, summary_folder, 0)
+                    if mog_model.store_encodings:
+                        if global_step_value is None:  # first iteration only
+                            mog_model.store_encodings_and_params(self.sess, summary_folder, 0)
 
-                    elif global_step_value % query_step == (query_step-1):
-                        mog_model.store_encodings_and_params(self.sess, summary_folder, global_step_value)
+                        elif global_step_value % query_step == (query_step-1):
+                            mog_model.store_encodings_and_params(self.sess, summary_folder, global_step_value)
 
                 if not isinstance(loss_list, list):  # go from namedtuple to list
                     loss_list = list(loss_list)

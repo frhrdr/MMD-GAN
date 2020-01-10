@@ -35,10 +35,10 @@ def main(ar):
   opt_spec = namedtuple('opt_spec', ['dis', 'gen'])(ar.optimizer_dis, ar.optimizer_gen)
 
   if ar.loss_type in {'rep', 'rmb'}:
-      sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}_{:.1f}_{:.1f}'.format(
-          ar.loss_type, lr_spec.dis, lr_spec.gen, act_k, ar.rep_weight_0, ar.rep_weight_1)
+      sub_folder = '{}_{:.0e}_{:.0e}_{:.1f}_{:.1f}'.format(
+          ar.loss_type, lr_spec.dis, lr_spec.gen, ar.rep_weight_0, ar.rep_weight_1)
   else:
-      sub_folder = 'sngan_{}_{:.0e}_{:.0e}_k{:.3g}'.format(ar.loss_type, lr_spec.dis, lr_spec.gen, act_k)
+      sub_folder = '{}_{:.0e}_{:.0e}'.format(ar.loss_type, lr_spec.dis, lr_spec.gen)
 
   if ar.noise_factor_loss is not None:
     dp_spec = {'loss_clip':  ar.l2_norm_clip_loss,

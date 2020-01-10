@@ -90,6 +90,7 @@ class SNGan(object):
 
         # for random fourier kerrnel approximation in loss
         self.rff_specs = kwargs['rff_specs'] if 'rff_specs' in kwargs else None
+        self.stop_snorm_grads = kwargs['stop_snorm_grads'] if 'stop_snorm_grads' in kwargs else None
 
     def register_mog(self, mog_model, train_with_mog, update_loss_type=False):
         self.mog_model = mog_model
@@ -115,6 +116,9 @@ class SNGan(object):
         # initialize the discriminator network
         # print('---------DISCRIMINATOR DEF')
         d_net = Net(self.architecture['discriminator'], 'dis', FLAGS.IMAGE_FORMAT, num_class=self.num_class)
+
+        if self.stop_snorm_grads:
+            d_net.stop_all_snorm_grads()
         # define layer connections in discriminator
         self.Dis = Routine(d_net)
         self.Dis.add_input_layers([64] + list(self.architecture['input'][0]), [0])
@@ -124,6 +128,8 @@ class SNGan(object):
         # print('-----------SNGAN INIT NET done')
         if self.mog_model is not None:
             self.mog_model.define_tfp_mog_vars(self.do_summary)
+
+
 
     ###################################################################
     def sample_codes(self, batch_size, code_x=None, code_y=None, name='codes'):

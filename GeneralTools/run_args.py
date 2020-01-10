@@ -73,6 +73,7 @@ def parse_run_args():
   parser.add_argument('--rff-gen-loss', type=str, default='data')  # options: data, mog, rff, (not yet: mog-rff
 
   parser.add_argument('--store-encodings', action='store_true', default=False)
+  parser.add_argument('--stop-snorm-grads', action='store_true', default=False)
 
   args = parser.parse_args()
 

@@ -350,6 +350,8 @@ class ParametricOperation(object):
         self.kernel_norm = None
         self.is_kernel_initialized = False
 
+        self.stop_snorm_grad = False
+
     def _get_shape_(self):
         """ This function calculates the kernel shape and the output shape
 
@@ -662,7 +664,7 @@ class ParametricOperation(object):
         :param is_training:
         :return:
         """
-        with tf.compat.v1.variable_scope(self.name_scope, reuse=tf.compat.v1.AUTO_REUSE):  # in case a layer has many kernels
+        with tf.compat.v1.variable_scope(self.name_scope, reuse=tf.compat.v1.AUTO_REUSE):  #  in case a layer has many kernels
             self._input_check_(op_input)
             with tf.control_dependencies(control_ops):
                 # initialize the kernel
@@ -672,7 +674,9 @@ class ParametricOperation(object):
                         self.design['op'] in {'d', 'c', 'tc', 'dcd', 'dck', 'cck'}:
                     # multiplier = 1.0 / self.kernel_norm \
                     #     if self.multiplier is None else self.multiplier / self.kernel_norm
-                    multiplier = (1.0 if self.multiplier is None else self.multiplier) / self.kernel_norm
+
+                    kernel_norm = tf.stop_gradient(self.kernel_norm) if self.stop_snorm_grad else self.kernel_norm
+                    multiplier = (1.0 if self.multiplier is None else self.multiplier) / kernel_norm
 
                 elif FLAGS.WEIGHT_INITIALIZER == 'pg_paper':
                     multiplier = self.multiplier
@@ -1994,6 +1998,12 @@ class Net(object):
                             tf.compat.v1.summary.scalar(summary_name, value)
                         else:
                             tf.compat.v1.summary.histogram(summary_name, value)
+
+    def stop_all_snorm_grads(self):
+        for layer in self.layers:
+            for op in layer.ops.values():
+                if isinstance(op, ParametricOperation):
+                    op.stop_snorm_grad = True
 
 
 class Routine(object):

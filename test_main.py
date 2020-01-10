@@ -57,7 +57,7 @@ def main(ar):
                 query_step=ar.query_step, imbalanced_update=ar.imbalanced_update)
 
   # print(rff_specs(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss))
-  mdl = SNGan(architecture, num_class, ar.loss_type, opt_spec, rff_specs=rff_spec)
+  mdl = SNGan(architecture, num_class, ar.loss_type, opt_spec, rff_specs=rff_spec, stop_snorm_grads=ar.stop_snorm_grads)
 
   if ar.train_without_mog:
     mog_model = None

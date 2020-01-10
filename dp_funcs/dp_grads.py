@@ -142,9 +142,10 @@ def release_loss_dis(loss_dis, l2_norm_clip, noise_factor):
   :return:
   """
   with tf.name_scope(None):  # return to root scope to avoid scope overlap
-    tf.compat.v1.summary.scalar('DPSGD/loss_norm', tf.reduce_mean(tf.norm(loss_dis, axis=1)))
+    tf.compat.v1.summary.scalar('DPSGD/loss_norm_avg_pre_clip', tf.reduce_mean(tf.norm(loss_dis, axis=1)))
 
   loss_clip = tf.clip_by_norm(loss_dis, l2_norm_clip, axes=1)
+
   loss_sum = tf.reduce_sum(loss_clip, axis=0)
   return loss_sum + tf.random.normal(tf.shape(loss_sum), stddev=l2_norm_clip * noise_factor)
 

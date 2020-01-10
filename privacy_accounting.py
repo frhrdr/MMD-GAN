@@ -3,8 +3,6 @@
 # (their github repo is : https://github.com/yuxiangw/autodp)
 # by changing the form of upper bound on the Renyi DP, resulting from
 # several Gaussian mechanisms we use given a mini-batch.
-
-
 from autodp import rdp_acct, rdp_bank
 
 # get the CGF functions
@@ -21,15 +19,16 @@ def CGF_func(sigma1, sigma2, sigma3, sigma4, num_Clust, num_iter_EM):
     func = lambda x: func_gaussian_1(x) + func_gaussian_2(x) + num_Clust*num_iter_EM*(func_gaussian_3(x) + func_gaussian_4(x))
     return func
 
+
 def main():
 
     """ input arguments """
 
     # (1) privacy parameters for four types of Gaussian mechanisms
-    sigma1 = 3.0
-    sigma2 = 2.0
-    sigma3 = 4.0
-    sigma4 = 5.0
+    sigma1 = 2.
+    sigma2 = 200.0
+    sigma3 = 200.0
+    sigma4 = 200.0
 
     # (2) number of clusters in MoG
     num_Clust = 1
@@ -38,14 +37,13 @@ def main():
     num_iter_EM = 1
 
     # (4) desired delta level
-    delta = 1e-4
+    delta = 1e-5
 
     # (5) number of training steps
-    k = 1000
+    k = 4000
 
     # (6) sampling rate
-    prob = 0.01
-
+    prob = 512./60000.
 
     """ end of input arguments """
 
@@ -57,10 +55,12 @@ def main():
     func = CGF_func(sigma1, sigma2, sigma3, sigma4, num_Clust, num_iter_EM)
 
     eps_seq = []
-    for i in range(k):
+    print_every_n = 100
+    for i in range(1, k+1):
         acct.compose_subsampled_mechanism(func, prob)
         eps_seq.append(acct.get_eps(delta))
-        print("[", i, "]Privacy loss is", (eps_seq[-1]))
+        if i % print_every_n == 0 or i == k:
+            print("[", i, "]Privacy loss is", (eps_seq[-1]))
 
     print("Composition of 1000 subsampled Gaussian mechanisms gives ", (acct.get_eps(delta), delta))
 

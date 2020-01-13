@@ -14,7 +14,7 @@ class RFFKMap:
     assert rff_dims > 0 and rff_dims % 2 == 0, 'rff_dims must be even positive int. Was {}'.format(rff_dims)
     self.rff_dims = rff_dims
     half_dims = rff_dims // 2
-    assert gen_loss in {'rff', 'mog', 'data'}, 'gen loss must be in {rff, mog, data}'
+    assert gen_loss in {'rff', 'dp_rff', 'mog', 'data'}, 'gen loss must be in {rff, mog, data}'
     self.gen_loss = gen_loss
     self.const_noise = const_noise
 

@@ -266,7 +266,7 @@ class SNGan(object):
                                                   d=self.score_size, rep_weights=self.rep_weights, dp_spec=dp_spec)
         else:
             loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
-                                                  batch_size=batch_size, d=self.score_size)
+                                                  batch_size=batch_size, d=self.score_size, dp_spec=dp_spec)
 
         # form loss list
         # sigma = [layer.sigma for layer in self.Dis.net.layers]

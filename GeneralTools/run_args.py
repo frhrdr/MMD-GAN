@@ -34,14 +34,18 @@ def parse_run_args():
   parser.add_argument('--architecture-dis-key', '-archd', type=str, default=None)
 
   # DP
-  parser.add_argument('--l2-norm-clip-loss', '-lclip', type=float, default=100.)
-  parser.add_argument('--l2-norm-clip-grad', '-gclip', type=float, default=100.)
-  parser.add_argument('--l2-norm-clip-mog',  '-mclip', type=float, default=None)
+  parser.add_argument('--l2-clip-loss', '-lclip', type=float, default=100.)
+  parser.add_argument('--l2-clip-grad', '-gclip', type=str, default='100.')
+  parser.add_argument('--l2-clip-mog',  '-mclip', type=float, default=None)
+
+  parser.add_argument('--clip-by-layer-norm', action='store_true', default=False)
+
   parser.add_argument('--noise-factor-loss',    '-lnoise',   type=float, default=None)
   parser.add_argument('--noise-factor-grad',    '-gnoise',   type=float, default=None)
   parser.add_argument('--noise-factor-mog-pi',  '-pinoise',  type=float, default=None)
   parser.add_argument('--noise-factor-mog-mu',  '-munoise',  type=float, default=None)
   parser.add_argument('--noise-factor-mog-sig', '-signoise', type=float, default=None)
+
   # parser.add_argument('--num_microbatches', '-micro', type=int, default=None)
 
   # MOG
@@ -83,6 +87,12 @@ def parse_run_args():
 
 def post_parse_processing(args):
   args.filename = '{}_{}'.format(args.dataset, args.filename)
+
+  assert isinstance(args.l2_norm_clip_grad, str)
+  if args.clip_by_layer_norm:
+    args.l2_norm_clip_grad = [float(k) for k in args.l2_norm_clip_grad.split(',')]
+  else:
+    args.l2_norm_clip_grad = float(args.l2_norm_clip_grad)
 
 
 def dataset_defaults(dataset, d_enc, gen_key, dis_key):

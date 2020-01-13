@@ -5,7 +5,7 @@ from collections import namedtuple
 
 
 class GANLoss(object):
-    def __init__(self, rff_specs, enc_dims, do_summary=False):
+    def __init__(self, rff_spec, enc_dims, do_summary=False):
         """ This class defines all kinds of loss functions for generative adversarial nets
 
         Current losses include:
@@ -34,8 +34,8 @@ class GANLoss(object):
         self.repulsive_weights = [0.0, -1.0]  # weights for e_kxy and -e_kyy; note that kyy is for the real data!
         # self.repulsive_weights = [-1.0, -2.0]  # weights for e_kxy and -e_kyy
 
-        if rff_specs is not None:
-            self.rff_map = RFFKMap(rff_specs.sigma, rff_specs.dims, enc_dims, rff_specs.const_noise, rff_specs.gen_loss)
+        if rff_spec is not None:
+            self.rff_map = RFFKMap(rff_spec.sigma, rff_spec.dims, enc_dims, rff_spec.const_noise, rff_spec.gen_loss)
         else:
             self.rff_map = None
 

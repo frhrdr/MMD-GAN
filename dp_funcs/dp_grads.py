@@ -21,12 +21,20 @@ GATE_OP = tf.compat.v1.train.Optimizer.GATE_OP
 GATE_GRAPH = tf.compat.v1.train.Optimizer.GATE_GRAPH
 
 
-def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
+def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor, clip_by_layer_norm=False):
   nest = tf.contrib.framework.nest
   batch_size = loss.get_shape()[0]
   rff_dim = loss.get_shape()[1]
 
-  def process_sample_loss(i, sample_state):
+  def clip_global(record_as_list):
+    return tf.clip_by_global_norm(record_as_list, l2_norm_clip)[0]
+
+  def clip_layerwise(record_as_list):
+    return [tf.clip_by_norm(k, n) for k, n in zip(record_as_list, l2_norm_clip)]
+
+  clip_fun = clip_global if not clip_by_layer_norm else clip_layerwise
+
+  def process_sample_loss(i, grad_acc):
     """Process one microbatch (record) with privacy helper."""
     grads_list = sample_grads(loss[i, :], var_list)
     # grads_list = zip(grads_n_vars)  # get grads
@@ -36,12 +44,12 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
     grads_list = list(grads_list)
     record_as_list = nest.flatten(grads_list)  # flattening list. should already be flat after removing queries
 
-    clipped_as_list, subgrad_norm = tf.clip_by_global_norm(record_as_list, l2_norm_clip)
+    clipped_as_list, _ = clip_fun(record_as_list)
     preprocessed_record = clipped_as_list
 
     # preprocessed_record, norm = tf.clip_by_global_norm(grads_list, l2_norm_clip)  # trying this simpler line for now
 
-    return nest.map_structure(tf.add, sample_state, preprocessed_record)  # add clipped sample grad to sum of grads
+    return nest.map_structure(tf.add, grad_acc, preprocessed_record)  # add clipped sample grad to sum of grads
 
   def zeros_like(arg):
     try:
@@ -70,15 +78,19 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor):
   #                                 loop_vars=[tf.constant(0), sample_state], name='dp_grads_while',
   #                                 parallel_iterations=1)
   with tf.name_scope(None):  # return to root scope to avoid scope overlap
-    tf.compat.v1.summary.scalar('DPSGD/grad_norm_sum_post_clip_global', tf.linalg.global_norm(sample_state))
+    tf.compat.v1.summary.scalar('DPSGD/grad_norm_avg_post_clip_global', tf.linalg.global_norm(sample_state)/batch_size)
     for idx, grad in enumerate(sample_state):
-      tf.compat.v1.summary.scalar(f'DPSGD/grad_norm_sum_post_clip_tensor_{idx}', tf.norm(grad))
+      tf.compat.v1.summary.scalar(f'DPSGD/grad_norm_avg_post_clip_tensor_{idx}', tf.norm(grad)/batch_size)
 
   # grad_sums, global_state = dp_sum_query.get_noised_result(sample_state, global_state)
-  def add_noise(v):
-    return v + tf.random.normal(tf.shape(v), stddev=l2_norm_clip * noise_factor)
+  def add_noise_global(grads):
+    return nest.map_structure(lambda k: k + tf.random.normal(tf.shape(k), stddev=l2_norm_clip * noise_factor), grads)
 
-  final_grads = nest.map_structure(add_noise, sample_state)  # normalization comes later
+  def add_noise_layerwise(grads):
+    return [k + tf.random.normal(tf.shape(k), stddev=n * noise_factor) for k, n in zip(grads, l2_norm_clip)]
+
+  final_grads = add_noise_global(sample_state) if not clip_by_layer_norm else add_noise_layerwise(sample_state)
+  # normalization comes later
 
   return final_grads
 
@@ -88,9 +100,9 @@ def sample_grads(sample_loss, var_list):
   n_rff = sample_loss.get_shape()[0]
   grads = [single_grad(sample_loss[i], var_list) for i in range(n_rff)]
   # THIS IS WHERE WE COULD CLIP PER LOSS DIMENSION IF THAT SEEMS LIKE IT WILL BE USEFUL
-  if 1 % 1 > 1:  # don't do it for now
-    made_up_clip = 2.
-    grads = [tf.clip_by_global_norm(k, made_up_clip)[0] for k in grads]
+  # if 1 % 1 > 1:  # don't do it for now
+  #   made_up_clip = 2.
+  #   grads = [tf.clip_by_global_norm(k, made_up_clip)[0] for k in grads]
   grad_stack = [tf.stack(k) for k in zip(*grads)]
   return grad_stack
 
@@ -166,7 +178,6 @@ def dp_compute_grads(loss_ops, dp_spec, vars_dis, vars_gen):
   computes dp gradients for discriminator update with rff mmd estimator
 
   :param loss_ops:
-  :param opt_ops: optimizer for gen and dis
   :param dp_spec:
   :param vars_dis
   :param vars_gen:
@@ -175,10 +186,11 @@ def dp_compute_grads(loss_ops, dp_spec, vars_dis, vars_gen):
   batch_size = int(loss_ops.dis.fdat.get_shape()[0])
   # discriminator op
   # - compute the partial gradients
-  grad_rff_dis_release = dp_rff_gradients(loss_ops.dis.fdat, vars_dis, dp_spec['grad_clip'], dp_spec['grad_noise'])
+  grad_rff_dis_release = dp_rff_gradients(loss_ops.dis.fdat, vars_dis, dp_spec.grad_clip, dp_spec.grad_noise,
+                                          dp_spec.clip_by_layer_norm)
   grad_rff_gen = sample_grads(loss_ops.dis.fgen, vars_dis)
   # - clip & perturb loss
-  loss_rff_dis_release = release_loss_dis(loss_ops.dis.fdat, dp_spec['loss_clip'], dp_spec['loss_noise'])
+  loss_rff_dis_release = release_loss_dis(loss_ops.dis.fdat, dp_spec.loss_clip, dp_spec.loss_noise)
 
   # get full grads, then couple with variables
   grads = compose_full_grads(fx_dp=loss_rff_dis_release, fy=loss_ops.dis.fgen,

@@ -89,7 +89,7 @@ class SNGan(object):
         self.repeat_for_mog = False
 
         # for random fourier kerrnel approximation in loss
-        self.rff_specs = kwargs['rff_specs'] if 'rff_specs' in kwargs else None
+        self.rff_spec = kwargs['rff_spec'] if 'rff_spec' in kwargs else None
         self.stop_snorm_grads = kwargs['stop_snorm_grads'] if 'stop_snorm_grads' in kwargs else None
 
     def register_mog(self, mog_model, train_with_mog, update_loss_type=False):
@@ -260,7 +260,7 @@ class SNGan(object):
         return s_x, s_gen, s_mog, gen_batch
 
     def get_losses(self, s_gen, s_x, s_mog, batch_size):
-        gan_losses = GANLoss(self.rff_specs, self.score_size, self.do_summary)
+        gan_losses = GANLoss(self.rff_spec, self.score_size, self.do_summary)
         if self.loss_type in {'rep', 'rmb'}:
             loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type, batch_size=batch_size,
                                                   d=self.score_size, rep_weights=self.rep_weights)

@@ -8,7 +8,7 @@ from GeneralTools.misc_fun import FLAGS
 from GeneralTools.graph_funcs.agent import Agent
 from GeneralTools.run_args import parse_run_args, dataset_defaults
 from dp_funcs.mog import EncodingMoG, default_mogs
-from dp_funcs.rff_mmd_loss import rff_specs
+from dp_funcs.rff_mmd_loss import rff_spec_tup
 from collections import namedtuple
 
 
@@ -41,30 +41,31 @@ def main(ar):
       sub_folder = '{}_{:.0e}_{:.0e}'.format(ar.loss_type, lr_spec.dis, lr_spec.gen)
 
   if ar.noise_factor_loss is not None:
-    dp_spec = {'loss_clip':  ar.l2_norm_clip_loss,
-               'grad_clip':  ar.l2_norm_clip_grad,
-               'loss_noise': ar.noise_factor_loss,
-               'grad_noise': ar.noise_factor_grad}
+    dp_keys = ['loss_clip', 'grad_clip', 'clip_by_layer_norm',
+               'loss_noise', 'grad_noise']
+    dp_args = [ar.l2_clip_loss, ar.l2_clip_grad, ar.clip_by_layer_norm,
+               ar.noise_factor_loss, ar.noise_factor_grad]
+    dp_spec = namedtuple('dp_spec', dp_keys)(*dp_args)
   else:
     dp_spec = None
 
   if ar.rff_sigma is not None:
-    rff_spec = rff_specs(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss)
+    rff_spec = rff_spec_tup(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss)
   else:
     rff_spec = None
 
   agent = Agent(ar.filename, sub_folder, load_ckpt=True, debug_mode=ar.debug_mode,
                 query_step=ar.query_step, imbalanced_update=ar.imbalanced_update)
 
-  # print(rff_specs(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss))
-  mdl = SNGan(architecture, num_class, ar.loss_type, opt_spec, rff_specs=rff_spec, stop_snorm_grads=ar.stop_snorm_grads)
+  # print(rff_spec(ar.rff_sigma, ar.rff_dims, ar.rff_const_noise, ar.rff_gen_loss))
+  mdl = SNGan(architecture, num_class, ar.loss_type, opt_spec, rff_spec=rff_spec, stop_snorm_grads=ar.stop_snorm_grads)
 
   if ar.train_without_mog:
     mog_model = None
   else:
     np_mog = default_mogs(ar.mog_type, ar.n_comp, d_enc, ar.cov_type, ar.decay_gamma, ar.em_steps, ar.map_em,
-                          ar.reg_covar,
-                          ar.l2_norm_clip_mog, ar.noise_factor_mog_pi, ar.noise_factor_mog_mu, ar.noise_factor_mog_sig)
+                          ar.reg_covar, ar.l2_norm_clip_mog, ar.noise_factor_mog_pi, ar.noise_factor_mog_mu,
+                          ar.noise_factor_mog_sig)
     mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=np_mog, n_data_samples=n_data_samples,
                             enc_batch_size=200, filename=ar.filename, cov_type=ar.cov_type,
                             fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,

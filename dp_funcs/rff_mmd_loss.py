@@ -62,4 +62,4 @@ class NumpySeedContext(object):
     np.random.set_state(self.cur_state)
 
 
-rff_specs = namedtuple('rff_specs', ['sigma', 'dims', 'const_noise', 'gen_loss'])
+rff_spec_tup = namedtuple('rff_spec', ['sigma', 'dims', 'const_noise', 'gen_loss'])

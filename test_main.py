@@ -64,7 +64,7 @@ def main(ar):
     mog_model = None
   else:
     np_mog = default_mogs(ar.mog_type, ar.n_comp, d_enc, ar.cov_type, ar.decay_gamma, ar.em_steps, ar.map_em,
-                          ar.reg_covar, ar.l2_norm_clip_mog, ar.noise_factor_mog_pi, ar.noise_factor_mog_mu,
+                          ar.reg_covar, ar.l2_clip_mog, ar.noise_factor_mog_pi, ar.noise_factor_mog_mu,
                           ar.noise_factor_mog_sig)
     mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=np_mog, n_data_samples=n_data_samples,
                             enc_batch_size=200, filename=ar.filename, cov_type=ar.cov_type,

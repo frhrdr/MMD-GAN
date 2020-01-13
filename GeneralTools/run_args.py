@@ -88,11 +88,11 @@ def parse_run_args():
 def post_parse_processing(args):
   args.filename = '{}_{}'.format(args.dataset, args.filename)
 
-  assert isinstance(args.l2_norm_clip_grad, str)
+  assert isinstance(args.l2_clip_grad, str)
   if args.clip_by_layer_norm:
-    args.l2_norm_clip_grad = [float(k) for k in args.l2_norm_clip_grad.split(',')]
+    args.l2_clip_grad = [float(k) for k in args.l2_clip_grad.split(',')]
   else:
-    args.l2_norm_clip_grad = float(args.l2_norm_clip_grad)
+    args.l2_clip_grad = float(args.l2_clip_grad)
 
 
 def dataset_defaults(dataset, d_enc, gen_key, dis_key):

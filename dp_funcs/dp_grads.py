@@ -44,7 +44,7 @@ def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor, clip_by_layer_n
     grads_list = list(grads_list)
     record_as_list = nest.flatten(grads_list)  # flattening list. should already be flat after removing queries
 
-    clipped_as_list, _ = clip_fun(record_as_list)
+    clipped_as_list = clip_fun(record_as_list)
     preprocessed_record = clipped_as_list
 
     # preprocessed_record, norm = tf.clip_by_global_norm(grads_list, l2_norm_clip)  # trying this simpler line for now

@@ -23,7 +23,7 @@ GATE_GRAPH = tf.compat.v1.train.Optimizer.GATE_GRAPH
 
 def dp_rff_gradients(loss, var_list, l2_norm_clip, noise_factor, clip_by_layer_norm=False):
   nest = tf.contrib.framework.nest
-  batch_size = loss.get_shape()[0]
+  batch_size = loss.get_shape().as_list()[0]
   rff_dim = loss.get_shape()[1]
 
   def clip_global(record_as_list):

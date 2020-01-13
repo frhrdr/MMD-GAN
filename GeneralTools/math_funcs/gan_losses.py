@@ -170,31 +170,10 @@ class GANLoss(object):
         if self.rff_map.gen_loss == 'rff':
             rffk_dat = tf.compat.v1.reduce_sum(rff_dat, axis=0)
             self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g') / self.batch_size**2
-        else:
-            assert self.rff_map.gen_loss in {'data', 'mog'}
-            comp_data = self.score_data if self.rff_map.gen_loss == 'data' else self.score_mog
-            name = 'mmd_g' if self.rff_map.gen_loss == 'data' else 'mmd_g_mog'
-            dist_gg, dist_gd, dist_dd = get_squared_dist(self.score_gen, comp_data, do_summary=self.do_summary)
-            self.loss_gen, _ = mmd_g(dist_gg, dist_gd, dist_dd, self.batch_size, name=name,
-                                     do_summary=self.do_summary, custom_weights=self.repulsive_weights)
-
-    def _dp_linear_kernel_simplified(self):
-        """
-        random fourier feature approximation of MMD for discriminator (i.e. attractive loss) in DP setting
-        provides the n+1 losses used to compute per-sample-clipped gradients
-        """
-        assert self.rff_map.rff_dims == 2  # must be same as d_enc for remaining code to work
-        # dis loss
-        rff_gen = self.score_gen  # (bs, d_enc)
-        rff_dat = self.score_data  # (bs, d_enc)
-        # print('0000000000000000000000', rff_dat, rff_gen)
-        rffk_gen = tf.compat.v1.reduce_sum(rff_gen, axis=0)  # (d_enc)
-        self.loss_dis = namedtuple('rff_loss', ['fdat', 'fgen'])(rff_dat, rffk_gen)
-
-        # gen loss
-        if self.rff_map.gen_loss == 'rff':
+        elif self.rff_map.gen_loss == 'dp_rff':
             rffk_dat = tf.compat.v1.reduce_sum(rff_dat, axis=0)
-            self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g') / self.batch_size**2
+            rffk_dat_pert = rffk_dat + tf.random.normal(tf.shape(rffk_dat), stddev=self.dp_spec.enc_noise)  # l2norm = 1
+            self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat_pert - rffk_gen)**2, name='rff_mmd_g')/self.batch_size**2
         else:
             assert self.rff_map.gen_loss in {'data', 'mog'}
             comp_data = self.score_data if self.rff_map.gen_loss == 'data' else self.score_mog
@@ -202,14 +181,39 @@ class GANLoss(object):
             dist_gg, dist_gd, dist_dd = get_squared_dist(self.score_gen, comp_data, do_summary=self.do_summary)
             self.loss_gen, _ = mmd_g(dist_gg, dist_gd, dist_dd, self.batch_size, name=name,
                                      do_summary=self.do_summary, custom_weights=self.repulsive_weights)
-
-    def _linear_kernel_simplified(self):
-        """
-        """
-        rffk_gen = tf.compat.v1.reduce_sum(self.score_gen, axis=0)  # (d_enc)
-        rffk_dat = tf.compat.v1.reduce_sum(self.score_data, axis=0)
-        self.loss_dis = -tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='lin_k_dis') / self.batch_size**2
-        self.loss_gen = -self.loss_dis
+    #
+    # def _dp_linear_kernel_simplified(self):
+    #     """
+    #     random fourier feature approximation of MMD for discriminator (i.e. attractive loss) in DP setting
+    #     provides the n+1 losses used to compute per-sample-clipped gradients
+    #     """
+    #     assert self.rff_map.rff_dims == 2  # must be same as d_enc for remaining code to work
+    #     # dis loss
+    #     rff_gen = self.score_gen  # (bs, d_enc)
+    #     rff_dat = self.score_data  # (bs, d_enc)
+    #     # print('0000000000000000000000', rff_dat, rff_gen)
+    #     rffk_gen = tf.compat.v1.reduce_sum(rff_gen, axis=0)  # (d_enc)
+    #     self.loss_dis = namedtuple('rff_loss', ['fdat', 'fgen'])(rff_dat, rffk_gen)
+    #
+    #     # gen loss
+    #     if self.rff_map.gen_loss == 'rff':
+    #         rffk_dat = tf.compat.v1.reduce_sum(rff_dat, axis=0)
+    #         self.loss_gen = tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='rff_mmd_g') / self.batch_size**2
+    #     else:
+    #         assert self.rff_map.gen_loss in {'data', 'mog'}
+    #         comp_data = self.score_data if self.rff_map.gen_loss == 'data' else self.score_mog
+    #         name = 'mmd_g' if self.rff_map.gen_loss == 'data' else 'mmd_g_mog'
+    #         dist_gg, dist_gd, dist_dd = get_squared_dist(self.score_gen, comp_data, do_summary=self.do_summary)
+    #         self.loss_gen, _ = mmd_g(dist_gg, dist_gd, dist_dd, self.batch_size, name=name,
+    #                                  do_summary=self.do_summary, custom_weights=self.repulsive_weights)
+    #
+    # def _linear_kernel_simplified(self):
+    #     """
+    #     """
+    #     rffk_gen = tf.compat.v1.reduce_sum(self.score_gen, axis=0)  # (d_enc)
+    #     rffk_dat = tf.compat.v1.reduce_sum(self.score_data, axis=0)
+    #     self.loss_dis = -tf.compat.v1.reduce_sum((rffk_dat - rffk_gen) ** 2, name='lin_k_dis') / self.batch_size**2
+    #     self.loss_gen = -self.loss_dis
 
     def _dp_conditional_rff_gaussian_kernel_approx(self):
         """
@@ -323,6 +327,8 @@ class GANLoss(object):
             self.true_labels = kwargs['true_labels']
         if 'gen_labels' in kwargs:
             self.gen_labels = kwargs['gen_labels']
+        if 'dp_spec' in kwargs:
+            self.dp_spec = kwargs['dp_spec']
         # check inputs
         if loss_type in {'fixed_g', 'mmd_g', 'fixed_t', 'mmd_t', 'mmd_g_mix', 'fixed_g_mix', 'rand_g', 'rand_g_mix',
                          'sym_rg_mix', 'instance_noise', 'ins_noise', 'sym_rg', 'rgb', 'rep', 'rep_gp', 'rmb', 'rmb_gp',
@@ -348,10 +354,10 @@ class GANLoss(object):
             self._rff_gaussian_kernel_approx()
         elif loss_type == 'dp_rff':
             self._dp_rff_gaussian_kernel_approx()
-        elif loss_type == 'dp_lin':
-            self._dp_linear_kernel_simplified()
-        elif loss_type == 'lin':
-            self._linear_kernel_simplified()
+        # elif loss_type == 'dp_lin':
+        #     self._dp_linear_kernel_simplified()
+        # elif loss_type == 'lin':
+        #     self._linear_kernel_simplified()
         elif loss_type == 'dp_dummy':
             self._dp_rff_dummy()
         # elif loss_type == 'rep_inv_disc':

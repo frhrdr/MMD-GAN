@@ -205,7 +205,7 @@ class SNGan(object):
             s_x, s_gen, s_mog, gen_batch = self.get_encodings(data_batch, batch_size, is_training)
 
             # loss function
-            loss_ops = self.get_losses(s_gen, s_x, s_mog, batch_size)
+            loss_ops = self.get_losses(s_gen, s_x, s_mog, batch_size, dp_spec)
 
             vars_dis = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "dis")
             vars_gen = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, "gen")
@@ -259,11 +259,11 @@ class SNGan(object):
         s_mog = self.mog_model.sample_batch(batch_size) if self.mog_model is not None and self.train_with_mog else None
         return s_x, s_gen, s_mog, gen_batch
 
-    def get_losses(self, s_gen, s_x, s_mog, batch_size):
+    def get_losses(self, s_gen, s_x, s_mog, batch_size, dp_spec):
         gan_losses = GANLoss(self.rff_spec, self.score_size, self.do_summary)
         if self.loss_type in {'rep', 'rmb'}:
             loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type, batch_size=batch_size,
-                                                  d=self.score_size, rep_weights=self.rep_weights)
+                                                  d=self.score_size, rep_weights=self.rep_weights, dp_spec=dp_spec)
         else:
             loss_gen, loss_dis = gan_losses.apply(s_gen, s_x, s_mog, self.loss_type,
                                                   batch_size=batch_size, d=self.score_size)

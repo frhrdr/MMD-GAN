@@ -42,9 +42,9 @@ def main(ar):
 
   if ar.noise_factor_loss is not None:
     dp_keys = ['loss_clip', 'grad_clip', 'clip_by_layer_norm',
-               'loss_noise', 'grad_noise']
+               'loss_noise', 'grad_noise', 'enc_noise']
     dp_args = [ar.l2_clip_loss, ar.l2_clip_grad, ar.clip_by_layer_norm,
-               ar.noise_factor_loss, ar.noise_factor_grad]
+               ar.noise_factor_loss, ar.noise_factor_grad, ar.noise_factor_enc]
     dp_spec = namedtuple('dp_spec', dp_keys)(*dp_args)
   else:
     dp_spec = None
@@ -63,14 +63,15 @@ def main(ar):
   if ar.train_without_mog:
     mog_model = None
   else:
-    np_mog = default_mogs(ar.mog_type, ar.n_comp, d_enc, ar.cov_type, ar.decay_gamma, ar.em_steps, ar.map_em,
-                          ar.reg_covar, ar.l2_clip_mog, ar.noise_factor_mog_pi, ar.noise_factor_mog_mu,
-                          ar.noise_factor_mog_sig)
-    mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=np_mog, n_data_samples=n_data_samples,
-                            enc_batch_size=200, filename=ar.filename, cov_type=ar.cov_type,
-                            fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,
-                            store_encodings=ar.store_encodings)
-    mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
+    mog_model = None  # for now, ensure, mog is not used
+    # np_mog = default_mogs(ar.mog_type, ar.n_comp, d_enc, ar.cov_type, ar.decay_gamma, ar.em_steps, ar.map_em,
+    #                       ar.reg_covar, ar.l2_clip_mog, ar.noise_factor_mog_pi, ar.noise_factor_mog_mu,
+    #                       ar.noise_factor_mog_sig)
+    # mog_model = EncodingMoG(d_enc, ar.n_comp, linked_gan=mdl, np_mog=np_mog, n_data_samples=n_data_samples,
+    #                         enc_batch_size=200, filename=ar.filename, cov_type=ar.cov_type,
+    #                         fix_cov=ar.fix_cov, fix_pi=ar.fix_pi, re_init_at_step=ar.re_init_step,
+    #                         store_encodings=ar.store_encodings)
+    # mdl.register_mog(mog_model, train_with_mog=True, update_loss_type=False)
 
   grey_scale = ar.dataset in ['mnist', 'fashion']
 
